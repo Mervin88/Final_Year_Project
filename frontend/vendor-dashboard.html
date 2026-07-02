@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor Dashboard - EventSync</title>
+    <link rel="stylesheet" href="css/vendor-dashboard.css">
+</head>
+
+<body>
+
+    <div class="dashboard-container">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div>
+                <h1 class="logo">
+                    EventSync
+                </h1>
+                <ul class="menu">
+                    <li class="active" onclick="window.location.href='vendor-dashboard.html'">
+                        Dashboard
+                    </li>
+                    <li onclick="window.location.href='vendor-dashboard.html#upload-section'">
+                        Upload Venue
+                    </li>
+                    <li onclick="window.location.href='vendor-dashboard.html#my-venues-section'">
+                        My Listings
+                    </li>
+                </ul>
+            </div>
+            <button class="logout-btn" onclick="logout()">
+                Logout
+            </button>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+
+            <!-- WELCOME BANNER -->
+            <div class="welcome-banner">
+                <div>
+                    <h1 id="welcomeText">
+                        Vendor Dashboard 🏢
+                    </h1>
+                    <p>
+                        Showcase your corporate venues, manage booking parameters, and track reviews dynamically.
+                    </p>
+                </div>
+                <button onclick="window.location.href='#upload-section'">
+                    Upload New Venue
+                </button>
+            </div>
+
+            <!-- UPLOAD VENUE SECTION -->
+            <section class="section" id="upload-section">
+                <div class="section-header">
+                    <h2>Upload Venue</h2>
+                </div>
+
+                <div class="form-container">
+                    <form id="uploadVenueForm">
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <label for="venueName">Venue Name</label>
+                                <input type="text" id="venueName" placeholder="e.g., Majestic Ballroom" required>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="venueLocation">Location / City</label>
+                                <input type="text" id="venueLocation" placeholder="e.g., Kuala Lumpur" required>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="venueCapacity">Capacity (Pax)</label>
+                                <input type="number" id="venueCapacity" placeholder="e.g., 500" min="1" required>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="venueType">Venue Type</label>
+                                <select id="venueType" required>
+                                    <option value="" disabled selected>Select Venue Type</option>
+                                    <option value="Indoor">Indoor</option>
+                                    <option value="Outdoor">Outdoor</option>
+                                    <option value="Hybrid">Hybrid</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="venuePrice">Price per Day (RM)</label>
+                                <input type="number" id="venuePrice" placeholder="e.g., 8500" min="0" step="0.01" required>
+                            </div>
+                        </div>
+
+                        <div class="input-group" style="margin-top: 20px;">
+                            <label for="venueDescription">Description</label>
+                            <textarea id="venueDescription" rows="4" placeholder="Describe your venue's highlights, space configuration, and layout suitability..." required></textarea>
+                        </div>
+
+                        <div class="input-group" style="margin-top: 20px;">
+                            <label for="venueDocument">Supporting Verification Documents Link (URL)</label>
+                            <input type="url" id="venueDocument" placeholder="e.g., Dropbox or Google Drive link to licenses/deed" required>
+                        </div>
+
+                        <div class="amenities-container" style="margin-top: 25px;">
+                            <label style="font-weight: 600; display: block; margin-bottom: 12px; color: #374151;">Available Facilities / Amenities</label>
+                            <div class="amenities-grid">
+                                <label class="checkbox-wrapper">
+                                    <input type="checkbox" id="facilityParking">
+                                    <span>Parking Available</span>
+                                </label>
+                                <label class="checkbox-wrapper">
+                                    <input type="checkbox" id="facilityWifi">
+                                    <span>WiFi Available</span>
+                                </label>
+                                <label class="checkbox-wrapper">
+                                    <input type="checkbox" id="facilityProjector">
+                                    <span>Projector & Screens</span>
+                                </label>
+                                <label class="checkbox-wrapper">
+                                    <input type="checkbox" id="facilityCatering">
+                                    <span>In-house Catering</span>
+                                </label>
+                                <label class="checkbox-wrapper">
+                                    <input type="checkbox" id="facilitySound">
+                                    <span>Sound System Included</span>
+                                </label>
+                                <label class="checkbox-wrapper">
+                                    <input type="checkbox" id="facilityStage">
+                                    <span>Stage Setup Available</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="submit-btn" style="margin-top: 30px;">
+                            Submit for Verification
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- MY VENUES SECTION -->
+            <section class="section" id="my-venues-section">
+                <div class="section-header">
+                    <h2>My Venue Listings</h2>
+                </div>
+
+                <div class="table-card">
+                    <table class="venues-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Location</th>
+                                <th>Capacity</th>
+                                <th>Price</th>
+                                <th>Type</th>
+                                <th>Facilities</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="myVenuesTableBody">
+                            <!-- Loaded Dynamically -->
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 30px; color: #6b7280;">
+                                    Loading your listings...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/vendor-dashboard.js"></script>
+</body>
+
+</html>

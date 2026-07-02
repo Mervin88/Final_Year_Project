@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+    content="width=device-width, initial-scale=1.0">
+
+    <title>
+        Communication Hub | EventSync
+    </title>
+
+    <link rel="stylesheet"
+    href="css/communication.css">
+
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+
+    <nav class="navbar">
+        <a href="landing.html" class="logo-text">
+            <span class="logo-dark">Event</span><span class="logo-gold">Sync</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="events.html" id="navEvents">Events</a></li>
+            <li><a href="venues.html" id="navVenues">Venues</a></li>
+            <li><a href="planner.html" id="navPlanner">Planner</a></li>
+            <li><a href="communication.html" id="navCommunication" class="active">Communication</a></li>
+            <li><a href="user-dashboard.html" id="navDashboard">Dashboard</a></li>
+            <li><a href="login.html" id="navLogin" class="login-btn">Login</a></li>
+        </ul>
+    </nav>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const username = localStorage.getItem("username");
+            const role = localStorage.getItem("role");
+            const navPlanner = document.getElementById("navPlanner");
+            const navCommunication = document.getElementById("navCommunication");
+            const navDashboard = document.getElementById("navDashboard");
+            const navLogin = document.getElementById("navLogin");
+            
+            if (username) {
+                if (navLogin) {
+                    navLogin.textContent = "Logout";
+                    navLogin.href = "#";
+                    navLogin.onclick = (e) => {
+                        e.preventDefault();
+                        localStorage.removeItem("username");
+                        localStorage.removeItem("role");
+                        localStorage.removeItem("userRole");
+                        localStorage.removeItem("selectedVenue");
+                        localStorage.removeItem("eventDraft");
+                        localStorage.removeItem("eventTimeline");
+                        localStorage.removeItem("editEventId");
+                        localStorage.removeItem("compareVenues");
+                        window.location.href = "login.html";
+                    };
+                }
+                if (navDashboard) {
+                    if (role === "Participant") {
+                        navDashboard.parentElement.style.display = "none";
+                    } else {
+                        navDashboard.parentElement.style.display = "block";
+                        if (role === "Vendor") {
+                            navDashboard.href = "vendor-dashboard.html";
+                        } else if (role === "Admin") {
+                            navDashboard.href = "admin-dashboard.html";
+                        } else {
+                            navDashboard.href = "user-dashboard.html";
+                        }
+                    }
+                }
+                if (role === "Participant") {
+                    if (navPlanner) navPlanner.parentElement.style.display = "none";
+                    if (navCommunication) navCommunication.parentElement.style.display = "none";
+                } else {
+                    if (navPlanner) navPlanner.parentElement.style.display = "block";
+                    if (navCommunication) navCommunication.parentElement.style.display = "block";
+                }
+            } else {
+                if (navLogin) {
+                    navLogin.style.display = "block";
+                    navLogin.textContent = "Login";
+                    navLogin.href = "login.html";
+                    navLogin.onclick = null;
+                }
+                if (navDashboard) navDashboard.parentElement.style.display = "none";
+                if (navPlanner) navPlanner.parentElement.style.display = "none";
+                if (navCommunication) navCommunication.parentElement.style.display = "none";
+            }
+        });
+    </script>
+
+    <!-- HERO -->
+
+    <section class="hero">
+
+        <div class="hero-overlay">
+
+            <div class="hero-content">
+
+                <span class="hero-tag">
+
+                    Integrated Communication Platform
+
+                </span>
+
+                <h1>
+
+                    Real-Time Event
+                    Coordination Hub
+
+                </h1>
+
+                <p>
+
+                    Centralize communication between organizers,
+                    vendors, venue providers and participants
+                    for efficient event coordination.
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- MAIN SECTION -->
+
+    <section class="communication-section">
+
+        <!-- LEFT -->
+
+        <div class="left-panel">
+
+            <!-- ANNOUNCEMENTS -->
+
+            <div class="card">
+
+                <div class="card-title">
+
+                    Latest Announcements
+
+                </div>
+
+                <div class="announcement-list">
+
+                    <div class="announcement-item">
+
+                        <div class="announcement-badge">
+
+                            📢
+
+                        </div>
+
+                        <div>
+
+                            <h3>
+
+                                Venue Booking Confirmed
+
+                            </h3>
+
+                            <p>
+
+                                KL Convention Centre booking
+                                has been approved successfully.
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <div class="announcement-item">
+
+                        <div class="announcement-badge">
+
+                            📢
+
+                        </div>
+
+                        <div>
+
+                            <h3>
+
+                                Catering Menu Updated
+
+                            </h3>
+
+                            <p>
+
+                                Vendor updated the corporate
+                                lunch menu selection.
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <div class="announcement-item">
+
+                        <div class="announcement-badge">
+
+                            📢
+
+                        </div>
+
+                        <div>
+
+                            <h3>
+
+                                Schedule Adjustment
+
+                            </h3>
+
+                            <p>
+
+                                Keynote presentation changed
+                                from 10:00 AM to 10:30 AM.
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- TASK COORDINATION -->
+
+            <div class="card">
+
+                <div class="card-title">
+
+                    Task Coordination
+
+                </div>
+
+                <div class="task-list">
+
+                    <label class="task-item">
+
+                        <input type="checkbox">
+
+                        Confirm catering vendor
+
+                    </label>
+
+                    <label class="task-item">
+
+                        <input type="checkbox">
+
+                        Setup registration counter
+
+                    </label>
+
+                    <label class="task-item">
+
+                        <input type="checkbox">
+
+                        Finalize event schedule
+
+                    </label>
+
+                    <label class="task-item">
+
+                        <input type="checkbox">
+
+                        Prepare LED screen presentation
+
+                    </label>
+
+                    <label class="task-item">
+
+                        <input type="checkbox">
+
+                        Confirm participant attendance
+
+                    </label>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT -->
+
+        <div class="right-panel">
+
+            <!-- CHAT -->
+
+            <div class="card">
+
+                <div class="card-title">
+
+                    AI Event Assistant
+
+                </div>
+
+                <div class="chat-box" id="chatBox"></div>
+
+                <!-- CHAT INPUT -->
+
+                <div class="chat-input">
+
+                    <input
+                    type="text"
+                    id="messageInput"
+                    placeholder="Ask EventSync AI...">
+
+                    <button id="sendBtn" onclick="sendMessage()">
+
+                        Send
+
+                    </button>
+
+                </div>
+
+            </div>
+
+            <!-- NOTIFICATIONS -->
+
+            <div class="card">
+
+                <div class="card-title">
+
+                    Notifications
+
+                </div>
+
+                <div class="notification-list" id="notificationList">
+                    <!-- Dynamically loaded from database -->
+                    <div class="notification-empty" style="text-align: center; padding: 30px 20px; color: #9ca3af; font-weight: 600; font-size: 14.5px;">
+                        No notifications yet.
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="js/communication.js"></script>
+    <!-- TOAST CONTAINER -->
+    <div id="toastContainer" class="toast-container"></div>
+</body>
+
+</html>

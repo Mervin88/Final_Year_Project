@@ -1,0 +1,17 @@
+# Secrets and Environment Variables
+backend/chatbot.env
+*.env
+.env
+
+# Python Caches and Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE Settings
+.vscode/
+
+# System Files
+.DS_Store
+Thumbs.db
+*.log

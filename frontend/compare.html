@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+    content="width=device-width, initial-scale=1.0">
+
+    <title>
+        Compare Venues | EventSync
+    </title>
+
+    <link rel="stylesheet"
+    href="css/compare.css">
+
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+
+    <nav class="navbar">
+        <a href="landing.html" class="logo-text">
+            <span class="logo-dark">Event</span><span class="logo-gold">Sync</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="events.html" id="navEvents">Events</a></li>
+            <li><a href="venues.html" id="navVenues" class="active">Venues</a></li>
+            <li><a href="planner.html" id="navPlanner">Planner</a></li>
+            <li><a href="communication.html" id="navCommunication">Communication</a></li>
+            <li><a href="user-dashboard.html" id="navDashboard">Dashboard</a></li>
+            <li><a href="login.html" id="navLogin" class="login-btn">Login</a></li>
+        </ul>
+    </nav>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const username = localStorage.getItem("username");
+            const role = localStorage.getItem("role");
+            const navPlanner = document.getElementById("navPlanner");
+            const navCommunication = document.getElementById("navCommunication");
+            const navDashboard = document.getElementById("navDashboard");
+            const navLogin = document.getElementById("navLogin");
+            
+            if (username) {
+                if (navLogin) {
+                    navLogin.textContent = "Logout";
+                    navLogin.href = "#";
+                    navLogin.onclick = (e) => {
+                        e.preventDefault();
+                        localStorage.removeItem("username");
+                        localStorage.removeItem("role");
+                        localStorage.removeItem("userRole");
+                        localStorage.removeItem("selectedVenue");
+                        localStorage.removeItem("eventDraft");
+                        localStorage.removeItem("eventTimeline");
+                        localStorage.removeItem("editEventId");
+                        localStorage.removeItem("compareVenues");
+                        window.location.href = "login.html";
+                    };
+                }
+                if (navDashboard) {
+                    if (role === "Participant") {
+                        navDashboard.parentElement.style.display = "none";
+                    } else {
+                        navDashboard.parentElement.style.display = "block";
+                        if (role === "Vendor") {
+                            navDashboard.href = "vendor-dashboard.html";
+                        } else if (role === "Admin") {
+                            navDashboard.href = "admin-dashboard.html";
+                        } else {
+                            navDashboard.href = "user-dashboard.html";
+                        }
+                    }
+                }
+                if (role === "Participant") {
+                    if (navPlanner) navPlanner.parentElement.style.display = "none";
+                    if (navCommunication) navCommunication.parentElement.style.display = "none";
+                } else {
+                    if (navPlanner) navPlanner.parentElement.style.display = "block";
+                    if (navCommunication) navCommunication.parentElement.style.display = "block";
+                }
+            } else {
+                if (navLogin) {
+                    navLogin.style.display = "block";
+                    navLogin.textContent = "Login";
+                    navLogin.href = "login.html";
+                    navLogin.onclick = null;
+                }
+                if (navDashboard) navDashboard.parentElement.style.display = "none";
+                if (navPlanner) navPlanner.parentElement.style.display = "none";
+                if (navCommunication) navCommunication.parentElement.style.display = "none";
+            }
+        });
+    </script>
+
+    <!-- HERO -->
+
+    <section class="hero">
+
+        <div class="hero-content">
+
+            <span class="hero-tag">
+
+                Venue Comparison System
+
+            </span>
+
+            <h1>
+
+                Compare Venues
+                Side By Side
+
+            </h1>
+
+            <p>
+
+                Analyze venue capacity, pricing,
+                distance, availability and suitability
+                to choose the best venue for your event.
+
+            </p>
+
+        </div>
+
+    </section>
+
+    <!-- COMPARISON SECTION -->
+
+    <section class="compare-section">
+
+        <div style="margin-bottom: 25px;">
+
+            <button onclick="window.location.href='venues.html'" style="padding: 12px 28px; border: 2px solid #c8a96b; border-radius: 16px; background: transparent; color: #c8a96b; font-weight: 700; cursor: pointer; transition: 0.3s; font-size: 15px;" onmouseover="this.style.background='#c8a96b'; this.style.color='#111827';" onmouseout="this.style.background='transparent'; this.style.color='#c8a96b';">
+
+                ← Back to Venues
+
+            </button>
+
+        </div>
+
+        <div class="compare-table" id="compareTable">
+
+            <!-- Loaded dynamically from JavaScript -->
+
+        </div>
+
+    </section>
+
+    <script src="js/compare.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+    content="width=device-width, initial-scale=1.0">
+
+    <title>User Dashboard</title>
+
+    <link rel="stylesheet"
+    href="css/user-dashboard.css">
+
+</head>
+
+<body>
+
+    <div class="dashboard-container">
+
+        <!-- SIDEBAR -->
+
+        <aside class="sidebar">
+
+            <div>
+
+                <h1 class="logo">
+                    EventSync
+                </h1>
+
+                <ul class="menu">
+
+                    <li class="active" onclick="window.location.href='user-dashboard.html'">
+                        Dashboard
+                    </li>
+
+                    <li onclick="window.location.href='my-events.html'">
+                        My Events
+                    </li>
+
+                    <li onclick="window.location.href='create-event.html'">
+                        Create Event
+                    </li>
+
+                    <li onclick="window.location.href='planner.html'">
+                        Planner
+                    </li>
+
+                    <li onclick="window.location.href='venues.html'">
+                        Venues
+                    </li>
+
+                    <li onclick="window.location.href='communication.html'">
+                        Communication
+                    </li>
+
+                    <li onclick="window.location.href='settings.html'">
+                        Settings
+                    </li>
+
+                </ul>
+
+            </div>
+
+            <button class="logout-btn" onclick="logout()">
+                Logout
+            </button>
+
+        </aside>
+
+        <!-- MAIN CONTENT -->
+
+        <main class="main-content">
+
+            <!-- TOP SECTION -->
+
+            <div class="welcome-banner">
+
+                <div>
+
+                    <h1 id="welcomeText">
+                        Welcome Back👋
+                    </h1>
+
+                    <p>
+                        Discover upcoming corporate events
+                        and manage your schedules seamlessly.
+                    </p>
+
+                </div>
+
+                <button
+                onclick="window.location.href='events.html'">
+
+                    Explore Events
+
+                </button>
+
+            </div>
+
+            <!-- UPCOMING EVENTS -->
+
+            <section class="section">
+
+                <div class="section-header">
+
+                    <h2>Upcoming Events</h2>
+
+                    <a href="#">
+                        View All
+                    </a>
+
+                </div>
+
+                <div class="event-grid">
+
+                    <div class="event-card">
+
+                        <img src="https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=1200&auto=format&fit=crop">
+
+                        <div class="event-content">
+
+                            <h3>
+                                Business Leadership Summit
+                            </h3>
+
+                            <p>
+                                KL Convention Centre
+                            </p>
+
+                            <span>
+                                15 May 2026
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <div class="event-card">
+
+                        <img src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=1200&auto=format&fit=crop">
+
+                        <div class="event-content">
+
+                            <h3>
+                                Corporate Networking Night
+                            </h3>
+
+                            <p>
+                                EQ Hotel Kuala Lumpur
+                            </p>
+
+                            <span>
+                                20 May 2026
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- RECOMMENDED VENUES -->
+
+            <section class="section">
+
+                <div class="section-header">
+
+                    <h2>Recommended Venues</h2>
+
+                    <a href="#">
+                        Explore More
+                    </a>
+
+                </div>
+
+                <div class="venue-grid">
+
+                    <div class="venue-card">
+
+                        <h3>MITEC Kuala Lumpur</h3>
+
+                        <p>Capacity: 5000 Pax</p>
+
+                        <span>Premium Convention Venue</span>
+
+                    </div>
+
+                    <div class="venue-card">
+
+                        <h3>EQ Hotel Ballroom</h3>
+
+                        <p>Capacity: 800 Pax</p>
+
+                        <span>Luxury Corporate Venue</span>
+
+                    </div>
+
+                    <div class="venue-card">
+
+                        <h3>Sunway Resort Hall</h3>
+
+                        <p>Capacity: 1200 Pax</p>
+
+                        <span>Modern Event Hall</span>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- NOTIFICATIONS -->
+
+            <section class="section">
+
+                <div class="section-header">
+
+                    <h2>Recent Notifications</h2>
+
+                </div>
+
+                <div class="notification-list">
+
+                    <div class="notification-item">
+
+                        <div class="dot"></div>
+
+                        <p>
+                            Your event registration for
+                            Business Summit 2026 is confirmed.
+                        </p>
+
+                    </div>
+
+                    <div class="notification-item">
+
+                        <div class="dot"></div>
+
+                        <p>
+                            New venue recommendations are available
+                            for your selected category.
+                        </p>
+
+                    </div>
+
+                    <div class="notification-item">
+
+                        <div class="dot"></div>
+
+                        <p>
+                            Tech Innovation Conference starts
+                            in 3 days.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+    <script src="js/user-dashboard.js"></script>
+
+</body>
+
+</html>

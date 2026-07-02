@@ -1,0 +1,505 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, sans-serif;
+}
+
+body{
+    background:#f8f8f8;
+    overflow:hidden;
+}
+
+/* BACKGROUND GLOW */
+
+body::before{
+    content:"";
+
+    position:absolute;
+
+    width:500px;
+    height:500px;
+
+    background:rgba(200,169,107,0.12);
+
+    border-radius:50%;
+
+    top:-150px;
+    left:-150px;
+
+    filter:blur(90px);
+
+    animation:float 8s ease-in-out infinite;
+}
+
+body::after{
+    content:"";
+
+    position:absolute;
+
+    width:450px;
+    height:450px;
+
+    background:rgba(17,24,39,0.18);
+
+    border-radius:50%;
+
+    bottom:-150px;
+    right:-150px;
+
+    filter:blur(90px);
+
+    animation:float2 10s ease-in-out infinite;
+}
+
+/* MAIN LAYOUT */
+
+.login-container{
+    display:flex;
+    height:100vh;
+    position:relative;
+    z-index:1;
+}
+
+/* LEFT PANEL */
+
+.login-left{
+    width:50%;
+
+    background:linear-gradient(
+        135deg,
+        #111827,
+        #1f2937
+    );
+
+    color:white;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    padding:70px;
+
+    animation:slideLeft 1s ease;
+}
+
+.left-content{
+    max-width:480px;
+}
+
+/* LOGO */
+
+.logo{
+    width:65px;
+    height:65px;
+
+    background:rgba(255,255,255,0.08);
+
+    border:1px solid rgba(255,255,255,0.1);
+
+    border-radius:18px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    font-size:28px;
+    font-weight:bold;
+
+    margin-bottom:28px;
+
+    backdrop-filter:blur(10px);
+
+    color:#c8a96b;
+
+    animation:cardFloat 4s ease-in-out infinite;
+}
+
+/* TITLE */
+
+.login-left h1{
+    font-size:78px;
+    font-weight:800;
+
+    margin-bottom:24px;
+
+    line-height:1.1;
+
+    color:white;
+}
+
+/* DESCRIPTION */
+
+.login-left p{
+    font-size:17px;
+    line-height:1.9;
+
+    opacity:0.82;
+
+    margin-bottom:38px;
+
+    max-width:500px;
+
+    color:#d1d5db;
+}
+
+/* FEATURES */
+
+.feature-list{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+
+    max-width:500px;
+}
+
+.feature-item{
+    background:rgba(255,255,255,0.05);
+
+    padding:15px 18px;
+
+    border-radius:12px;
+
+    backdrop-filter:blur(10px);
+
+    border:1px solid rgba(255,255,255,0.08);
+
+    transition:0.3s;
+
+    font-size:15px;
+
+    font-weight:500;
+
+    color:#f3f4f6;
+}
+
+.feature-item:hover{
+    transform:translateX(8px);
+
+    background:rgba(200,169,107,0.12);
+
+    border-color:rgba(200,169,107,0.3);
+}
+
+/* RIGHT PANEL */
+
+.login-right{
+    width:50%;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    padding:20px;
+
+    animation:fadeIn 1.2s ease;
+}
+
+/* REGISTER CARD */
+
+.login-card{
+    width:420px;
+
+    background:white;
+
+    padding:38px;
+
+    border-radius:24px;
+
+    box-shadow:0 15px 40px rgba(0,0,0,0.08);
+
+    animation:cardFloat 4s ease-in-out infinite;
+}
+
+.login-card h2{
+    font-size:48px;
+
+    margin-bottom:10px;
+
+    color:#111827;
+
+    line-height:1.1;
+}
+
+.subtitle{
+    color:#6b7280;
+
+    margin-bottom:28px;
+
+    font-size:16px;
+}
+
+/* INPUT GROUP */
+
+.input-group{
+    margin-bottom:18px;
+}
+
+.input-group label{
+    display:block;
+
+    margin-bottom:8px;
+
+    color:#374151;
+
+    font-weight:600;
+
+    font-size:14px;
+}
+
+.login-card input,
+.login-card select{
+    width:100%;
+
+    padding:14px;
+
+    border:1px solid #e5e7eb;
+
+    border-radius:12px;
+
+    font-size:15px;
+
+    transition:0.3s;
+}
+
+.login-card input:focus,
+.login-card select:focus{
+    border-color:#c8a96b;
+
+    outline:none;
+
+    box-shadow:0 0 12px rgba(200,169,107,0.2);
+}
+
+/* BUTTON */
+
+.login-card button[type="submit"] {
+    width:100%;
+
+    padding:14px;
+
+    border:none;
+
+    background:#111827;
+
+    color:white;
+
+    font-size:16px;
+    font-weight:600;
+
+    border-radius:12px;
+
+    cursor:pointer;
+
+    transition:0.3s;
+
+    margin-top:8px;
+}
+
+.login-card button[type="submit"]:hover{
+    background:#c8a96b;
+
+    color:#111827;
+
+    transform:translateY(-3px);
+
+    box-shadow:0 10px 20px rgba(200,169,107,0.25);
+}
+
+/* BOTTOM TEXT */
+
+.bottom-text{
+    text-align:center;
+
+    margin-top:24px;
+
+    color:#6b7280;
+
+    font-size:15px;
+}
+
+.bottom-text a{
+    color:#c8a96b;
+
+    text-decoration:none;
+
+    font-weight:600;
+}
+
+.bottom-text a:hover{
+    text-decoration:underline;
+}
+
+/* ANIMATIONS */
+
+@keyframes fadeIn{
+
+    from{
+        opacity:0;
+        transform:translateY(30px);
+    }
+
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+
+}
+
+@keyframes slideLeft{
+
+    from{
+        opacity:0;
+        transform:translateX(-60px);
+    }
+
+    to{
+        opacity:1;
+        transform:translateX(0);
+    }
+
+}
+
+@keyframes float{
+
+    0%{
+        transform:translateY(0px);
+    }
+
+    50%{
+        transform:translateY(20px);
+    }
+
+    100%{
+        transform:translateY(0px);
+    }
+
+}
+
+@keyframes float2{
+
+    0%{
+        transform:translateY(0px);
+    }
+
+    50%{
+        transform:translateY(-20px);
+    }
+
+    100%{
+        transform:translateY(0px);
+    }
+
+}
+
+@keyframes cardFloat{
+
+    0%{
+        transform:translateY(0px);
+    }
+
+    50%{
+        transform:translateY(-6px);
+    }
+
+    100%{
+        transform:translateY(0px);
+    }
+
+}
+
+/* RESPONSIVE */
+
+@media(max-width:1000px){
+
+    .login-left{
+        display:none;
+    }
+
+    .login-right{
+        width:100%;
+    }
+
+    .login-card{
+        width:90%;
+        max-width:420px;
+    }
+
+}
+
+@media(max-width:600px){
+
+    body{
+        overflow:auto;
+    }
+
+    .login-card{
+        padding:30px 24px;
+    }
+
+    .login-card h2{
+        font-size:40px;
+    }
+
+}
+
+/* PASSWORD TOGGLE STYLES */
+/* PASSWORD TOGGLE */
+
+.password-wrapper{
+    position:relative;
+}
+
+.password-wrapper input{
+    width:100%;
+    padding-right:50px;
+}
+
+.password-toggle-btn{
+    position:absolute;
+
+    right:15px;
+    top:50%;
+
+    transform:translateY(-50%);
+
+    background:transparent !important;
+    border:none !important;
+
+    width:auto !important;
+    height:auto !important;
+
+    padding:0 !important;
+    margin:0 !important;
+
+    color:#9ca3af;
+
+    cursor:pointer;
+
+    box-shadow:none !important;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.password-toggle-btn:hover{
+    background:transparent !important;
+    color:#c8a96b;
+    transform:translateY(-50%);
+}
+
+.password-toggle-btn svg{
+    width:20px;
+    height:20px;
+}
+
+/* Hide Edge native password reveal button */
+.password-wrapper input::-ms-reveal {
+    display: none;
+}
+
+/* Hide custom eye toggle when password input is empty */
+.password-wrapper input:placeholder-shown ~ .password-toggle-btn {
+    display: none;
+}

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+    content="width=device-width, initial-scale=1.0">
+
+    <title>
+        Venue Discovery | EventSync
+    </title>
+
+    <link rel="stylesheet"
+    href="css/venues.css">
+
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+
+    <nav class="navbar">
+        <a href="landing.html" class="logo-text">
+            <span class="logo-dark">Event</span><span class="logo-gold">Sync</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="events.html" id="navEvents">Events</a></li>
+            <li><a href="venues.html" id="navVenues" class="active">Venues</a></li>
+            <li><a href="planner.html" id="navPlanner">Planner</a></li>
+            <li><a href="communication.html" id="navCommunication">Communication</a></li>
+            <li><a href="user-dashboard.html" id="navDashboard">Dashboard</a></li>
+            <li><a href="login.html" id="navLogin" class="login-btn">Login</a></li>
+        </ul>
+    </nav>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const username = localStorage.getItem("username");
+            const role = localStorage.getItem("role");
+            const navPlanner = document.getElementById("navPlanner");
+            const navCommunication = document.getElementById("navCommunication");
+            const navDashboard = document.getElementById("navDashboard");
+            const navLogin = document.getElementById("navLogin");
+            
+            if (username) {
+                if (navLogin) {
+                    navLogin.textContent = "Logout";
+                    navLogin.href = "#";
+                    navLogin.onclick = (e) => {
+                        e.preventDefault();
+                        localStorage.removeItem("username");
+                        localStorage.removeItem("role");
+                        localStorage.removeItem("userRole");
+                        localStorage.removeItem("selectedVenue");
+                        localStorage.removeItem("eventDraft");
+                        localStorage.removeItem("eventTimeline");
+                        localStorage.removeItem("editEventId");
+                        localStorage.removeItem("compareVenues");
+                        window.location.href = "login.html";
+                    };
+                }
+                if (navDashboard) {
+                    if (role === "Participant") {
+                        navDashboard.parentElement.style.display = "none";
+                    } else {
+                        navDashboard.parentElement.style.display = "block";
+                        if (role === "Vendor") {
+                            navDashboard.href = "vendor-dashboard.html";
+                        } else if (role === "Admin") {
+                            navDashboard.href = "admin-dashboard.html";
+                        } else {
+                            navDashboard.href = "user-dashboard.html";
+                        }
+                    }
+                }
+                if (role === "Participant") {
+                    if (navPlanner) navPlanner.parentElement.style.display = "none";
+                    if (navCommunication) navCommunication.parentElement.style.display = "none";
+                } else {
+                    if (navPlanner) navPlanner.parentElement.style.display = "block";
+                    if (navCommunication) navCommunication.parentElement.style.display = "block";
+                }
+            } else {
+                if (navLogin) {
+                    navLogin.style.display = "block";
+                    navLogin.textContent = "Login";
+                    navLogin.href = "login.html";
+                    navLogin.onclick = null;
+                }
+                if (navDashboard) navDashboard.parentElement.style.display = "none";
+                if (navPlanner) navPlanner.parentElement.style.display = "none";
+                if (navCommunication) navCommunication.parentElement.style.display = "none";
+            }
+        });
+    </script>
+
+    <!-- HERO -->
+
+    <section class="hero">
+
+        <div class="hero-overlay">
+
+            <div class="hero-content">
+
+                <span class="hero-tag">
+
+                    Smart Venue Recommendation
+
+                </span>
+
+                <h1>
+
+                    Smart Venue
+                    Recommendations
+                    <span>
+                        For Your Event
+                    </span>
+
+                </h1>
+
+                <p>
+
+                    Compare and discover venues based on
+                    your event type, attendee capacity,
+                    budget, location and planning needs.
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <section class="search-section">
+
+        <div class="search-box">
+
+            <!-- SEARCH -->
+
+            <div class="search-field">
+
+                <input
+                type="text"
+                id="searchQuery"
+                placeholder="Search venues...">
+
+            </div>
+
+            <!-- VENUE TYPE -->
+
+            <div class="search-field">
+
+                <select id="searchType">
+
+                    <option value="">
+                        Venue Type
+                    </option>
+
+                    <option value="Indoor">
+                        Indoor
+                    </option>
+
+                    <option value="Outdoor">
+                        Outdoor
+                    </option>
+
+                    <option value="Hybrid">
+                        Hybrid
+                    </option>
+
+                </select>
+
+            </div>
+
+            <!-- CAPACITY -->
+
+            <div class="search-field">
+
+                <select id="searchCapacity">
+
+                    <option value="">
+                        Capacity
+                    </option>
+
+                    <option value="100-500">
+                        100 - 500 Pax
+                    </option>
+
+                    <option value="500-1000">
+                        500 - 1000 Pax
+                    </option>
+
+                    <option value="1000+">
+                        1000+ Pax
+                    </option>
+
+                </select>
+
+            </div>
+
+            <!-- LOCATION -->
+
+            <div class="search-field">
+
+                <select id="searchLocation">
+
+                    <option value="">
+                        Location
+                    </option>
+
+                    <option value="Kuala Lumpur">
+                        Kuala Lumpur
+                    </option>
+
+                    <option value="Selangor">
+                        Selangor
+                    </option>
+
+                    <option value="Penang">
+                        Penang
+                    </option>
+
+                    <option value="Johor">
+                        Johor
+                    </option>
+
+                    <option value="Sabah">
+                        Sabah
+                    </option>
+
+                    <option value="Sarawak">
+                        Sarawak
+                    </option>
+
+                    <option value="Melaka">
+                        Melaka
+                    </option>
+
+                    <option value="Kedah">
+                        Kedah
+                    </option>
+
+                    <option value="Perak">
+                        Perak
+                    </option>
+
+                    <option value="Pahang">
+                        Pahang
+                    </option>
+
+                    <option value="Negeri Sembilan">
+                        Negeri Sembilan
+                    </option>
+
+                    <option value="Terengganu">
+                        Terengganu
+                    </option>
+
+                    <option value="Kelantan">
+                        Kelantan
+                    </option>
+
+                    <option value="Perlis">
+                        Perlis
+                    </option>
+
+                    <option value="Putrajaya">
+                        Putrajaya
+                    </option>
+
+                    <option value="Labuan">
+                        Labuan
+                    </option>
+                </select>
+
+            </div>
+
+            <!-- BUTTON -->
+
+            <button id="searchBtn">
+
+                Search
+
+            </button>
+
+        </div>
+
+    </section>
+
+    <!-- RECOMMENDATION SUMMARY -->
+
+    <section class="recommendation-summary">
+
+        <div class="summary-card">
+
+            <div class="summary-title" id="summaryTitle">
+
+                Recommended Based On
+
+            </div>
+
+            <div class="summary-tags" id="summaryTags">
+
+                <span>
+                    Corporate Event
+                </span>
+
+                <span>
+                    500 Attendees
+                </span>
+
+                <span>
+                    Kuala Lumpur
+                </span>
+
+                <span>
+                    RM 10k - RM 15k
+                </span>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <section class="venues-grid" id="venuesGrid">
+
+        <!-- Loaded dynamically from the database -->
+
+    </section>
+
+    <!-- PAGINATION -->
+
+    <section class="pagination-section">
+
+        <div class="pagination">
+
+        </div>
+
+    </section>
+
+    <script src="js/venue.js"></script>
+
+</body>
+
+</html>

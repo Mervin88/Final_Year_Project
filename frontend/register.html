@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>EventSync - Register</title>
+
+    <link rel="stylesheet" href="css/register.css">
+
+</head>
+
+<body>
+
+    <div class="login-container">
+
+        <!-- LEFT PANEL -->
+        <div class="login-left">
+
+            <div class="left-content">
+
+                <div class="logo">
+                    ES
+                </div>
+
+                <h1>EventSync</h1>
+
+                <p>
+                    Join EventSync and start planning smarter
+                    corporate events with centralized management,
+                    smart venue recommendations and seamless
+                    coordination experience.
+                </p>
+
+                <div class="feature-list">
+
+                    <div class="feature-item">
+                        ✓ Smart Venue Discovery
+                    </div>
+
+                    <div class="feature-item">
+                        ✓ Real-Time Communication
+                    </div>
+
+                    <div class="feature-item">
+                        ✓ Interactive Event Planning
+                    </div>
+
+                    <div class="feature-item">
+                        ✓ Centralized Management Dashboard
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="login-right">
+
+            <div class="login-card">
+
+                <h2>Create Account</h2>
+
+                <p class="subtitle">
+                    Register your EventSync account.
+                </p>
+
+                <form id="registerForm">
+
+                    <div class="input-group">
+
+                        <label>Full Name</label>
+
+                        <input
+                            type="text"
+                            id="fullname"
+                            placeholder="Enter your full name"
+                            required>
+
+                    </div>
+
+                    <div class="input-group">
+
+                        <label>Email Address</label>
+
+                        <input
+                            type="email"
+                            id="email"
+                            placeholder="Enter your email"
+                            required>
+
+                    </div>
+
+                    <div class="input-group">
+
+                    <label>Password</label>
+                        
+                    <div class="password-wrapper">
+
+                        <input
+                            type="password"
+                            id="password"
+                            placeholder="Enter your password"
+                            required>
+
+                        <button
+                            type="button"
+                            id="togglePassword"
+                            class="password-toggle-btn">
+
+                            <svg class="eye-open"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2">
+
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+
+                            </svg>
+
+                            <svg class="eye-closed"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                style="display:none;">
+
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+
+                            </svg>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+                    <div class="input-group">
+
+                        <label>Role</label>
+
+                        <select id="role" required>
+
+                            <option value="Organizer">
+                                Organizer
+                            </option>
+
+                            <option value="Participant">
+                                Participant
+                            </option>
+
+                            <option value="Vendor">
+                                Vendor
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <button type="submit">
+                        Register
+                    </button>
+
+                </form>
+
+                <div class="bottom-text">
+
+                    Already have an account?
+
+                    <a href="login.html">
+                        Login
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/register.js"></script>
+    
+    
+</body>
+
+</html>

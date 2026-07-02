@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+    content="width=device-width, initial-scale=1.0">
+
+    <title>
+        Admin Dashboard
+    </title>
+
+    <link rel="stylesheet"
+    href="css/admin-dashboard.css">
+
+    <style media="print">
+        body {
+            background: white !important;
+            color: black !important;
+        }
+        .sidebar, .logout-btn, .welcome-banner button, .section-header a, #reportTimeframe, button, .stats-card p {
+            display: none !important;
+        }
+        .main-content {
+            margin-left: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+        }
+        .welcome-banner {
+            background: none !important;
+            color: black !important;
+            border-bottom: 2px solid #ccc !important;
+            border-radius: 0 !important;
+            padding: 20px 0 !important;
+            margin-bottom: 30px !important;
+        }
+        .welcome-banner h1 {
+            color: black !important;
+        }
+        .welcome-banner p {
+            color: #555 !important;
+        }
+        .section {
+            page-break-inside: avoid;
+            margin-bottom: 30px !important;
+        }
+        .stats-card {
+            border: 1px solid #ddd !important;
+            box-shadow: none !important;
+            padding: 15px !important;
+        }
+        .reports-grid {
+            grid-template-columns: 1fr 1fr !important;
+        }
+        .reports-grid > div {
+            border: 1px solid #ddd !important;
+            box-shadow: none !important;
+            page-break-inside: avoid;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="dashboard-container">
+
+        <!-- SIDEBAR -->
+
+        <aside class="sidebar">
+
+            <div>
+
+                <h1 class="logo">
+
+                    EventSync
+
+                </h1>
+
+                <ul class="menu">
+
+                    <li class="active" onclick="window.location.href='admin-dashboard.html'">
+
+                        Dashboard
+
+                    </li>
+
+                    <li onclick="window.location.href='admin-dashboard.html#recent-events-section'">
+
+                        Manage Events
+
+                    </li>
+
+                    <li onclick="window.location.href='admin-dashboard.html#manage-venues-section'">
+
+                        Manage Venues
+
+                    </li>
+
+                    <li onclick="window.location.href='admin-dashboard.html#user-management-section'">
+
+                        User Management
+
+                    </li>
+
+                    <li onclick="window.location.href='admin-dashboard.html#reports-section'">
+
+                        Reports
+
+                    </li>
+
+                    <li onclick="window.location.href='admin-dashboard.html#notifications-section'">
+
+                        Notifications
+
+                    </li>
+
+                    <li onclick="window.location.href='admin-dashboard.html'">
+
+                        Settings
+
+                    </li>
+
+                </ul>
+
+            </div>
+
+            <button class="logout-btn" onclick="logout()">
+
+                Logout
+
+            </button>
+
+        </aside>
+
+        <!-- MAIN -->
+
+        <main class="main-content">
+
+            <!-- WELCOME -->
+
+            <div class="welcome-banner">
+
+                <div>
+
+                    <h1 id="welcomeText">
+
+                        Admin Control Panel 👨‍💼
+
+                    </h1>
+
+                    <p>
+
+                        Monitor platform activities,
+                        manage venues, users and
+                        event operations centrally.
+
+                    </p>
+
+                </div>
+
+                <button onclick="window.location.href='admin-dashboard.html#reports-section'">
+
+                    Generate Report
+
+                </button>
+
+            </div>
+
+            <!-- STATISTICS -->
+
+            <section class="section">
+
+                <div class="section-header">
+
+                    <h2>
+
+                        System Statistics
+
+                    </h2>
+
+                </div>
+
+                <div class="stats-grid">
+
+                    <div class="stats-card" onclick="window.location.href='admin-dashboard.html#user-management-section'" style="cursor: pointer;">
+
+                        <h3>
+
+                            Total Users
+
+                        </h3>
+
+                        <h1 id="totalUsers">
+
+                            0
+
+                        </h1>
+
+                        <p>
+
+                            Registered Accounts
+
+                        </p>
+
+                    </div>
+
+                    <div class="stats-card" onclick="window.location.href='admin-dashboard.html#recent-events-section'" style="cursor: pointer;">
+
+                        <h3>
+
+                            Total Events
+
+                        </h3>
+
+                        <h1 id="totalEvents">
+
+                            0
+
+                        </h1>
+
+                        <p>
+
+                            Active Event Listings
+
+                        </p>
+
+                    </div>
+
+                    <div class="stats-card">
+
+                        <h3>
+
+                            Total Venues
+
+                        </h3>
+
+                        <h1 id="totalVenues">
+
+                            0
+
+                        </h1>
+
+                        <p>
+
+                            Verified Venues
+
+                        </p>
+
+                    </div>
+
+                    <div class="stats-card">
+
+                        <h3>
+
+                            Reports
+
+                        </h3>
+
+                        <h1 id="pendingReviews">
+
+                            0
+
+                        </h1>
+
+                        <p>
+
+                            Pending Reviews
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- EVENT MANAGEMENT -->
+
+            <section class="section" id="recent-events-section">
+
+                <div class="section-header">
+
+                    <h2>
+
+                        Recent Events
+
+                    </h2>
+
+                    <a href="#">
+
+                        View All
+
+                    </a>
+
+                </div>
+
+                <div class="event-grid" id="adminEventGrid">
+
+                    <!-- Will be loaded dynamically -->
+
+                </div>
+
+            </section>
+
+            <!-- VENUE MANAGEMENT -->
+
+            <section class="section" id="manage-venues-section">
+
+                <div class="section-header">
+
+                    <h2>
+
+                        Venue Management
+
+                    </h2>
+
+                </div>
+
+                <div class="venue-grid" id="adminVenueGrid">
+
+                    <!-- Loaded dynamically from database -->
+
+                </div>
+
+                <button id="viewMoreVenuesBtn" class="secondary-btn" style="display: none; margin-top: 15px; width: 100%; padding: 12px; border: 2px dashed #c8a96b; background: transparent; color: #c8a96b; font-weight: bold; border-radius: 12px; cursor: pointer; transition: 0.3s;">
+
+                    View More Venues
+
+                </button>
+
+            </section>
+
+            <!-- USER MANAGEMENT -->
+
+            <section class="section" id="user-management-section">
+
+                <div class="section-header">
+
+                    <h2>
+
+                        User Management
+
+                    </h2>
+
+                    <div style="display: flex; align-items: center; gap: 10px;">
+
+                        <label for="userRoleFilter" style="font-weight: 600; color: #4b5563;">Filter Role:</label>
+
+                        <select id="userRoleFilter" style="padding: 10px 15px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 14px; background: white; cursor: pointer; outline: none; transition: 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+
+                            <option value="All">All Roles</option>
+
+                            <option value="Participant">Participant</option>
+
+                            <option value="Vendor">Vendor</option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+                <div style="background: white; border-radius: 22px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.06); overflow-x: auto;">
+
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; min-width: 600px;">
+
+                        <thead>
+
+                            <tr style="border-bottom: 2px solid #f3f4f6; color: #4b5563; font-size: 14px; font-weight: 600;">
+
+                                <th style="padding: 16px 20px; font-weight: 600;">ID</th>
+
+                                <th style="padding: 16px 20px; font-weight: 600;">Full Name</th>
+
+                                <th style="padding: 16px 20px; font-weight: 600;">Email Address</th>
+
+                                <th style="padding: 16px 20px; font-weight: 600;">Role</th>
+
+                                <th style="padding: 16px 20px; font-weight: 600; text-align: center;">Actions</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="adminUserTableBody" style="color: #1f2937; font-size: 14px;">
+
+                            <!-- Loaded dynamically -->
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+            <!-- REPORTS & ANALYTICS -->
+
+            <section class="section" id="reports-section">
+
+                <div class="section-header">
+
+                    <h2>
+
+                        Reports & Analytics
+
+                    </h2>
+
+                </div>
+
+                <div style="background: white; border-radius: 22px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.06); margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+
+                    <div style="display: flex; align-items: center; gap: 10px;">
+
+                        <label for="reportTimeframe" style="font-weight: 600; color: #4b5563;">Timeframe:</label>
+
+                        <select id="reportTimeframe" style="padding: 10px 15px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 14px; background: white; cursor: pointer; outline: none;">
+
+                            <option value="all">All Time</option>
+
+                            <option value="30">Last 30 Days</option>
+
+                            <option value="7">Last 7 Days</option>
+
+                        </select>
+
+                    </div>
+
+                    <div style="display: flex; gap: 12px;">
+
+                        <button onclick="exportCSV()" style="background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.3s; font-size: 14px;">
+
+                            Export CSV Data
+
+                        </button>
+
+                        <button onclick="printReport()" style="background: #c8a96b; color: #111827; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.3s; font-size: 14px;">
+
+                            Print Report (PDF)
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="reports-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px;">
+
+                    <div style="background: white; border-radius: 22px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.06); display: flex; flex-direction: column; align-items: center;">
+
+                        <h3 style="margin-bottom: 20px; color: #374151; font-size: 18px; font-weight: 700;">Event Categories Distribution</h3>
+
+                        <div style="width: 100%; max-width: 300px; height: 300px; position: relative;">
+
+                            <canvas id="categoryChart"></canvas>
+
+                        </div>
+
+                    </div>
+
+                    <div style="background: white; border-radius: 22px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.06); display: flex; flex-direction: column; align-items: center;">
+
+                        <h3 style="margin-bottom: 20px; color: #374151; font-size: 18px; font-weight: 700;">Event Status Breakdown</h3>
+
+                        <div style="width: 100%; max-width: 300px; height: 300px; position: relative;">
+
+                            <canvas id="statusChart"></canvas>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- SYSTEM NOTIFICATIONS -->
+
+            <section class="section" id="notifications-section">
+
+                <div class="section-header">
+
+                    <h2>
+
+                        System Notifications
+
+                    </h2>
+
+                </div>
+
+                <div class="notification-list" id="adminNotificationList">
+                    <!-- Loaded dynamically from database -->
+                </div>
+
+                <button id="viewMoreNotificationsBtn" class="secondary-btn" style="display: none; margin-top: 15px; width: 100%; padding: 12px; border: 2px dashed #c8a96b; background: transparent; color: #c8a96b; font-weight: bold; border-radius: 12px; cursor: pointer; transition: 0.3s;">
+                    View More Notifications
+                </button>
+
+            </section>
+
+        </main>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/admin-dashboard.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+    content="width=device-width, initial-scale=1.0">
+
+    <title>Create Event</title>
+
+    <link rel="stylesheet"
+    href="css/create-event.css">
+
+</head>
+
+<body>
+
+    <!-- SIDEBAR -->
+
+    <aside class="sidebar">
+
+        <h1 class="logo">
+            EventSync
+        </h1>
+
+        <ul class="menu">
+
+            <ul class="menu">
+
+                <li onclick="window.location.href='user-dashboard.html'">
+                    Dashboard
+                </li>
+
+                <li onclick="window.location.href='my-events.html'">
+                    My Events
+                </li>
+
+                <li class="active" onclick="newEvent()">
+                    Create Event
+                </li>
+
+                <li onclick="window.location.href='planner.html'">
+                    Planner
+                </li>
+
+                <li onclick="window.location.href='venues.html'">
+                    Venues
+                </li>
+
+                <li onclick="window.location.href='communication.html'">
+                    Communication
+                </li>
+
+                <li onclick="window.location.href='settings.html'">
+                    Settings
+                </li>
+
+            </ul>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+
+    <main class="main-content">
+
+        <div class="top-section">
+
+            <h1 id="pageTitle">
+                Create New Event
+            </h1>
+
+            <p>
+                Organize and manage your corporate events seamlessly.
+            </p>
+
+        </div>
+
+        <!-- FORM -->
+
+        <form class="event-form">
+
+            <!-- BANNER -->
+
+            <div class="form-card">
+
+                <h2>
+                    Event Banner
+                </h2>
+
+                <div class="upload-box">
+
+                    <p>
+                        Upload Event Banner
+                    </p>
+
+                    <input type="file">
+
+                </div>
+
+            </div>
+
+            <!-- BASIC INFO -->
+
+            <div class="form-card">
+
+                <h2>Event Information</h2>
+
+                <div class="form-grid">
+
+                    <div class="input-group">
+
+                        <label>Event Title</label>
+
+                        <input
+                        type="text"
+                        id="title"
+                        placeholder="Enter event title"
+                        maxlength="100">
+
+                    </div>
+
+                    <div class="input-group">
+
+                        <label>Event Category</label>
+
+                        <select id="category">
+
+                            <option value="">
+                                Select Category
+                            </option>
+
+                            <option>Conference</option>
+                            <option>Seminar</option>
+                            <option>Workshop</option>
+                            <option>Networking</option>
+                            <option>Corporate Dinner</option>
+                            <option>Training</option>
+                            <option>Product Launch</option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="form-card">
+
+                <h2>Event Schedule</h2>
+
+                <div class="form-grid">
+
+                    <div class="input-group">
+
+                        <label>Event Date</label>
+
+                        <input
+                        type="date"
+                        id="eventDate">
+
+                    </div>
+
+                    <div class="input-group">
+
+                        <label>Start Time</label>
+
+                        <input
+                        type="time"
+                        id="startTime">
+
+                    </div>
+
+                    <div class="input-group">
+
+                        <label>End Time</label>
+
+                        <input
+                        type="time"
+                        id="endTime">
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="form-card">
+
+                <h2>Venue Requirements</h2>
+
+                <div class="form-grid">
+
+                    <div class="input-group">
+
+                        <label>Expected Participants</label>
+
+                        <input
+                        type="number"
+                        id="participants"
+                        placeholder="Expected attendees"
+                        min="1"
+                        max="10000">
+
+                    </div>
+
+                    <div class="input-group">
+
+                        <label>Preferred Location</label>
+
+                        <input
+                        type="text"
+                        id="location"
+                        placeholder="e.g. Kuala Lumpur"
+                        maxlength="100">
+
+                    </div>
+
+                    <div class="input-group">
+
+                        <label>Budget (RM)</label>
+
+                        <input
+                        type="number"
+                        id="budget"
+                        placeholder="e.g. 10000"
+                        min="0"
+                        max="1000000">
+
+                    </div>
+
+                    <div class="input-group">
+
+                        <label>
+                            Required Capacity
+                            <span class="tooltip-wrapper">
+                                <span class="info-icon">?</span>
+                                <span class="tooltip-text">1 table is typically 10 seats</span>
+                            </span>
+                        </label>
+
+                        <input
+                        type="number"
+                        id="capacity"
+                        placeholder="e.g. 500"
+                        min="1"
+                        max="10000">
+
+                    </div>
+
+                    <div class="input-group">
+
+                        <label>
+                            Venue Type
+                        </label>
+
+                        <select id="venueType">
+
+                            <option value="">
+                                Select Venue Type
+                            </option>
+
+                            <option>
+                                Indoor
+                            </option>
+
+                            <option>
+                                Outdoor
+                            </option>
+
+                            <option>
+                                Hybrid
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+            </div>
+            
+            <div class="form-card">
+
+                <h2>Special Requirements</h2>
+
+                <div class="checkbox-group">
+
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="parking">
+                        <label for="parking">Parking</label>
+                    </div>
+
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="wifi">
+                        <label for="wifi">WiFi</label>
+                    </div>
+
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="projector">
+                        <label for="projector">Projector</label>
+                    </div>
+
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="catering">
+                        <label for="catering">Catering</label>
+                    </div>
+
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="soundSystem">
+                        <label for="soundSystem">Sound System</label>
+                    </div>
+
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="stageSetup">
+                        <label for="stageSetup">Stage Setup</label>
+                    </div>
+                    
+                      <div class="other-textbox">
+                       <textarea id="otherRequirements"
+                        placeholder="Any additional requirements, requests or facilities needed..."
+                        maxlength="300"></textarea>
+                     </div>
+
+                </div>
+
+            </div>
+
+            <!-- DESCRIPTION -->
+
+            <div class="form-card">
+
+                <h2>
+                    Event Description
+                </h2>
+
+                <textarea id="description"
+                class="modern-textarea"
+                placeholder="Describe your event objectives, agenda, target audience, expected outcomes and other important details..."
+                maxlength="1000"></textarea>
+
+            </div>
+
+            <!-- BUTTON -->
+
+            <button
+            type="button"
+            id="continueBtn"
+            class="submit-btn">
+
+                Continue to Venue Recommendation
+
+            </button>
+
+        </form>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/create-event.js"></script>
+    
+</body>
+
+</html>

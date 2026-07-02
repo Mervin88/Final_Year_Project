@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+    content="width=device-width, initial-scale=1.0">
+
+    <title>User Dashboard</title>
+
+    <link rel="stylesheet"
+    href="css/my-events.css">
+
+</head>
+
+<body>
+
+    <div class="dashboard-container">
+
+        <!-- SIDEBAR -->
+
+        <aside class="sidebar">
+
+            <div>
+
+                <h1 class="logo">
+                    EventSync
+                </h1>
+
+                <ul class="menu">
+
+                    <li onclick="window.location.href='user-dashboard.html'">
+                        Dashboard
+                    </li>
+
+                    <li class="active" onclick="window.location.href='my-events.html'">
+                        My Events
+                    </li>
+
+                    <li onclick="newEvent()">
+                        Create Event
+                    </li>
+
+                    <li onclick="window.location.href='planner.html'">
+                        Planner
+                    </li>
+
+                    <li onclick="window.location.href='venues.html'">
+                        Venues
+                    </li>
+
+                    <li onclick="window.location.href='communication.html'">
+                        Communication
+                    </li>
+
+                    <li onclick="window.location.href='settings.html'">
+                        Settings
+                    </li>
+
+                </ul>
+
+            </div>
+
+            <button class="logout-btn" onclick="logout()">
+                Logout
+            </button>
+
+        </aside>
+
+        <!-- MAIN CONTENT -->
+
+        <main class="main-content">
+
+            <!-- TOP SECTION -->
+
+            <div class="welcome-banner">
+
+                <div>
+
+                    <h1 id="welcomeText">
+                        Welcome Back👋
+                    </h1>
+
+                    <p>
+                        Discover upcoming corporate events
+                        and manage your schedules seamlessly.
+                    </p>
+
+                </div>
+
+                <button
+                onclick="window.location.href='events.html'">
+
+                    Explore Events
+
+                </button>
+
+            </div>
+                <section class="content">
+
+                    <h1>My Events</h1>
+
+                    <div class="my-events-grid">
+
+                    </div>
+
+                </section>
+
+        </main>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/my-events.js"></script>
+
+</body>
+
+</html>

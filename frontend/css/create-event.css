@@ -1,0 +1,401 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, sans-serif;
+}
+
+body{
+    background:#f5f5f5;
+    color:#111827;
+}
+
+/* SIDEBAR */
+
+.sidebar{
+    width:260px;
+    height:100vh;
+
+    background:#111827;
+    color:white;
+
+    padding:35px 25px;
+
+    position:fixed;
+    top:0;
+    left:0;
+}
+
+.logo{
+    font-size:32px;
+    color:#c8a96b;
+    margin-bottom:50px;
+}
+
+.menu{
+    list-style:none;
+}
+
+.menu li{
+    padding:16px 18px;
+    margin-bottom:12px;
+
+    border-radius:12px;
+
+    cursor:pointer;
+
+    color:#d1d5db;
+
+    transition:0.3s;
+}
+
+.menu li:hover{
+    background:rgba(255,255,255,0.08);
+}
+
+.menu .active{
+    background:#c8a96b;
+    color:#111827;
+    font-weight:bold;
+}
+
+/* MAIN */
+
+.main-content{
+    margin-left:260px;
+    width:calc(100% - 260px);
+    padding:50px;
+}
+
+/* TOP SECTION */
+
+.top-section{
+    margin-bottom:40px;
+}
+
+.top-section h1{
+    font-size:42px;
+    margin-bottom:10px;
+}
+
+.top-section p{
+    color:#6b7280;
+}
+
+/* FORM */
+
+.event-form{
+    display:flex;
+    flex-direction:column;
+    gap:30px;
+}
+
+/* CARD */
+
+.form-card{
+    background:white;
+    padding:35px;
+    border-radius:24px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.06);
+}
+
+.form-card h2{
+    font-size:32px;
+    margin-bottom:30px;
+}
+
+/* UPLOAD */
+
+.upload-box{
+    border:2px dashed #d1d5db;
+    border-radius:20px;
+    padding:50px;
+    text-align:center;
+    background:#fafafa;
+}
+
+.upload-box p{
+    margin-bottom:20px;
+    color:#6b7280;
+}
+
+/* GRID */
+
+.form-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:25px;
+}
+
+/* INPUT GROUP */
+
+.input-group{
+    display:flex;
+    flex-direction:column;
+}
+
+.input-group label{
+    margin-bottom:10px;
+    font-weight:600;
+    font-size:16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Tooltip styles */
+.tooltip-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    background: #e5e7eb;
+    color: #4b5563;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+}
+
+.tooltip-wrapper:hover .info-icon {
+    background: #c8a96b;
+    color: #111827;
+}
+
+.tooltip-text {
+    visibility: hidden;
+    width: 200px;
+    background-color: #111827;
+    color: #fff;
+    text-align: center;
+    border-radius: 8px;
+    padding: 8px 12px;
+    position: absolute;
+    z-index: 10;
+    bottom: 125%; /* Position above the icon */
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    font-size: 13px;
+    font-weight: normal;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%; /* At the bottom of the tooltip */
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: #111827 transparent transparent transparent;
+}
+
+.tooltip-wrapper:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(-2px);
+}
+
+.input-group input,
+.input-group select{
+    padding:15px;
+    border:1px solid #e5e7eb;
+    border-radius:12px;
+    font-size:15px;
+    transition:0.3s;
+}
+
+.input-group input:focus,
+.input-group select:focus,
+textarea:focus{
+    outline:none;
+    border-color:#c8a96b;
+    box-shadow:0 0 10px rgba(200,169,107,0.2);
+}
+
+/* TEXTAREA */
+
+textarea{
+    width:100%;
+    min-height:180px;
+    padding:18px;
+    border:1px solid #e5e7eb;
+    border-radius:16px;
+    resize:none;
+    font-size:15px;
+}
+
+/* SPECIAL REQUIREMENTS */
+
+.checkbox-group{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:20px;
+}
+
+.checkbox-item{
+    display:flex;
+    align-items:center;
+    gap:15px;
+
+    padding:20px;
+
+    background:#fafafa;
+    border:1px solid #e5e7eb;
+    border-radius:16px;
+
+    transition:0.3s;
+}
+
+.checkbox-item:hover{
+    border-color:#c8a96b;
+}
+
+.checkbox-item input{
+    width:20px;
+    height:20px;
+    cursor:pointer;
+}
+
+.checkbox-item label{
+    font-size:16px;
+    font-weight:600;
+    cursor:pointer;
+}
+
+.other-textbox{
+    grid-column: 1 / -1;
+}
+
+.other-textbox textarea{
+
+    width:100%;
+
+    min-height:140px;
+
+    padding:20px;
+
+    border:2px dashed #d1d5db;
+
+    border-radius:18px;
+
+    background:#fafafa;
+
+    font-size:16px;
+
+    resize:none;
+
+    transition:0.3s;
+}
+
+.other-textbox textarea:focus{
+
+    border-color:#c8a96b;
+
+    background:white;
+
+}
+
+.modern-textarea{
+
+    width:100%;
+
+    min-height:140px;
+
+    padding:20px;
+
+    border:2px dashed #d1d5db;
+
+    border-radius:18px;
+
+    background:#fafafa;
+
+    font-size:16px;
+
+    resize:none;
+
+    transition:0.3s;
+
+}
+
+.modern-textarea:focus{
+
+    border-color:#c8a96b;
+
+    background:white;
+
+    box-shadow:0 0 10px rgba(200,169,107,0.2);
+
+}
+
+/* SUBMIT BUTTON */
+
+.submit-btn{
+    width:100%;
+
+    padding:20px;
+
+    border:none;
+
+    background:#111827;
+    color:white;
+
+    border-radius:18px;
+
+    font-size:18px;
+    font-weight:bold;
+
+    cursor:pointer;
+
+    transition:0.3s;
+
+    box-shadow:0 10px 20px rgba(0,0,0,0.08);
+}
+
+.submit-btn:hover{
+    background:#c8a96b;
+    color:#111827;
+    transform:translateY(-4px);
+}
+
+/* RESPONSIVE */
+
+@media(max-width:1000px){
+
+    .sidebar{
+        display:none;
+    }
+
+    .main-content{
+        margin-left:0;
+        width:100%;
+        padding:25px;
+    }
+
+    .top-section h1{
+        font-size:32px;
+    }
+
+    .form-card{
+        padding:25px;
+    }
+
+    .checkbox-group{
+        grid-template-columns:1fr;
+    }
+
+}

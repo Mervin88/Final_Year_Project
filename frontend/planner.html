@@ -1,0 +1,328 @@
+    <!DOCTYPE html>
+    <html lang="en">
+
+    <head>
+
+        <meta charset="UTF-8">
+
+        <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+        <title>
+            Event Planner | EventSync
+        </title>
+
+        <link rel="stylesheet"
+        href="css/planner.css">
+
+    </head>
+
+    <body>
+
+        <!-- NAVBAR -->
+
+        <nav class="navbar">
+            <a href="landing.html" class="logo-text">
+                <span class="logo-dark">Event</span><span class="logo-gold">Sync</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="events.html" id="navEvents">Events</a></li>
+                <li><a href="venues.html" id="navVenues">Venues</a></li>
+                <li><a href="planner.html" id="navPlanner" class="active">Planner</a></li>
+                <li><a href="communication.html" id="navCommunication">Communication</a></li>
+                <li><a href="user-dashboard.html" id="navDashboard">Dashboard</a></li>
+                <li><a href="login.html" id="navLogin" class="login-btn">Login</a></li>
+            </ul>
+        </nav>
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                const username = localStorage.getItem("username");
+                const role = localStorage.getItem("role");
+                const navPlanner = document.getElementById("navPlanner");
+                const navCommunication = document.getElementById("navCommunication");
+                const navDashboard = document.getElementById("navDashboard");
+                const navLogin = document.getElementById("navLogin");
+                
+                if (username) {
+                    if (navLogin) {
+                        navLogin.textContent = "Logout";
+                        navLogin.href = "#";
+                        navLogin.onclick = (e) => {
+                            e.preventDefault();
+                            localStorage.removeItem("username");
+                            localStorage.removeItem("role");
+                            localStorage.removeItem("userRole");
+                            localStorage.removeItem("selectedVenue");
+                            localStorage.removeItem("eventDraft");
+                            localStorage.removeItem("eventTimeline");
+                            localStorage.removeItem("editEventId");
+                            localStorage.removeItem("compareVenues");
+                            localStorage.removeItem("eventLayout");
+                            window.location.href = "login.html";
+                        };
+                    }
+                    if (navDashboard) {
+                        if (role === "Participant") {
+                            navDashboard.parentElement.style.display = "none";
+                        } else {
+                            navDashboard.parentElement.style.display = "block";
+                            if (role === "Vendor") {
+                                navDashboard.href = "vendor-dashboard.html";
+                            } else if (role === "Admin") {
+                                navDashboard.href = "admin-dashboard.html";
+                            } else {
+                                navDashboard.href = "user-dashboard.html";
+                            }
+                        }
+                    }
+                    if (role === "Participant") {
+                        if (navPlanner) navPlanner.parentElement.style.display = "none";
+                        if (navCommunication) navCommunication.parentElement.style.display = "none";
+                    } else {
+                        if (navPlanner) navPlanner.parentElement.style.display = "block";
+                        if (navCommunication) navCommunication.parentElement.style.display = "block";
+                    }
+                } else {
+                    if (navLogin) {
+                        navLogin.style.display = "block";
+                        navLogin.textContent = "Login";
+                        navLogin.href = "login.html";
+                        navLogin.onclick = null;
+                    }
+                    if (navDashboard) navDashboard.parentElement.style.display = "none";
+                    if (navPlanner) navPlanner.parentElement.style.display = "none";
+                    if (navCommunication) navCommunication.parentElement.style.display = "none";
+                }
+            });
+        </script>
+
+        <!-- HERO -->
+
+        <section class="hero">
+
+            <div class="hero-overlay">
+
+                <div class="hero-content">
+
+                    <span class="hero-tag">
+
+                        Event Visualization & Planning
+
+                    </span>
+
+                    <h1>
+
+                        Interactive Event
+                        Planning Workspace
+
+                    </h1>
+
+                    <p>
+
+                        Organize schedules, visualize layouts,
+                        manage event flow and coordinate
+                        event arrangements efficiently.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- MAIN SECTION -->
+
+        <section class="planner-section">
+
+            <!-- LEFT -->
+
+            <div class="planner-left">
+
+                <!-- EVENT SUMMARY -->
+
+                <div class="planner-card">
+
+                    <div class="card-title">
+
+                        Event Summary
+
+                    </div>
+
+                    <div class="summary-grid">
+
+                        <div class="summary-item">
+
+                            <span>
+                                Event Type
+                            </span>
+
+                            <h3 id="eventType">
+                            </h3>
+
+                        </div>
+
+                        <div class="summary-item">
+
+                            <span>
+                                Venue
+                            </span>
+
+                            <h3 id="venueName">
+                            </h3>
+
+                        </div>
+
+                        <div class="summary-item">
+
+                            <span>
+                                Capacity
+                            </span>
+
+                            <h3 id="capacity">
+                            </h3>
+
+                        </div>
+
+                        <div class="summary-item">
+
+                            <span>
+                                Venue Type
+                            </span>
+
+                            <h3 id="venueType">
+                            </h3>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- EVENT TIMELINE -->
+
+                <div class="planner-card">
+
+                    <div class="card-title">
+
+                        Event Timeline
+
+                    </div>
+
+                    <div class="timeline" id="timelineContainer">
+
+                        <div class="timeline-item">
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- RIGHT -->
+
+            <div class="planner-right">
+
+                <!-- LAYOUT -->
+
+                <div class="planner-card">
+
+                    <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+
+                        <span>Venue Layout Preview</span>
+
+                        <button id="maximizeLayoutBtn" class="maximize-btn" title="Maximize Layout Design Space">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="15 3 21 3 21 9"></polyline>
+                                <polyline points="9 21 3 21 3 15"></polyline>
+                                <line x1="21" y1="3" x2="14" y2="10"></line>
+                                <line x1="3" y1="21" x2="10" y2="14"></line>
+                            </svg>
+                            <span>Maximize</span>
+                        </button>
+
+                    </div>
+
+                    <div class="layout-preview">
+                        <!-- Rendered dynamically -->
+                    </div>
+
+                <!-- COMPONENTS -->
+
+                <div class="planner-card drag-component-card">
+
+                    <div class="card-title">
+
+                        Planning Components
+
+                    </div>
+
+                    <div class="drag-items">
+
+                        <div class="drag-box">
+
+                            Booth
+
+                        </div>
+
+                        <div class="drag-box">
+
+                            Registration Counter
+
+                        </div>
+
+                        <div class="drag-box">
+
+                            Catering Area
+
+                        </div>
+
+                        <div class="drag-box">
+
+                            LED Screen
+
+                        </div>
+
+                        <div class="drag-box">
+
+                            Networking Zone
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="save-section">
+
+                <button id="saveEventBtn" class="save-btn">
+
+                    Save Event
+
+                </button>
+
+            </div>
+
+        </section>
+
+        <div id="layoutModal" class="layout-modal">
+            <div class="layout-modal-content">
+                <div class="layout-modal-header">
+                    <h2>Venue Layout Design Space</h2>
+                    <button class="layout-modal-close" id="closeLayoutModalBtn">&times;</button>
+                </div>
+                <div class="layout-modal-body" id="modalLayoutPreview">
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script src="js/planner.js"></script>
+
+    </body>
+
+    </html>

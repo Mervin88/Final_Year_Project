@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+    content="width=device-width, initial-scale=1.0">
+
+    <title>Event Details | EventSync</title>
+
+    <link rel="stylesheet"
+    href="css/event-details.css">
+
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+
+    <nav class="navbar">
+        <a href="landing.html" class="logo-text">
+            <span class="logo-dark">Event</span><span class="logo-gold">Sync</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="events.html" id="navEvents" class="active">Events</a></li>
+            <li><a href="venues.html" id="navVenues">Venues</a></li>
+            <li><a href="planner.html" id="navPlanner">Planner</a></li>
+            <li><a href="communication.html" id="navCommunication">Communication</a></li>
+            <li><a href="user-dashboard.html" id="navDashboard">Dashboard</a></li>
+            <li><a href="login.html" id="navLogin" class="login-btn">Login</a></li>
+        </ul>
+    </nav>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const username = localStorage.getItem("username");
+            const role = localStorage.getItem("role");
+            const navPlanner = document.getElementById("navPlanner");
+            const navCommunication = document.getElementById("navCommunication");
+            const navDashboard = document.getElementById("navDashboard");
+            const navLogin = document.getElementById("navLogin");
+            
+            if (username) {
+                if (navLogin) {
+                    navLogin.textContent = "Logout";
+                    navLogin.href = "#";
+                    navLogin.onclick = (e) => {
+                        e.preventDefault();
+                        localStorage.removeItem("username");
+                        localStorage.removeItem("role");
+                        localStorage.removeItem("userRole");
+                        localStorage.removeItem("selectedVenue");
+                        localStorage.removeItem("eventDraft");
+                        localStorage.removeItem("eventTimeline");
+                        localStorage.removeItem("editEventId");
+                        localStorage.removeItem("compareVenues");
+                        window.location.href = "login.html";
+                    };
+                }
+                if (navDashboard) {
+                    if (role === "Participant") {
+                        navDashboard.parentElement.style.display = "none";
+                    } else {
+                        navDashboard.parentElement.style.display = "block";
+                        if (role === "Vendor") {
+                            navDashboard.href = "vendor-dashboard.html";
+                        } else if (role === "Admin") {
+                            navDashboard.href = "admin-dashboard.html";
+                        } else {
+                            navDashboard.href = "user-dashboard.html";
+                        }
+                    }
+                }
+                if (role === "Participant") {
+                    if (navPlanner) navPlanner.parentElement.style.display = "none";
+                    if (navCommunication) navCommunication.parentElement.style.display = "none";
+                } else {
+                    if (navPlanner) navPlanner.parentElement.style.display = "block";
+                    if (navCommunication) navCommunication.parentElement.style.display = "block";
+                }
+            } else {
+                if (navLogin) {
+                    navLogin.style.display = "block";
+                    navLogin.textContent = "Login";
+                    navLogin.href = "login.html";
+                    navLogin.onclick = null;
+                }
+                if (navDashboard) navDashboard.parentElement.style.display = "none";
+                if (navPlanner) navPlanner.parentElement.style.display = "none";
+                if (navCommunication) navCommunication.parentElement.style.display = "none";
+            }
+        });
+    </script>
+
+    <!-- HERO -->
+
+    <section class="hero">
+
+        <div class="overlay">
+
+            <div class="hero-content">
+
+                <span class="event-category">
+                    Conference
+                </span>
+
+                <h1>
+                    Business Leadership Summit 2026
+                </h1>
+
+                <p>
+                    Connect with industry leaders and explore
+                    the future of corporate innovation.
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- MAIN CONTENT -->
+
+    <section class="content-container">
+
+        <!-- LEFT SIDE -->
+
+        <div class="left-content">
+
+            <!-- ABOUT EVENT -->
+
+            <div class="card">
+
+                <h2>
+                    About This Event
+                </h2>
+
+                <p>
+                    The Business Leadership Summit 2026 gathers
+                    corporate leaders, entrepreneurs and innovators
+                    from across the region to discuss strategies,
+                    technologies and future opportunities in business.
+                </p>
+
+            </div>
+
+            <!-- SPEAKERS -->
+
+            <div class="card">
+
+                <h2>
+                    Featured Speakers
+                </h2>
+
+                <div class="speaker-grid">
+
+                    <div class="speaker-card">
+
+                        <img
+                        src="https://randomuser.me/api/portraits/men/32.jpg">
+
+                        <h3>
+                            Daniel Wong
+                        </h3>
+
+                        <p>
+                            CEO, NexTech Asia
+                        </p>
+
+                    </div>
+
+                    <div class="speaker-card">
+
+                        <img
+                        src="https://randomuser.me/api/portraits/women/44.jpg">
+
+                        <h3>
+                            Sarah Lim
+                        </h3>
+
+                        <p>
+                            Director, FutureWorks
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- SCHEDULE -->
+
+            <div class="card">
+
+                <h2>
+                    Event Schedule
+                </h2>
+
+                <div class="schedule-item">
+
+                    <h3>
+                        9:00 AM - Opening Ceremony
+                    </h3>
+
+                    <p>
+                        Welcome speech and event introduction.
+                    </p>
+
+                </div>
+
+                <div class="schedule-item">
+
+                    <h3>
+                        11:00 AM - Leadership Panel
+                    </h3>
+
+                    <p>
+                        Industry leaders discuss innovation trends.
+                    </p>
+
+                </div>
+
+                <div class="schedule-item">
+
+                    <h3>
+                        2:00 PM - Networking Session
+                    </h3>
+
+                    <p>
+                        Interactive networking and collaboration.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <!-- VENUE PREVIEW -->
+
+            <div class="card">
+
+                <h2>
+                    Venue Preview
+                </h2>
+
+                <img
+                class="venue-image"
+                src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?q=80&w=1400&auto=format&fit=crop">
+
+                <p class="venue-description">
+
+                    Interactive venue layout and seating
+                    arrangement preview for event planning
+                    and attendee coordination.
+
+                </p>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT SIDE -->
+
+        <div class="right-content">
+
+            <div class="registration-card">
+
+                <h2>
+                    Event Information
+                </h2>
+
+                <div class="info-item">
+
+                    <span>
+                        Date
+                    </span>
+
+                    <p>
+                        15 May 2026
+                    </p>
+
+                </div>
+
+                <div class="info-item">
+
+                    <span>
+                        Venue
+                    </span>
+
+                    <p>
+                        KL Convention Centre
+                    </p>
+
+                </div>
+
+                <div class="info-item">
+
+                    <span>
+                        Attendees
+                    </span>
+
+                    <p>
+                        1,250 Registered
+                    </p>
+
+                </div>
+
+                <div class="info-item">
+
+                    <span>
+                        Category
+                    </span>
+
+                    <p>
+                        Conference
+                    </p>
+
+                </div>
+
+                <button>
+                    Register Now
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</body>
+
+</html>
