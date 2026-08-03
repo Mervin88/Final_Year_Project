@@ -835,4 +835,86 @@ body {
         transform:translateY(0);
     }
 
+}
+
+/* DARK THEME STYLING OVERRIDES */
+html.dark-theme body {
+    background: #0b0f19;
+    color: #f9fafb;
+}
+
+html.dark-theme .navbar {
+    background: #111827;
+    border-bottom: 1px solid #1f2937;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+html.dark-theme .navbar ul li a {
+    color: #d1d5db !important;
+}
+
+html.dark-theme .navbar ul li a:hover,
+html.dark-theme .navbar ul li a.active {
+    color: #c8a96b !important;
+}
+
+html.dark-theme .logo-dark {
+    color: #f9fafb !important;
+}
+
+html.dark-theme .card {
+    background: #111827 !important;
+    border: 1px solid #1f2937;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+html.dark-theme .card-title {
+    color: #f9fafb !important;
+}
+
+html.dark-theme .announcement-item,
+html.dark-theme .task-item {
+    background: #1f2937 !important;
+    color: #f9fafb !important;
+    border: 1px solid #374151;
+}
+
+html.dark-theme .announcement-item h3,
+html.dark-theme .announcement-item div {
+    color: #f9fafb !important;
+}
+
+html.dark-theme .announcement-item p,
+html.dark-theme .announcement-item span {
+    color: #9ca3af !important;
+}
+
+html.dark-theme .task-item span {
+    color: #f9fafb !important;
+}
+
+html.dark-theme #newTaskInput {
+    background: #1f2937 !important;
+    color: #f9fafb !important;
+    border-color: #374151 !important;
+}
+
+html.dark-theme .message.received {
+    background: #1f2937 !important;
+    color: #f9fafb !important;
+}
+
+html.dark-theme .message.sent {
+    background: #c8a96b !important;
+    color: #111827 !important;
+}
+
+html.dark-theme .chat-input input {
+    background: #1f2937 !important;
+    color: #f9fafb !important;
+    border-color: #374151 !important;
+}
+
+html.dark-theme .chat-box::-webkit-scrollbar-track {
+    background: #111827;
 }

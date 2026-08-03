@@ -320,6 +320,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const heroFindVenuesBtn = document.getElementById("heroFindVenuesBtn");
     const heroStartPlanningBtn = document.getElementById("heroStartPlanningBtn");
 
+    if (heroStartPlanningBtn) {
+        const username = localStorage.getItem("username");
+        const role = (localStorage.getItem("role") || "").toLowerCase();
+        if (username) {
+            if (role !== "organizer") {
+                heroStartPlanningBtn.textContent = "Go to Dashboard";
+            }
+        }
+    }
+
     if (heroFindVenuesBtn) {
         heroFindVenuesBtn.addEventListener("click", () => {
             if (localStorage.getItem("username")) {
@@ -332,8 +342,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (heroStartPlanningBtn) {
         heroStartPlanningBtn.addEventListener("click", () => {
-            if (localStorage.getItem("username")) {
-                window.location.href = "create-event.html";
+            const username = localStorage.getItem("username");
+            const role = (localStorage.getItem("role") || "").toLowerCase();
+            if (username) {
+                if (role === "participant") {
+                    window.location.href = "participant-dashboard.html";
+                } else if (role === "vendor") {
+                    window.location.href = "vendor-dashboard.html";
+                } else if (role === "admin") {
+                    window.location.href = "admin-dashboard.html";
+                } else {
+                    window.location.href = "create-event.html";
+                }
             } else {
                 window.location.href = "login.html";
             }

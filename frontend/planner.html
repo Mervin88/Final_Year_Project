@@ -1,219 +1,235 @@
-    <!DOCTYPE html>
-    <html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 
-    <head>
+<head>
 
-        <meta charset="UTF-8">
+    <meta charset="UTF-8">
 
-        <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        <title>
-            Event Planner | EventSync
-        </title>
+    <title>
+        Event Planner | EventSync
+    </title>
 
-        <link rel="stylesheet"
-        href="css/planner.css">
+    <link rel="stylesheet" href="css/planner.css">
+    <script>
+        // Check authorization: Participants cannot access planner
+        if (!localStorage.getItem("username") || localStorage.getItem("role") === "Participant") {
+            window.location.href = "login.html";
+        }
+        // Immediately load dark mode setting to avoid flash of light theme
+        if (localStorage.getItem("theme") === "dark") {
+            document.documentElement.classList.add("dark-theme");
+        }
+    </script>
 
-    </head>
+</head>
 
-    <body>
+<body class="theme-transition">
 
-        <!-- NAVBAR -->
+    <!-- NAVBAR -->
 
-        <nav class="navbar">
-            <a href="landing.html" class="logo-text">
-                <span class="logo-dark">Event</span><span class="logo-gold">Sync</span>
-            </a>
-            <ul class="nav-links">
-                <li><a href="events.html" id="navEvents">Events</a></li>
-                <li><a href="venues.html" id="navVenues">Venues</a></li>
-                <li><a href="planner.html" id="navPlanner" class="active">Planner</a></li>
-                <li><a href="communication.html" id="navCommunication">Communication</a></li>
-                <li><a href="user-dashboard.html" id="navDashboard">Dashboard</a></li>
-                <li><a href="login.html" id="navLogin" class="login-btn">Login</a></li>
-            </ul>
-        </nav>
-        <script>
-            document.addEventListener("DOMContentLoaded", () => {
-                const username = localStorage.getItem("username");
-                const role = localStorage.getItem("role");
-                const navPlanner = document.getElementById("navPlanner");
-                const navCommunication = document.getElementById("navCommunication");
-                const navDashboard = document.getElementById("navDashboard");
-                const navLogin = document.getElementById("navLogin");
-                
-                if (username) {
-                    if (navLogin) {
-                        navLogin.textContent = "Logout";
-                        navLogin.href = "#";
-                        navLogin.onclick = (e) => {
-                            e.preventDefault();
-                            localStorage.removeItem("username");
-                            localStorage.removeItem("role");
-                            localStorage.removeItem("userRole");
-                            localStorage.removeItem("selectedVenue");
-                            localStorage.removeItem("eventDraft");
-                            localStorage.removeItem("eventTimeline");
-                            localStorage.removeItem("editEventId");
-                            localStorage.removeItem("compareVenues");
-                            localStorage.removeItem("eventLayout");
-                            window.location.href = "login.html";
-                        };
-                    }
-                    if (navDashboard) {
-                        if (role === "Participant") {
-                            navDashboard.parentElement.style.display = "none";
-                        } else {
-                            navDashboard.parentElement.style.display = "block";
-                            if (role === "Vendor") {
-                                navDashboard.href = "vendor-dashboard.html";
-                            } else if (role === "Admin") {
-                                navDashboard.href = "admin-dashboard.html";
-                            } else {
-                                navDashboard.href = "user-dashboard.html";
-                            }
-                        }
-                    }
-                    if (role === "Participant") {
-                        if (navPlanner) navPlanner.parentElement.style.display = "none";
-                        if (navCommunication) navCommunication.parentElement.style.display = "none";
+    <nav class="navbar">
+        <a href="landing.html" class="logo-text">
+            <span class="logo-dark">Event</span><span class="logo-gold">Sync</span>
+        </a>
+        <ul class="nav-links">
+            <li style="display: none;"><a href="participant-dashboard.html" id="navDashboard">Dashboard</a></li>
+            <li><a href="events.html" id="navEvents">Events</a></li>
+            <li><a href="venues.html" id="navVenues">Venues</a></li>
+            <li style="display: none;"><a href="registrations.html" id="navRegistrations">My Registrations</a></li>
+            <li style="display: none;"><a href="participant-settings.html" id="navSettings">Settings</a></li>
+            <li style="display: none;"><a href="planner.html" id="navPlanner">Planner</a></li>
+            <li style="display: none;"><a href="communication.html" id="navCommunication">Communication</a></li>
+            <li><a href="login.html" id="navLogin" class="login-btn">Login</a></li>
+        </ul>
+    </nav>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const username = localStorage.getItem("username");
+            const role = (localStorage.getItem("role") || "").toLowerCase();
+
+            const navDashboard = document.getElementById("navDashboard");
+            const navRegistrations = document.getElementById("navRegistrations");
+            const navSettings = document.getElementById("navSettings");
+            const navPlanner = document.getElementById("navPlanner");
+            const navCommunication = document.getElementById("navCommunication");
+            const navLogin = document.getElementById("navLogin");
+
+            if (username) {
+                if (navLogin) {
+                    navLogin.parentElement.style.display = "block";
+                    navLogin.textContent = "Logout";
+                    navLogin.href = "#";
+                    navLogin.onclick = (e) => {
+                        e.preventDefault();
+                        localStorage.removeItem("username");
+                        localStorage.removeItem("role");
+                        localStorage.removeItem("userRole");
+                        localStorage.removeItem("selectedVenue");
+                        localStorage.removeItem("eventDraft");
+                        localStorage.removeItem("eventTimeline");
+                        localStorage.removeItem("editEventId");
+                        localStorage.removeItem("compareVenues");
+                        localStorage.removeItem("eventLayout");
+                        window.location.href = "login.html";
+                    };
+                }
+                if (navDashboard) {
+                    navDashboard.parentElement.style.display = "block";
+                    if (role === "participant") {
+                        navDashboard.href = "participant-dashboard.html";
+                    } else if (role === "vendor") {
+                        navDashboard.href = "vendor-dashboard.html";
+                    } else if (role === "admin") {
+                        navDashboard.href = "admin-dashboard.html";
                     } else {
-                        if (navPlanner) navPlanner.parentElement.style.display = "block";
-                        if (navCommunication) navCommunication.parentElement.style.display = "block";
+                        navDashboard.href = "user-dashboard.html";
                     }
+                }
+                if (role === "organizer" || role === "organiser" || role === "vendor" || role === "admin") {
+                    const navEvents = document.getElementById("navEvents");
+                    if ((role === "organizer" || role === "organiser") && navEvents) {
+                        navEvents.parentElement.style.display = "none";
+                    }
+                    if (navRegistrations) navRegistrations.parentElement.style.display = "none";
+                    if (navSettings) {
+                        navSettings.parentElement.style.display = "none";
+                    }
+                    if (navPlanner) navPlanner.parentElement.style.display = "block";
+                    if (navCommunication) navCommunication.parentElement.style.display = "block";
                 } else {
-                    if (navLogin) {
-                        navLogin.style.display = "block";
-                        navLogin.textContent = "Login";
-                        navLogin.href = "login.html";
-                        navLogin.onclick = null;
+                    if (navRegistrations) navRegistrations.parentElement.style.display = "block";
+                    if (navSettings) {
+                        navSettings.parentElement.style.display = "block";
+                        navSettings.href = "participant-settings.html";
                     }
-                    if (navDashboard) navDashboard.parentElement.style.display = "none";
                     if (navPlanner) navPlanner.parentElement.style.display = "none";
                     if (navCommunication) navCommunication.parentElement.style.display = "none";
                 }
+            } else {
+                if (navLogin) {
+                    navLogin.parentElement.style.display = "block";
+                    navLogin.textContent = "Login";
+                    navLogin.href = "login.html";
+                    navLogin.onclick = null;
+                }
+                if (navDashboard) navDashboard.parentElement.style.display = "none";
+                if (navRegistrations) navRegistrations.parentElement.style.display = "none";
+                if (navSettings) navSettings.parentElement.style.display = "none";
+                if (navPlanner) navPlanner.parentElement.style.display = "none";
+                if (navCommunication) navCommunication.parentElement.style.display = "none";
+            }
+
+            const pagePath = window.location.pathname.split("/").pop();
+            const navLinks = document.querySelectorAll(".nav-links a");
+            navLinks.forEach(link => {
+                const linkPath = link.getAttribute("href");
+                if (linkPath === pagePath) {
+                    link.classList.add("active");
+                } else {
+                    link.classList.remove("active");
+                }
             });
-        </script>
+        });
+    </script>
 
-        <!-- HERO -->
+    <!-- HERO -->
 
-        <section class="hero">
+    <section class="hero">
 
-            <div class="hero-overlay">
+        <div class="hero-overlay">
 
-                <div class="hero-content">
+            <div class="hero-content">
 
-                    <span class="hero-tag">
+                <span class="hero-tag">
 
-                        Event Visualization & Planning
+                    Event Visualization & Planning
 
-                    </span>
+                </span>
 
-                    <h1>
+                <h1>
 
-                        Interactive Event
-                        Planning Workspace
+                    Interactive Event
+                    Planning Workspace
 
-                    </h1>
+                </h1>
 
-                    <p>
+                <p>
 
-                        Organize schedules, visualize layouts,
-                        manage event flow and coordinate
-                        event arrangements efficiently.
+                    Organize schedules, visualize layouts,
+                    manage event flow and coordinate
+                    event arrangements efficiently.
 
-                    </p>
-
-                </div>
+                </p>
 
             </div>
 
-        </section>
+        </div>
 
-        <!-- MAIN SECTION -->
+    </section>
 
-        <section class="planner-section">
+    <!-- MAIN SECTION -->
 
-            <!-- LEFT -->
+    <section class="planner-section">
 
-            <div class="planner-left">
+        <!-- LEFT -->
 
-                <!-- EVENT SUMMARY -->
+        <div class="planner-left">
 
-                <div class="planner-card">
+            <!-- EVENT SUMMARY -->
 
-                    <div class="card-title">
+            <div class="planner-card">
 
-                        Event Summary
+                <div class="card-title">
 
-                    </div>
-
-                    <div class="summary-grid">
-
-                        <div class="summary-item">
-
-                            <span>
-                                Event Type
-                            </span>
-
-                            <h3 id="eventType">
-                            </h3>
-
-                        </div>
-
-                        <div class="summary-item">
-
-                            <span>
-                                Venue
-                            </span>
-
-                            <h3 id="venueName">
-                            </h3>
-
-                        </div>
-
-                        <div class="summary-item">
-
-                            <span>
-                                Capacity
-                            </span>
-
-                            <h3 id="capacity">
-                            </h3>
-
-                        </div>
-
-                        <div class="summary-item">
-
-                            <span>
-                                Venue Type
-                            </span>
-
-                            <h3 id="venueType">
-                            </h3>
-
-                        </div>
-
-                    </div>
+                    Event Summary
 
                 </div>
 
-                <!-- EVENT TIMELINE -->
+                <div class="summary-grid">
 
-                <div class="planner-card">
+                    <div class="summary-item">
 
-                    <div class="card-title">
+                        <span>
+                            Event Type
+                        </span>
 
-                        Event Timeline
+                        <h3 id="eventType">
+                        </h3>
 
                     </div>
 
-                    <div class="timeline" id="timelineContainer">
+                    <div class="summary-item">
 
-                        <div class="timeline-item">
+                        <span>
+                            Venue
+                        </span>
 
-                        </div>
+                        <h3 id="venueName">
+                        </h3>
+
+                    </div>
+
+                    <div class="summary-item">
+
+                        <span>
+                            Capacity
+                        </span>
+
+                        <h3 id="capacity">
+                        </h3>
+
+                    </div>
+
+                    <div class="summary-item">
+
+                        <span>
+                            Venue Type
+                        </span>
+
+                        <h3 id="venueType">
+                        </h3>
 
                     </div>
 
@@ -221,85 +237,91 @@
 
             </div>
 
-            <!-- RIGHT -->
+            <!-- EVENT TIMELINE -->
 
-            <div class="planner-right">
+            <div class="planner-card">
 
-                <!-- LAYOUT -->
+                <div class="card-title">
 
-                <div class="planner-card">
+                    Event Timeline
 
-                    <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                </div>
 
-                        <span>Venue Layout Preview</span>
+                <div class="timeline" id="timelineContainer">
 
-                        <button id="maximizeLayoutBtn" class="maximize-btn" title="Maximize Layout Design Space">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="15 3 21 3 21 9"></polyline>
-                                <polyline points="9 21 3 21 3 15"></polyline>
-                                <line x1="21" y1="3" x2="14" y2="10"></line>
-                                <line x1="3" y1="21" x2="10" y2="14"></line>
-                            </svg>
-                            <span>Maximize</span>
-                        </button>
+                    <div class="timeline-item">
 
                     </div>
 
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT -->
+
+        <div class="planner-right">
+
+            <!-- LAYOUT -->
+
+            <div class="planner-card">
+
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+
+                    <span>Venue Layout Preview</span>
+
+                    <button id="maximizeLayoutBtn" class="maximize-btn" title="Maximize Layout Design Space">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 3 21 3 21 9"></polyline>
+                            <polyline points="9 21 3 21 3 15"></polyline>
+                            <line x1="21" y1="3" x2="14" y2="10"></line>
+                            <line x1="3" y1="21" x2="10" y2="14"></line>
+                        </svg>
+                        <span>Maximize</span>
+                    </button>
+
+                </div>
+
+                <div class="layout-preview-container" id="layoutPreviewContainer" onclick="document.getElementById('maximizeLayoutBtn').click()" style="cursor: pointer;">
                     <div class="layout-preview">
                         <!-- Rendered dynamically -->
                     </div>
-
-                <!-- COMPONENTS -->
-
-                <div class="planner-card drag-component-card">
-
-                    <div class="card-title">
-
-                        Planning Components
-
+                    <div class="minimized-overlay">
+                        <span>🔍 Click to Maximize & Design Space</span>
                     </div>
+                </div> <!-- Closes Venue Layout Preview Card -->
 
-                    <div class="drag-items">
-
-                        <div class="drag-box">
-
-                            Booth
-
-                        </div>
-
-                        <div class="drag-box">
-
-                            Registration Counter
-
-                        </div>
-
-                        <div class="drag-box">
-
-                            Catering Area
-
-                        </div>
-
-                        <div class="drag-box">
-
-                            LED Screen
-
-                        </div>
-
-                        <div class="drag-box">
-
-                            Networking Zone
-
-                        </div>
-
+                <!-- BACKDROP BUILDER PREVIEW CARD -->
+                <div class="planner-card backdrop-preview-card" style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
+                    <div class="card-title" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; margin-bottom: 5px;">
+                        <span style="line-height: 1.2;">3D Stage Backdrop Setup</span>
+                        <span id="backdropThemeBadge" style="background: rgba(200, 169, 107, 0.1); color: #c8a96b; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; border: 1px solid rgba(200, 169, 107, 0.2); white-space: nowrap; margin-top: 4px;">No Theme</span>
                     </div>
-
+                    <p style="color: #6b7280; font-size: 13px; margin: 0; line-height: 1.5;">Visualize and customize your event's primary stage backdrop in an interactive 3D WebVR virtual reality environment.</p>
+                    <div class="backdrop-preview-thumbnail" onclick="goToVRVisualizer()" style="cursor: pointer; height: 160px; border-radius: 16px; border: 1px solid #1f2937; background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1506157786151-b8491531f063?q=80&w=1200') center/cover; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: 0.3s;" onmouseover="this.querySelector('.play-hover').style.transform='scale(1.1)';this.style.borderColor='#c8a96b';" onmouseout="this.querySelector('.play-hover').style.transform='scale(1)';" >
+                        <div class="play-hover" style="width: 54px; height: 54px; border-radius: 50%; background: #c8a96b; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(200,169,107,0.3); transition: 0.3s;">
+                            <span style="color: #111827; font-size: 20px; font-weight: bold; margin-left: 2px;">▶</span>
+                        </div>
+                        <div style="position: absolute; bottom: 12px; left: 12px; display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 12px; color: #fff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); background: rgba(17, 24, 39, 0.7); padding: 4px 8px; border-radius: 8px;">🎮 Enter 3D VR Builder</span>
+                        </div>
+                    </div>
                 </div>
 
             </div>
 
-            <div class="save-section">
+            <div class="save-section"
+                style="display: flex; justify-content: flex-end; gap: 15px; width: 100%; max-width: 580px; margin: 30px auto 0;">
 
-                <button id="saveEventBtn" class="save-btn">
+                <button onclick="window.history.back()"
+                    style="flex: 1; background: transparent; border: 2px solid #374151; color: #9ca3af; padding: 16px 24px; border-radius: 16px; font-weight: 700; font-size: 16px; cursor: pointer; transition: 0.3s;"
+                    onmouseover="this.style.borderColor='#4b5563';this.style.color='white';" onmouseout="this.style.borderColor='#374151';this.style.color='#9ca3af';">
+                    Go Back
+                </button>
+
+                <button id="saveEventBtn" class="save-btn" style="flex: 1;">
 
                     Save Event
 
@@ -307,22 +329,66 @@
 
             </div>
 
-        </section>
+    </section>
 
-        <div id="layoutModal" class="layout-modal">
-            <div class="layout-modal-content">
-                <div class="layout-modal-header">
-                    <h2>Venue Layout Design Space</h2>
-                    <button class="layout-modal-close" id="closeLayoutModalBtn">&times;</button>
+    <div id="layoutModal" class="layout-modal">
+        <div class="layout-modal-content">
+            <div class="layout-modal-header">
+                <h2>Venue Layout Design Space</h2>
+                <button class="layout-modal-close" id="closeLayoutModalBtn">&times;</button>
+            </div>
+            <div class="layout-modal-body">
+                <div class="modal-sidebar">
+                    <div class="sidebar-content">
+                        <div class="capacity-target-selector" style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: bold; margin-bottom: 8px; font-size: 14px; color: #c8a96b;">Target Capacity:</label>
+                            <select id="layoutTargetCapacity" style="width: 100%; padding: 12px; border-radius: 8px; background: #111827; border: 1px solid #1f2937; color: white; font-weight: bold;">
+                                <!-- Populated dynamically based on eventData range -->
+                            </select>
+                        </div>
+
+                        <div class="zoom-controls-wrapper" style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: bold; margin-bottom: 8px; font-size: 14px; color: #c8a96b;">Canvas Zoom:</label>
+                            <div class="zoom-controls" style="display: flex; gap: 8px;">
+                                <button class="preset-btn" data-zoom="0.5" onclick="setPlannerZoom(0.5)" style="flex: 1; padding: 10px; font-size: 13px; background: transparent; color: white;">50%</button>
+                                <button class="preset-btn" data-zoom="0.75" onclick="setPlannerZoom(0.75)" style="flex: 1; padding: 10px; font-size: 13px; background: transparent; color: white;">75%</button>
+                                <button class="preset-btn" data-zoom="1.0" onclick="setPlannerZoom(1.0)" style="flex: 1; padding: 10px; font-size: 13px; background: #c8a96b; color: #111827;">100%</button>
+                            </div>
+                        </div>
+
+                        <h3>Layout Presets</h3>
+                        <p>Select a pre-arranged layout setup to quickly populate your workspace:</p>
+                        <div class="preset-buttons">
+                            <button class="preset-btn" onclick="applyLayoutPreset('banquet')">Banquet Dinner</button>
+                            <button class="preset-btn" onclick="applyLayoutPreset('classroom')">Classroom Lecture</button>
+                            <button class="preset-btn" onclick="applyLayoutPreset('ushape')">Interactive U-Shape</button>
+                            <button class="preset-btn" onclick="applyLayoutPreset('boardroom')">Hollow Boardroom</button>
+                            <button class="preset-btn" onclick="applyLayoutPreset('cabaret')">Cabaret Arc</button>
+                        </div>
+
+                        <hr style="border: 0; border-top: 1px solid #1f2937; margin: 15px 0;">
+
+                        <h3>Planning Components</h3>
+                        <p>Drag these items onto the design canvas to customize your layout:</p>
+                        <div class="drag-items">
+                            <div class="drag-box" draggable="true">Booth</div>
+                            <div class="drag-box" draggable="true">Registration Counter</div>
+                            <div class="drag-box" draggable="true">Catering Area</div>
+                            <div class="drag-box" draggable="true">LED Screen</div>
+                            <div class="drag-box" draggable="true">Networking Zone</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="layout-modal-body" id="modalLayoutPreview">
+                <div class="modal-workspace" id="modalLayoutPreview">
+                    <!-- Scaled canvas rendered here dynamically -->
                 </div>
             </div>
         </div>
+    </div>
 
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <script src="js/planner.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/planner.js"></script>
 
-    </body>
+</body>
 
-    </html>
+</html>

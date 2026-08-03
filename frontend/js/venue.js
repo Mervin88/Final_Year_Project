@@ -527,8 +527,89 @@ function filterAndRenderVenues(resetPage = false) {
 }
 
 function viewVenueDetails(venueId) {
-    localStorage.setItem("viewVenueId", venueId);
-    window.location.href = "event-details.html";
+    const venue = allApprovedVenues.find(v => v.id === venueId);
+    if (!venue) {
+        if (typeof Swal !== "undefined") {
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "Venue details could not be found.",
+                confirmButtonColor: "#c8a96b"
+            });
+        } else {
+            alert("Venue details could not be found.");
+        }
+        return;
+    }
+
+    let img = "https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=1200&auto=format&fit=crop";
+    if (venue.type === "Indoor") {
+        img = "https://images.unsplash.com/photo-1497366412874-3415097a27e7?q=80&w=1200&auto=format&fit=crop";
+    } else if (venue.type === "Outdoor") {
+        img = "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?q=80&w=1200&auto=format&fit=crop";
+    } else if (venue.type === "Hybrid") {
+        img = "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=1200&auto=format&fit=crop";
+    }
+
+    const isParticipant = (localStorage.getItem("userRole") || localStorage.getItem("role")) === "Participant";
+    const priceText = isParticipant ? "" : `<p style="font-size: 20px; font-weight: 800; color: #c8a96b; margin-top: 10px; margin-bottom: 4px;">RM ${parseFloat(venue.price).toLocaleString(undefined, {minimumFractionDigits: 0})} / day</p>`;
+
+    const facilities = [];
+    if (venue.parking_available) facilities.push("🚗 Parking");
+    if (venue.wifi_available) facilities.push("📶 WiFi");
+    if (venue.projector_available) facilities.push("📽️ Projector");
+    if (venue.catering_available) facilities.push("🍽️ Catering");
+    if (venue.sound_system_available) facilities.push("🔊 Sound System");
+    if (venue.stage_setup_available) facilities.push("🎭 Stage Setup");
+
+    const facilitiesHtml = facilities.length > 0
+        ? facilities.map(f => `<span style="background: rgba(200,169,107,0.12); color: #b08d4b; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; display: inline-block; margin: 2px;">${f}</span>`).join(" ")
+        : `<span style="color: #9ca3af; font-size: 13px;">Standard Amenities Included</span>`;
+
+    const modalContent = `
+        <div style="text-align: left; font-family: Arial, sans-serif;">
+            <img src="${img}" alt="${venue.name}" style="width: 100%; height: 220px; object-fit: cover; border-radius: 16px; margin-bottom: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span style="background: #111827; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 700;">${venue.type} Venue</span>
+                <span style="color: #f59e0b; font-size: 15px; font-weight: 700;">★ 4.8 Rating</span>
+            </div>
+            <p style="color: #4b5563; font-size: 14px; margin-bottom: 6px;"><strong>📍 Location:</strong> ${venue.location}, Malaysia</p>
+            <p style="color: #4b5563; font-size: 14px; margin-bottom: 6px;"><strong>👥 Capacity:</strong> ${venue.capacity} Pax</p>
+            ${priceText}
+            <div style="margin-top: 14px; margin-bottom: 14px;">
+                <h4 style="font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 6px;">Venue Description</h4>
+                <p style="color: #4b5563; font-size: 13px; line-height: 1.6;">${venue.description || "High-quality venue with comprehensive facilities suitable for corporate and social events."}</p>
+            </div>
+            <div style="margin-top: 12px;">
+                <h4 style="font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 8px;">Available Amenities</h4>
+                <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                    ${facilitiesHtml}
+                </div>
+            </div>
+        </div>
+    `;
+
+    Swal.fire({
+        title: venue.name,
+        html: modalContent,
+        showCancelButton: true,
+        showConfirmButton: !isParticipant,
+        confirmButtonText: "Select Venue for Event",
+        confirmButtonColor: "#c8a96b",
+        cancelButtonText: "Close",
+        cancelButtonColor: "#6b7280",
+        width: 560
+    }).then((result) => {
+        if (result.isConfirmed) {
+            if (!localStorage.getItem("eventDraft")) {
+                alert("Please create an event draft first before selecting a venue.");
+                window.location.href = "create-event.html";
+                return;
+            }
+            localStorage.setItem("selectedVenue", venue.name);
+            window.location.href = "planner.html";
+        }
+    });
 }
 
 function renderPaginationControls(totalPages) {

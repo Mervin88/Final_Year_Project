@@ -5,19 +5,27 @@
 
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-    content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>
         Communication Hub | EventSync
     </title>
 
-    <link rel="stylesheet"
-    href="css/communication.css">
+    <link rel="stylesheet" href="css/communication.css">
+    <script>
+        // Check authorization: Participants cannot access communication
+        if (!localStorage.getItem("username") || localStorage.getItem("role") === "Participant") {
+            window.location.href = "login.html";
+        }
+        // Immediately load dark mode setting to avoid flash of light theme
+        if (localStorage.getItem("theme") === "dark") {
+            document.documentElement.classList.add("dark-theme");
+        }
+    </script>
 
 </head>
 
-<body>
+<body class="theme-transition">
 
     <!-- NAVBAR -->
 
@@ -26,25 +34,31 @@
             <span class="logo-dark">Event</span><span class="logo-gold">Sync</span>
         </a>
         <ul class="nav-links">
+            <li style="display: none;"><a href="participant-dashboard.html" id="navDashboard">Dashboard</a></li>
             <li><a href="events.html" id="navEvents">Events</a></li>
             <li><a href="venues.html" id="navVenues">Venues</a></li>
-            <li><a href="planner.html" id="navPlanner">Planner</a></li>
-            <li><a href="communication.html" id="navCommunication" class="active">Communication</a></li>
-            <li><a href="user-dashboard.html" id="navDashboard">Dashboard</a></li>
+            <li style="display: none;"><a href="registrations.html" id="navRegistrations">My Registrations</a></li>
+            <li style="display: none;"><a href="participant-settings.html" id="navSettings">Settings</a></li>
+            <li style="display: none;"><a href="planner.html" id="navPlanner">Planner</a></li>
+            <li style="display: none;"><a href="communication.html" id="navCommunication">Communication</a></li>
             <li><a href="login.html" id="navLogin" class="login-btn">Login</a></li>
         </ul>
     </nav>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const username = localStorage.getItem("username");
-            const role = localStorage.getItem("role");
+            const role = (localStorage.getItem("role") || "").toLowerCase();
+
+            const navDashboard = document.getElementById("navDashboard");
+            const navRegistrations = document.getElementById("navRegistrations");
+            const navSettings = document.getElementById("navSettings");
             const navPlanner = document.getElementById("navPlanner");
             const navCommunication = document.getElementById("navCommunication");
-            const navDashboard = document.getElementById("navDashboard");
             const navLogin = document.getElementById("navLogin");
-            
+
             if (username) {
                 if (navLogin) {
+                    navLogin.parentElement.style.display = "block";
                     navLogin.textContent = "Logout";
                     navLogin.href = "#";
                     navLogin.onclick = (e) => {
@@ -61,37 +75,61 @@
                     };
                 }
                 if (navDashboard) {
-                    if (role === "Participant") {
-                        navDashboard.parentElement.style.display = "none";
+                    navDashboard.parentElement.style.display = "block";
+                    if (role === "participant") {
+                        navDashboard.href = "participant-dashboard.html";
+                    } else if (role === "vendor") {
+                        navDashboard.href = "vendor-dashboard.html";
+                    } else if (role === "admin") {
+                        navDashboard.href = "admin-dashboard.html";
                     } else {
-                        navDashboard.parentElement.style.display = "block";
-                        if (role === "Vendor") {
-                            navDashboard.href = "vendor-dashboard.html";
-                        } else if (role === "Admin") {
-                            navDashboard.href = "admin-dashboard.html";
-                        } else {
-                            navDashboard.href = "user-dashboard.html";
-                        }
+                        navDashboard.href = "user-dashboard.html";
                     }
                 }
-                if (role === "Participant") {
-                    if (navPlanner) navPlanner.parentElement.style.display = "none";
-                    if (navCommunication) navCommunication.parentElement.style.display = "none";
-                } else {
+                if (role === "organizer" || role === "organiser" || role === "vendor" || role === "admin") {
+                    const navEvents = document.getElementById("navEvents");
+                    if ((role === "organizer" || role === "organiser") && navEvents) {
+                        navEvents.parentElement.style.display = "none";
+                    }
+                    if (navRegistrations) navRegistrations.parentElement.style.display = "none";
+                    if (navSettings) {
+                        navSettings.parentElement.style.display = "none";
+                    }
                     if (navPlanner) navPlanner.parentElement.style.display = "block";
                     if (navCommunication) navCommunication.parentElement.style.display = "block";
+                } else {
+                    if (navRegistrations) navRegistrations.parentElement.style.display = "block";
+                    if (navSettings) {
+                        navSettings.parentElement.style.display = "block";
+                        navSettings.href = "participant-settings.html";
+                    }
+                    if (navPlanner) navPlanner.parentElement.style.display = "none";
+                    if (navCommunication) navCommunication.parentElement.style.display = "none";
                 }
             } else {
                 if (navLogin) {
-                    navLogin.style.display = "block";
+                    navLogin.parentElement.style.display = "block";
                     navLogin.textContent = "Login";
                     navLogin.href = "login.html";
                     navLogin.onclick = null;
                 }
                 if (navDashboard) navDashboard.parentElement.style.display = "none";
+                if (navRegistrations) navRegistrations.parentElement.style.display = "none";
+                if (navSettings) navSettings.parentElement.style.display = "none";
                 if (navPlanner) navPlanner.parentElement.style.display = "none";
                 if (navCommunication) navCommunication.parentElement.style.display = "none";
             }
+
+            const pagePath = window.location.pathname.split("/").pop();
+            const navLinks = document.querySelectorAll(".nav-links a");
+            navLinks.forEach(link => {
+                const linkPath = link.getAttribute("href");
+                if (linkPath === pagePath) {
+                    link.classList.add("active");
+                } else {
+                    link.classList.remove("active");
+                }
+            });
         });
     </script>
 
@@ -148,87 +186,10 @@
 
                 </div>
 
-                <div class="announcement-list">
+                <div class="announcement-list" id="liveAnnouncementList">
 
-                    <div class="announcement-item">
-
-                        <div class="announcement-badge">
-
-                            📢
-
-                        </div>
-
-                        <div>
-
-                            <h3>
-
-                                Venue Booking Confirmed
-
-                            </h3>
-
-                            <p>
-
-                                KL Convention Centre booking
-                                has been approved successfully.
-
-                            </p>
-
-                        </div>
-
-                    </div>
-
-                    <div class="announcement-item">
-
-                        <div class="announcement-badge">
-
-                            📢
-
-                        </div>
-
-                        <div>
-
-                            <h3>
-
-                                Catering Menu Updated
-
-                            </h3>
-
-                            <p>
-
-                                Vendor updated the corporate
-                                lunch menu selection.
-
-                            </p>
-
-                        </div>
-
-                    </div>
-
-                    <div class="announcement-item">
-
-                        <div class="announcement-badge">
-
-                            📢
-
-                        </div>
-
-                        <div>
-
-                            <h3>
-
-                                Schedule Adjustment
-
-                            </h3>
-
-                            <p>
-
-                                Keynote presentation changed
-                                from 10:00 AM to 10:30 AM.
-
-                            </p>
-
-                        </div>
-
+                    <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 13.5px;">
+                        Loading live announcements...
                     </div>
 
                 </div>
@@ -245,48 +206,17 @@
 
                 </div>
 
-                <div class="task-list">
+                <div class="task-list" id="coordTaskList">
 
-                    <label class="task-item">
+                    <!-- Loaded dynamically from localStorage/eventDraft -->
 
-                        <input type="checkbox">
+                </div>
 
-                        Confirm catering vendor
-
-                    </label>
-
-                    <label class="task-item">
-
-                        <input type="checkbox">
-
-                        Setup registration counter
-
-                    </label>
-
-                    <label class="task-item">
-
-                        <input type="checkbox">
-
-                        Finalize event schedule
-
-                    </label>
-
-                    <label class="task-item">
-
-                        <input type="checkbox">
-
-                        Prepare LED screen presentation
-
-                    </label>
-
-                    <label class="task-item">
-
-                        <input type="checkbox">
-
-                        Confirm participant attendance
-
-                    </label>
-
+                <div class="add-task-container" style="display: flex; gap: 8px; margin-top: 15px; padding: 0 10px;">
+                    <input type="text" id="newTaskInput" placeholder="Add a new coordination task..."
+                        style="flex-grow: 1; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13.5px; outline: none; background: #fff; color: #1f2937;">
+                    <button id="addTaskBtn" onclick="addUserTask()"
+                        style="background: #c8a96b; color: #111827; border: none; padding: 10px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 13.5px; display: flex; align-items: center; justify-content: center;">Add</button>
                 </div>
 
             </div>
@@ -313,10 +243,7 @@
 
                 <div class="chat-input">
 
-                    <input
-                    type="text"
-                    id="messageInput"
-                    placeholder="Ask EventSync AI...">
+                    <input type="text" id="messageInput" placeholder="Ask EventSync AI...">
 
                     <button id="sendBtn" onclick="sendMessage()">
 
@@ -340,7 +267,8 @@
 
                 <div class="notification-list" id="notificationList">
                     <!-- Dynamically loaded from database -->
-                    <div class="notification-empty" style="text-align: center; padding: 30px 20px; color: #9ca3af; font-weight: 600; font-size: 14.5px;">
+                    <div class="notification-empty"
+                        style="text-align: center; padding: 30px 20px; color: #9ca3af; font-weight: 600; font-size: 14.5px;">
                         No notifications yet.
                     </div>
                 </div>

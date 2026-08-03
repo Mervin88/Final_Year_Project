@@ -29,6 +29,9 @@ document.getElementById("forgotForm").addEventListener("submit", async function(
         if (data.success) {
 
             if (data.console_fallback) {
+                // Determine the correct reset password page URL matching the user's active host/port dynamically
+                const resetUrl = window.location.href.replace("forgot-password.html", "reset-password.html") + `?token=${data.token}`;
+                
                 // Developer environment fallback
                 Swal.fire({
                     icon: "info",
@@ -37,8 +40,8 @@ document.getElementById("forgotForm").addEventListener("submit", async function(
                         Password reset link has been printed to the Flask terminal console.
                         <br><br>
                         <strong>Direct Test URL:</strong><br>
-                        <a href="${data.reset_url}" target="_blank" style="color:#c8a96b; word-break:break-all;">
-                            ${data.reset_url}
+                        <a href="${resetUrl}" target="_blank" style="color:#c8a96b; word-break:break-all;">
+                            ${resetUrl}
                         </a>
                     `,
                     confirmButtonColor: "#c8a96b",

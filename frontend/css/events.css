@@ -518,3 +518,103 @@ body{
     }
 
 }
+
+/* DARK THEME STYLING OVERRIDES */
+html.dark-theme body {
+    background: #0b0f19;
+    color: #f9fafb;
+}
+
+html.dark-theme .navbar {
+    background: #111827;
+    border-bottom: 1px solid #1f2937;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+html.dark-theme .navbar ul li a {
+    color: #d1d5db !important;
+}
+
+html.dark-theme .navbar ul li a:hover,
+html.dark-theme .navbar ul li a.active {
+    color: #c8a96b !important;
+}
+
+html.dark-theme .logo-dark {
+    color: #f9fafb !important;
+}
+
+html.dark-theme .hero {
+    background-color: #0b0f19;
+}
+
+html.dark-theme .search-box {
+    background: rgba(17, 24, 39, 0.85);
+    border-color: #1f2937;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+}
+
+html.dark-theme .search-box input {
+    background: #1f2937;
+    color: #f9fafb;
+    border-color: #374151;
+}
+
+html.dark-theme .filters button {
+    background: #111827;
+    color: #9ca3af;
+    border: 1px solid #1f2937;
+}
+
+html.dark-theme .filters button.active,
+html.dark-theme .filters button:hover {
+    background: #c8a96b;
+    color: #111827;
+}
+
+html.dark-theme .event-card {
+    background: #111827;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+html.dark-theme .event-content h2,
+html.dark-theme h1 {
+    color: #f9fafb !important;
+}
+
+html.dark-theme .event-content p {
+    color: #9ca3af !important;
+}
+
+/* Core Navigation Layout Override */
+.navbar {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    height: 90px !important;
+    padding: 0 80px !important;
+    box-sizing: border-box !important;
+}
+
+.logo-text {
+    display: inline-flex !important;
+    align-items: center !important;
+    font-size: 36px !important;
+    font-weight: 800 !important;
+    text-decoration: none !important;
+}
+
+.nav-links {
+    display: flex !important;
+    align-items: center !important;
+    gap: 55px !important;
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.nav-links li {
+    margin: 0 !important;
+    padding: 0 !important;
+}

@@ -285,3 +285,37 @@ body{
     }
 
 }
+
+/* Card Banner Hover Zoom */
+.event-card:hover .event-banner-img {
+    transform: scale(1.06);
+}
+
+/* DARK THEME STYLING OVERRIDES */
+html.dark-theme body {
+    background: #0b0f19;
+    color: #f9fafb;
+}
+
+html.dark-theme .event-card,
+html.dark-theme .empty-state,
+html.dark-theme .rejection-reason {
+    background: #111827;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+html.dark-theme .event-content h3,
+html.dark-theme .empty-state h3,
+html.dark-theme .content h1 {
+    color: #f9fafb;
+}
+
+html.dark-theme .event-content p,
+html.dark-theme .event-content small,
+html.dark-theme .empty-state p {
+    color: #9ca3af;
+}
+
+html.dark-theme .event-banner {
+    border-bottom-color: #1f2937;
+}

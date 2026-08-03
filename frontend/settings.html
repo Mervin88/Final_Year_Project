@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EventSync - Settings</title>
+    <link rel="stylesheet" href="css/settings.css">
+    <script>
+        // Immediately load dark mode setting to avoid flash of light theme
+        if (localStorage.getItem("theme") === "dark") {
+            document.documentElement.classList.add("dark-theme");
+        }
+    </script>
+</head>
+
+<body class="theme-transition">
+
+    <div class="dashboard-container">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div>
+                <h1 class="logo">EventSync</h1>
+                <ul class="menu">
+                    <li onclick="window.location.href='user-dashboard.html'">
+                        Dashboard
+                    </li>
+                    <li onclick="window.location.href='my-events.html'">
+                        My Events
+                    </li>
+                    <li onclick="window.location.href='create-event.html'">
+                        Create Event
+                    </li>
+                    <li onclick="window.location.href='planner.html'">
+                        Planner
+                    </li>
+                    <li onclick="window.location.href='venues.html'">
+                        Venues
+                    </li>
+                    <li onclick="window.location.href='communication.html'">
+                        Communication
+                    </li>
+                    <li class="active" onclick="window.location.href='settings.html'">
+                        Settings
+                    </li>
+                </ul>
+            </div>
+            <button class="logout-btn" onclick="logout()">
+                Logout
+            </button>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <div class="settings-header">
+                <h1>Account Settings</h1>
+                <p>Manage your account profile, email, and password security.</p>
+            </div>
+
+            <div class="settings-grid">
+                <!-- PROFILE CARD -->
+                <div class="settings-card">
+                    <h2>Personal Information</h2>
+                    <form id="profileForm">
+                        <div class="form-group">
+                            <label for="fullName">Full Name</label>
+                            <input type="text" id="fullName" required placeholder="John Doe">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" required placeholder="john@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="userRole">Account Role</label>
+                            <input type="text" id="userRole" disabled style="background-color: #f3f4f6; color: #6b7280; cursor: not-allowed;">
+                        </div>
+                        <button type="submit" class="save-btn">Save Profile</button>
+                    </form>
+                </div>
+
+                <!-- SECURITY CARD -->
+                <div class="settings-card">
+                    <h2>Change Password</h2>
+                    <form id="passwordForm">
+                        <div class="form-group">
+                            <label for="currentPassword">Current Password</label>
+                            <input type="password" id="currentPassword" placeholder="••••••••">
+                        </div>
+                        <div class="form-group">
+                            <label for="newPassword">New Password</label>
+                            <input type="password" id="newPassword" placeholder="••••••••">
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirm New Password</label>
+                            <input type="password" id="confirmPassword" placeholder="••••••••">
+                        </div>
+                        <button type="submit" class="save-btn font-bold">Update Password</button>
+                    </form>
+                </div>
+
+                <!-- APPEARANCE CARD -->
+                <div class="settings-card">
+                    <h2>Appearance Preferences</h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
+                        <div>
+                            <span style="font-weight: 600; display: block; margin-bottom: 4px; font-size: 15px;">Dark Theme</span>
+                            <span style="font-size: 13px; color: #6b7280;" class="theme-desc">Switch between light and dark dashboard layouts.</span>
+                        </div>
+                        <label class="switch" style="position: relative; display: inline-block; width: 50px; height: 26px;">
+                            <input type="checkbox" id="themeCheckbox">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/settings.js"></script>
+
+</body>
+</html>

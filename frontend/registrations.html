@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>My Registrations | EventSync</title>
+
+    <link rel="stylesheet" href="css/events.css">
+    <script>
+        // Immediately load dark mode setting to avoid flash of light theme
+        if (localStorage.getItem("theme") === "dark") {
+            document.documentElement.classList.add("dark-theme");
+        }
+    </script>
+
+</head>
+
+<body class="theme-transition">
+
+    <!-- NAVBAR -->
+
+    <nav class="navbar">
+        <a href="landing.html" class="logo-text">
+            <span class="logo-dark">Event</span><span class="logo-gold">Sync</span>
+        </a>
+        <ul class="nav-links">
+            <li style="display: none;"><a href="participant-dashboard.html" id="navDashboard">Dashboard</a></li>
+            <li><a href="events.html" id="navEvents">Events</a></li>
+            <li><a href="venues.html" id="navVenues">Venues</a></li>
+            <li style="display: none;"><a href="registrations.html" id="navRegistrations">My Registrations</a></li>
+            <li style="display: none;"><a href="participant-settings.html" id="navSettings">Settings</a></li>
+            <li><a href="login.html" id="navLogin" class="login-btn">Login</a></li>
+        </ul>
+    </nav>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const username = localStorage.getItem("username");
+            const role = (localStorage.getItem("role") || "").toLowerCase();
+
+            const navDashboard = document.getElementById("navDashboard");
+            const navRegistrations = document.getElementById("navRegistrations");
+            const navSettings = document.getElementById("navSettings");
+            const navLogin = document.getElementById("navLogin");
+
+            if (username) {
+                if (navLogin) {
+                    navLogin.parentElement.style.display = "block";
+                    navLogin.textContent = "Logout";
+                    navLogin.href = "#";
+                    navLogin.onclick = (e) => {
+                        e.preventDefault();
+                        localStorage.removeItem("username");
+                        localStorage.removeItem("role");
+                        localStorage.removeItem("userRole");
+                        localStorage.removeItem("selectedVenue");
+                        localStorage.removeItem("eventDraft");
+                        localStorage.removeItem("eventTimeline");
+                        localStorage.removeItem("editEventId");
+                        localStorage.removeItem("compareVenues");
+                        window.location.href = "login.html";
+                    };
+                }
+                if (navDashboard) {
+                    navDashboard.parentElement.style.display = "block";
+                    if (role === "participant") {
+                        navDashboard.href = "participant-dashboard.html";
+                    } else if (role === "vendor") {
+                        navDashboard.href = "vendor-dashboard.html";
+                    } else if (role === "admin") {
+                        navDashboard.href = "admin-dashboard.html";
+                    } else {
+                        navDashboard.href = "user-dashboard.html";
+                    }
+                }
+                if (role === "organizer" || role === "vendor" || role === "admin") {
+                    if (navRegistrations) navRegistrations.parentElement.style.display = "none";
+                    if (navSettings) {
+                        navSettings.parentElement.style.display = "block";
+                        navSettings.href = "settings.html";
+                    }
+                } else {
+                    if (navRegistrations) navRegistrations.parentElement.style.display = "block";
+                    if (navSettings) {
+                        navSettings.parentElement.style.display = "block";
+                        navSettings.href = "participant-settings.html";
+                    }
+                }
+            } else {
+                if (navLogin) {
+                    navLogin.parentElement.style.display = "block";
+                    navLogin.textContent = "Login";
+                    navLogin.href = "login.html";
+                    navLogin.onclick = null;
+                }
+                if (navDashboard) navDashboard.parentElement.style.display = "none";
+                if (navRegistrations) navRegistrations.parentElement.style.display = "none";
+                if (navSettings) navSettings.parentElement.style.display = "none";
+            }
+
+            const pagePath = window.location.pathname.split("/").pop();
+            const navLinks = document.querySelectorAll(".nav-links a");
+            navLinks.forEach(link => {
+                const linkPath = link.getAttribute("href");
+                if (linkPath === pagePath) {
+                    link.classList.add("active");
+                } else {
+                    link.classList.remove("active");
+                }
+            });
+        });
+    </script>
+
+    <!-- HERO -->
+
+    <section class="hero">
+
+        <div class="hero-content">
+
+            <h1>
+                My Registered Events
+            </h1>
+
+            <p>
+                Keep track of all corporate events you have signed up to attend.
+            </p>
+
+        </div>
+
+    </section>
+
+    <!-- FILTERS -->
+
+    <section class="filters" style="padding-top: 30px;">
+        <button class="active" onclick="filterRegistrations('All', this)">All</button>
+        <button onclick="filterRegistrations('Upcoming', this)">🟢 Upcoming</button>
+        <button onclick="filterRegistrations('Completed', this)">🏁 Completed</button>
+    </section>
+
+    <!-- EVENTS GRID -->
+
+    <section class="events-grid">
+        <!-- Rendered dynamically -->
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/registrations.js"></script>
+
+</body>
+
+</html>

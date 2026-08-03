@@ -49,7 +49,7 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
                 }else if(data.role === "Organizer"){
                     window.location.href = "user-dashboard.html";
                 }else{
-                    window.location.href = "events.html";
+                    window.location.href = "participant-dashboard.html";
                 }
             }
 

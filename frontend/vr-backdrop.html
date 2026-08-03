@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Venue Backdrop Visualizer</title>
+    <link rel="stylesheet" href="css/vr-backdrop.css">
+</head>
+<body>
+    <div class="vr-container">
+        <!-- NAVBAR -->
+        <header class="vr-navbar">
+            <h1 class="vr-logo">Event<span>Sync</span></h1>
+            <div class="vr-nav-center" id="eventTitleDisplay">Loading Event Context...</div>
+            <div class="vr-nav-actions">
+                <button class="btn-secondary" onclick="backToPlanner()">Planner</button>
+                <button class="btn-primary" onclick="saveBackdropSetup()">Save Backdrop Design</button>
+            </div>
+        </header>
+
+        <!-- WORKSPACE -->
+        <main class="vr-workspace">
+            <!-- SETTINGS SIDEBAR -->
+            <aside class="vr-settings-panel">
+                <div>
+                    <h2 class="panel-section-title">Ballroom Background</h2>
+                    <div style="display: flex; flex-direction: column; gap: 20px; margin-bottom: 25px;">
+                        <div class="control-group">
+                            <label class="control-label" for="ballroomSelect">Select Ballroom</label>
+                            <select id="ballroomSelect" style="width: 100%; padding: 10px 12px; background: rgba(17, 24, 39, 0.7); border: 1px solid #c8a96b; border-radius: 8px; color: #fff; outline: none; font-size: 14px; cursor: pointer;">
+                                <option value="eq_grand_ballroom.jpg">EQ Grand Ballroom</option>
+                                <option value="glass_greenhouse.jpg">Glass Greenhouse</option>
+                                <option value="palace_classic.jpg">Palace Classic</option>
+                                <option value="modern_gold.jpg">Modern Gold</option>
+                                <option value="luxury_dome.jpg">Luxury Dome</option>
+                                <option value="sleek_chandelier.jpg">Sleek Chandelier</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="panel-section-title">Backdrop Properties</h2>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        <!-- Width Slider -->
+                        <div class="control-group">
+                            <label class="control-label">
+                                Width
+                                <span class="val-label" id="widthVal">500px</span>
+                            </label>
+                            <input type="range" class="control-slider" id="widthSlider" min="200" max="800" value="500">
+                        </div>
+
+                        <!-- Height Slider -->
+                        <div class="control-group">
+                            <label class="control-label">
+                                Height
+                                <span class="val-label" id="heightVal">220px</span>
+                            </label>
+                            <input type="range" class="control-slider" id="heightSlider" min="100" max="400" value="220">
+                        </div>
+
+                        <!-- Scale Slider -->
+                        <div class="control-group">
+                            <label class="control-label">
+                                Scale Zoom
+                                <span class="val-label" id="scaleVal">1.0x</span>
+                            </label>
+                            <input type="range" class="control-slider" id="scaleSlider" min="50" max="200" value="100">
+                        </div>
+
+                        <!-- Opacity Slider -->
+                        <div class="control-group">
+                            <label class="control-label">
+                                Opacity
+                                <span class="val-label" id="opacityVal">100%</span>
+                            </label>
+                            <input type="range" class="control-slider" id="opacitySlider" min="10" max="100" value="100">
+                        </div>
+
+                        <!-- Selected Prop Info and Delete -->
+                        <div class="control-group" id="selectedPropControlGroup" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1); display: none;">
+                            <label class="control-label" style="margin-bottom: 8px;">
+                                Selected Element:
+                                <span class="val-label" id="selectedPropName" style="color: #c8a96b; font-weight: bold;">None</span>
+                            </label>
+                            <button class="btn-secondary" onclick="deleteSelectedProp()" style="width: 100%; padding: 10px; background: #ef4444; border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 13.5px;" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">🗑️ Delete Selected</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="panel-section-title">Visualizer Help</h2>
+                    <div class="control-group">
+                        <label class="control-checkbox-label">
+                            <input type="checkbox" class="control-checkbox" id="guidelineToggle">
+                            Show Stage Guideline
+                        </label>
+                    </div>
+                    <p style="font-size: 12px; color: #6b7280; line-height: 1.5; margin-top: 15px;">
+                        💡 Select a color theme at the bottom, pick a backdrop card, and then drag it directly inside the ballroom photo to position it precisely onto the stage!
+                    </p>
+                </div>
+            </aside>
+
+            <!-- 3D BALLROOM VIEW -->
+            <section class="vr-canvas-container">
+                <div class="vr-venue-canvas" id="venueCanvas">
+                    <!-- Guidelines -->
+                    <div class="stage-guideline" id="stageGuideline" style="display: none;">STAGE REGION</div>
+                </div>
+            </section>
+        </main>
+
+        <!-- BOTTOM CATALOG PANEL -->
+        <footer class="vr-catalog-panel">
+            <div class="catalog-filters">
+                <button class="filter-chip active" onclick="filterCatalog('all')">All Themes</button>
+                <button class="filter-chip" onclick="filterCatalog('beige')">Beige</button>
+                <button class="filter-chip" onclick="filterCatalog('white')">White/Grey</button>
+                <button class="filter-chip" onclick="filterCatalog('pink')">Pink</button>
+                <button class="filter-chip" onclick="filterCatalog('purple')">Purple</button>
+                <button class="filter-chip" onclick="filterCatalog('red')">Red</button>
+                <button class="filter-chip" onclick="filterCatalog('custom')">Custom Props</button>
+            </div>
+            
+            <div class="backdrop-slider" id="backdropSlider">
+                <!-- Cards will be populated dynamically by JS -->
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/vr-backdrop.js?v=4"></script>
+</body>
+</html>

@@ -2,6 +2,22 @@
 // GET EVENT DATA
 // ==========================
 
+// Intelligently check if the user is entering the planner from a demo session from outside pages.
+// If they click the Planner navbar link directly from other pages, we reset the demo mode
+// so they can see the onboarding/demo popup again.
+const referrer = document.referrer || "";
+const isDemoModeOnLoad = localStorage.getItem("isDemoMode") === "true";
+const fromAllowedFlow = referrer.includes("vr-backdrop.html") || referrer.includes("planner.html");
+
+if (isDemoModeOnLoad && !fromAllowedFlow) {
+    localStorage.removeItem("eventDraft");
+    localStorage.removeItem("selectedVenue");
+    localStorage.removeItem("eventTimeline");
+    localStorage.removeItem("eventLayout");
+    localStorage.removeItem("eventBackdropSetup");
+    localStorage.removeItem("isDemoMode");
+}
+
 let eventData = JSON.parse(localStorage.getItem("eventDraft"));
 let selectedVenue = localStorage.getItem("selectedVenue");
 
@@ -38,10 +54,10 @@ window.loadDemoEvent = function () {
         event_date: "2026-10-15",
         start_time: "09:00",
         end_time: "17:00",
-        participants: 120,
+        participants: 100,
         preferred_location: "Kuala Lumpur",
         budget: 15000,
-        required_capacity: 120,
+        required_capacity: 100,
         venue_type: "Indoor",
         parking_required: 1,
         wifi_required: 1,
@@ -71,7 +87,46 @@ window.loadDemoEvent = function () {
     window.location.reload();
 };
 
-function initializeWorkspace() {
+async function initializeWorkspace() {
+    // If editEventId is set, fetch the event details from the server to ensure eventData is fully in sync
+    const editEventId = localStorage.getItem("editEventId");
+    if (editEventId) {
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/event/${editEventId}`);
+            const dbEvent = await response.json();
+            if (dbEvent && dbEvent.id) {
+                eventData = {
+                    title: dbEvent.title,
+                    category: dbEvent.category,
+                    description: dbEvent.description,
+                    event_date: dbEvent.event_date,
+                    event_date_end: dbEvent.event_date_end,
+                    start_time: dbEvent.start_time,
+                    end_time: dbEvent.end_time,
+                    participants: dbEvent.participants,
+                    preferred_location: dbEvent.preferred_location,
+                    budget: dbEvent.budget,
+                    required_capacity: dbEvent.required_capacity,
+                    venue_type: dbEvent.venue_type,
+                    parking_required: dbEvent.parking_required,
+                    wifi_required: dbEvent.wifi_required,
+                    projector_required: dbEvent.projector_required,
+                    catering_required: dbEvent.catering_required,
+                    sound_system_required: dbEvent.sound_system_required,
+                    stage_setup_required: dbEvent.stage_setup_required,
+                    other_requirements: dbEvent.other_requirements,
+                    selected_venue: dbEvent.selected_venue,
+                    privacy: dbEvent.privacy
+                };
+                localStorage.setItem("eventDraft", JSON.stringify(eventData));
+                localStorage.setItem("selectedVenue", dbEvent.selected_venue);
+                selectedVenue = dbEvent.selected_venue;
+            }
+        } catch (e) {
+            console.error("Error syncing event details:", e);
+        }
+    }
+
     // ==========================
     // EVENT SUMMARY
     // ==========================
@@ -80,13 +135,98 @@ function initializeWorkspace() {
     document.getElementById("capacity").innerText = eventData.required_capacity + " Attendees";
     document.getElementById("venueType").innerText = eventData.venue_type;
 
+    // Show Demo badge if in Demo Mode
+    if (localStorage.getItem("isDemoMode") === "true") {
+        showDemoBadge();
+    }
+
     // ==========================
     // VENUE LAYOUT DESIGN SPACE
     // ==========================
-    initializeLayout();
+    await initializeLayout();
+
+    initCapacityTargetSelector();
 
     // Start timeline initialization
-    initTimeline();
+    await initTimeline();
+
+    // Update 3D Backdrop Preview Card Theme Badge & Thumbnail
+    updateBackdropPreviewCard();
+}
+
+function updateBackdropPreviewCard() {
+    const badge = document.getElementById("backdropThemeBadge");
+    const thumbnail = document.querySelector(".backdrop-preview-thumbnail");
+    if (!badge && !thumbnail) return;
+
+    let themeName = "No Theme";
+    const setupRaw = localStorage.getItem("eventBackdropSetup") || (eventData ? eventData.backdrop_setup : null);
+
+    if (setupRaw && setupRaw !== "null" && setupRaw !== "None" && setupRaw !== "") {
+        try {
+            const parsed = JSON.parse(setupRaw);
+            themeName = parsed.theme || "Custom Theme";
+        } catch (e) {
+            themeName = setupRaw.replace(/"/g, "") || "Custom Theme";
+        }
+    }
+
+    if (badge) {
+        badge.innerText = themeName;
+    }
+
+    if (thumbnail) {
+        let coverImg = "https://images.unsplash.com/photo-1506157786151-b8491531f063?q=80&w=1200";
+        const cleanTheme = themeName.toLowerCase();
+        if (cleanTheme.includes("corporate") || cleanTheme.includes("elegance")) {
+            coverImg = "https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=1200";
+        } else if (cleanTheme.includes("tech") || cleanTheme.includes("summit") || cleanTheme.includes("cyber") || cleanTheme.includes("ai")) {
+            coverImg = "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=1200";
+        } else if (cleanTheme.includes("vintage") || cleanTheme.includes("celebration") || cleanTheme.includes("classic") || cleanTheme.includes("wedding")) {
+            coverImg = "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?q=80&w=1200";
+        }
+        thumbnail.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${coverImg}')`;
+    }
+}
+
+function initCapacityTargetSelector() {
+    const selector = document.getElementById("layoutTargetCapacity");
+    if (!selector) return;
+
+    selector.innerHTML = "";
+    const cap = eventData ? (parseInt(eventData.required_capacity) || 100) : 100;
+
+    // Full options range from 100 Pax to 1000 Pax in steps of 100
+    let options = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];
+
+    // Ensure current capacity value is in options list
+    if (!options.includes(cap)) {
+        options.push(cap);
+        options.sort((a, b) => a - b);
+    }
+
+    options.forEach(val => {
+        const opt = document.createElement("option");
+        opt.value = val;
+        opt.innerText = val + " Pax";
+        if (val === cap) {
+            opt.selected = true;
+        }
+        selector.appendChild(opt);
+    });
+
+    selector.addEventListener("change", (e) => {
+        const newCap = parseInt(e.target.value);
+        eventData.required_capacity = newCap;
+        localStorage.setItem("eventDraft", JSON.stringify(eventData));
+
+        const capDisplay = document.getElementById("capacity");
+        if (capDisplay) {
+            capDisplay.innerText = newCap + " Attendees";
+        }
+
+        applyLayoutPreset(lastAppliedPreset || 'banquet');
+    });
 }
 
 // ==========================
@@ -339,6 +479,24 @@ async function saveEvent() {
 
     try {
 
+        const mainCanvasForWidth = document.querySelector(".planner-right > .planner-card > .layout-preview-container > .layout-preview");
+        const currentBaseWidth = mainCanvasForWidth ? mainCanvasForWidth.clientWidth : 600;
+
+        const storedLayout = localStorage.getItem("eventLayout") || "[]";
+        let parsedLayoutElements = [];
+        try {
+            const parsed = JSON.parse(storedLayout);
+            parsedLayoutElements = parsed && Array.isArray(parsed.elements) ? 
+            parsed.elements : (Array.isArray(parsed) ? parsed : []);
+        } catch (e) {
+            parsedLayoutElements = [];
+        }
+
+        const layoutObj = {
+            canvasWidth: currentBaseWidth,
+            elements: parsedLayoutElements
+        };
+
         const payload = {
 
             ...eventData,
@@ -348,7 +506,11 @@ async function saveEvent() {
             created_by:
                 localStorage.getItem("username") || "Guest",
 
-            timeline: JSON.stringify(timelineEvents)
+            timeline: JSON.stringify(timelineEvents),
+
+            layout: JSON.stringify(layoutObj),
+
+            backdrop_setup: localStorage.getItem("eventBackdropSetup") || "null"
 
         };
 
@@ -412,6 +574,7 @@ async function saveEvent() {
                     localStorage.removeItem("selectedVenue");
                     localStorage.removeItem("eventTimeline");
                     localStorage.removeItem("eventLayout");
+                    localStorage.removeItem("eventBackdropSetup");
 
                     window.location.href = "my-events.html";
 
@@ -444,6 +607,7 @@ async function saveEvent() {
                     localStorage.removeItem("selectedVenue");
                     localStorage.removeItem("eventTimeline");
                     localStorage.removeItem("eventLayout");
+                    localStorage.removeItem("eventBackdropSetup");
 
                     window.location.href = "my-events.html";
 
@@ -499,21 +663,54 @@ let dragStartX = 0;
 let dragStartY = 0;
 let elementStartX = 0;
 let elementStartY = 0;
+let plannerZoom = 1.0;
 
-function initializeLayout() {
-    const mainCanvas = document.querySelector(".planner-right > .planner-card > .layout-preview");
+async function initializeLayout() {
+    const mainCanvas = document.querySelector(".planner-right > .planner-card > .layout-preview-container > .layout-preview");
     if (!mainCanvas) return;
 
     // Load from cache if exists
-    const cachedLayout = localStorage.getItem("eventLayout");
+    let cachedLayout = localStorage.getItem("eventLayout");
+    if (!cachedLayout) {
+        const editEventId = localStorage.getItem("editEventId");
+        if (editEventId) {
+            try {
+                const response = await fetch(`http://127.0.0.1:5000/event/${editEventId}`);
+                const dbEvent = await response.json();
+                if (dbEvent.layout && dbEvent.layout !== "[]" && dbEvent.layout !== "") {
+                    try {
+                        const parsed = JSON.parse(dbEvent.layout);
+                        const elems = parsed && Array.isArray(parsed.elements) ? parsed.elements : (Array.isArray(parsed) ? parsed : []);
+                        localStorage.setItem("eventLayout", JSON.stringify(elems));
+                        cachedLayout = JSON.stringify(elems);
+                    } catch (parseErr) {
+                        localStorage.setItem("eventLayout", dbEvent.layout);
+                        cachedLayout = dbEvent.layout;
+                    }
+                }
+            } catch (e) {
+                console.error("Error fetching db event layout:", e);
+            }
+        }
+    }
+
     if (cachedLayout) {
         try {
-            layoutElements = JSON.parse(cachedLayout);
+            const parsed = JSON.parse(cachedLayout);
+            if (parsed && Array.isArray(parsed.elements)) {
+                layoutElements = parsed.elements;
+            } else if (Array.isArray(parsed)) {
+                layoutElements = parsed;
+            } else {
+                layoutElements = [];
+            }
 
             // Verify if cached layout table count matches expected capacity table count
             const attendeeCount = eventData ? (parseInt(eventData.required_capacity) || 50) : 50;
             const tablesNeeded = Math.ceil(attendeeCount / 10);
-            const cachedTablesCount = layoutElements.filter(el => el.type === "table").length;
+            const cachedTablesCount = Array.isArray(layoutElements)
+                ? layoutElements.filter(el => el.type === "table").length
+                : 0;
 
             if (cachedTablesCount !== tablesNeeded) {
                 console.log(`Table quantity mismatch (cached: ${cachedTablesCount}, needed: ${tablesNeeded}). Regenerating layout.`);
@@ -521,13 +718,14 @@ function initializeLayout() {
             }
         } catch (e) {
             console.error("Error parsing cached layout:", e);
+            layoutElements = [];
         }
     }
 
     // Generate defaults if empty
     if (layoutElements.length === 0) {
-        // 1. Add Stage at top center
-        const canvasWidth = mainCanvas.clientWidth || 600;
+        // Use the dynamic virtual canvas width based on capacity for layout coordinate math
+        const canvasWidth = getWorkspaceWidth();
         const stageWidth = 300;
         layoutElements.push({
             id: "stage",
@@ -542,10 +740,20 @@ function initializeLayout() {
         const tablesNeeded = Math.ceil(attendeeCount / 10);
 
         const tableWidth = 120;
-        const spacingX = 150;
-        const spacingY = 150;
-        const startTop = 150;
-        const cols = Math.floor((canvasWidth - 40) / spacingX) || 3;
+        let spacingX = 200;
+        let spacingY = 130;
+        let startTop = 150;
+
+        // Use 2 columns by default (as in image 2), and wrap to 3 or 4 columns for larger events to avoid bottom overflow
+        let cols = 2;
+        if (tablesNeeded > 12) {
+            cols = 3;
+            spacingX = 180;
+        }
+        if (tablesNeeded > 18) {
+            cols = 4;
+            spacingX = 160;
+        }
 
         for (let i = 1; i <= tablesNeeded; i++) {
             const index = i - 1;
@@ -554,8 +762,7 @@ function initializeLayout() {
 
             // Calculate coordinates to center tables grid row
             const totalColsThisRow = Math.min(cols, tablesNeeded - row * cols);
-            const rowWidth = totalColsThisRow * spacingX;
-            const rowStartLeft = (canvasWidth - rowWidth) / 2 + 15;
+            const rowStartLeft = (canvasWidth - (totalColsThisRow - 1) * spacingX - tableWidth) / 2;
 
             const x = Math.floor(rowStartLeft + col * spacingX);
             const y = Math.floor(startTop + row * spacingY);
@@ -572,7 +779,7 @@ function initializeLayout() {
     }
 
     // Render in main canvas
-    renderLayout(mainCanvas);
+    renderLayout(mainCanvas, true);
 
     // Bind HTML5 Drop events to main canvas
     bindCanvasEvents(mainCanvas);
@@ -581,9 +788,71 @@ function initializeLayout() {
     initSidebarComponents();
 }
 
-function renderLayout(canvas) {
+function getWorkspaceWidth() {
+    const attendeeCount = eventData ? (parseInt(eventData.required_capacity) || 50) : 50;
+    const tablesNeeded = Math.ceil(attendeeCount / 10);
+    return Math.max(1200, Math.min(2600, 1200 + (tablesNeeded - 12) * 45));
+}
+
+function getWorkspaceHeight() {
+    let maxY = 0;
+    layoutElements.forEach(el => {
+        const height = el.type === 'stage' ? 64 : (el.type === 'table' ? 120 : 48);
+        if (el.y + height > maxY) {
+            maxY = el.y + height;
+        }
+    });
+    return Math.max(950, maxY + 100); // 100px bottom padding, minimum 950px
+}
+
+function renderLayout(canvas, isMinimized = false) {
     if (!canvas) return;
+
+    const workspaceWidth = getWorkspaceWidth();
+    const workspaceHeight = getWorkspaceHeight();
+    const containerWidth = canvas.clientWidth || 500;
+
+    // Add margin buffer to scale calculation when minimized to prevent component clipping at edges
+    const scale = isMinimized ? (containerWidth / (workspaceWidth + 120)) : plannerZoom;
+
     canvas.innerHTML = "";
+
+    const canvasDiv = document.createElement("div");
+    canvasDiv.className = "layout-canvas";
+    canvasDiv.style.width = workspaceWidth + "px";
+    canvasDiv.style.height = workspaceHeight + "px";
+    canvasDiv.style.position = "absolute";
+
+    // Center it visually when minimized
+    const leftMargin = isMinimized ? (60 * scale) : 0;
+    const topMargin = isMinimized ? (40 * scale) : 0;
+    canvasDiv.style.left = leftMargin + "px";
+    canvasDiv.style.top = topMargin + "px";
+
+    canvasDiv.style.transform = `scale(${scale})`;
+    canvasDiv.style.transformOrigin = "top left";
+
+    canvas.style.position = "relative";
+    canvas.style.overflow = isMinimized ? "hidden" : "auto";
+    canvas.style.height = (isMinimized ? (workspaceHeight + 80) : workspaceHeight) * scale + "px";
+
+    if (isMinimized) {
+        canvas.style.background = "transparent";
+        canvas.style.border = "";
+        canvas.style.width = "100%";
+    } else {
+        canvas.style.background = "#f9fafb";
+        canvas.style.width = "100%";
+
+        // Add a spacer to force natural scrollbar ranges for the scaled canvas size
+        const spacer = document.createElement("div");
+        spacer.style.width = (workspaceWidth * scale) + "px";
+        spacer.style.height = (workspaceHeight * scale) + "px";
+        spacer.style.pointerEvents = "none";
+        canvas.appendChild(spacer);
+    }
+
+    canvas.appendChild(canvasDiv);
 
     layoutElements.forEach(el => {
         if (el.type === 'stage') {
@@ -594,10 +863,12 @@ function renderLayout(canvas) {
             stageDiv.style.top = el.y + "px";
             stageDiv.innerText = el.label;
 
-            stageDiv.addEventListener("mousedown", (e) => startDragging(e, el.id));
-            stageDiv.addEventListener("touchstart", (e) => startDragging(e, el.id), { passive: false });
+            if (!isMinimized) {
+                stageDiv.addEventListener("mousedown", (e) => startDragging(e, el.id));
+                stageDiv.addEventListener("touchstart", (e) => startDragging(e, el.id), { passive: false });
+            }
 
-            canvas.appendChild(stageDiv);
+            canvasDiv.appendChild(stageDiv);
         } else if (el.type === 'table') {
             const tableDiv = document.createElement("div");
             tableDiv.className = "table-wrapper";
@@ -614,10 +885,12 @@ function renderLayout(canvas) {
                 </div>
             `;
 
-            tableDiv.addEventListener("mousedown", (e) => startDragging(e, el.id));
-            tableDiv.addEventListener("touchstart", (e) => startDragging(e, el.id), { passive: false });
+            if (!isMinimized) {
+                tableDiv.addEventListener("mousedown", (e) => startDragging(e, el.id));
+                tableDiv.addEventListener("touchstart", (e) => startDragging(e, el.id), { passive: false });
+            }
 
-            canvas.appendChild(tableDiv);
+            canvasDiv.appendChild(tableDiv);
         } else if (el.type === 'component') {
             const compDiv = document.createElement("div");
             compDiv.className = "component-wrapper";
@@ -625,21 +898,32 @@ function renderLayout(canvas) {
             compDiv.style.left = el.x + "px";
             compDiv.style.top = el.y + "px";
 
+            if (el.rotation === 90 || el.rotation === 270) {
+                compDiv.classList.add("rotated");
+            }
+
             compDiv.innerHTML = `
                 <span>${el.label}</span>
-                <span class="delete-comp-btn" onclick="deleteComponent('${el.id}', event)">&times;</span>
+                ${!isMinimized ? `
+                    <div class="comp-actions">
+                        <span class="rotate-comp-btn" onclick="rotateComponent('${el.id}', event)">↻</span>
+                        <span class="delete-comp-btn" onclick="deleteComponent('${el.id}', event)">&times;</span>
+                    </div>
+                ` : ''}
             `;
 
-            compDiv.addEventListener("mousedown", (e) => {
-                if (e.target.classList.contains('delete-comp-btn')) return;
-                startDragging(e, el.id);
-            });
-            compDiv.addEventListener("touchstart", (e) => {
-                if (e.target.classList.contains('delete-comp-btn')) return;
-                startDragging(e, el.id);
-            }, { passive: false });
+            if (!isMinimized) {
+                compDiv.addEventListener("mousedown", (e) => {
+                    if (e.target.classList.contains('delete-comp-btn') || e.target.classList.contains('rotate-comp-btn')) return;
+                    startDragging(e, el.id);
+                });
+                compDiv.addEventListener("touchstart", (e) => {
+                    if (e.target.classList.contains('delete-comp-btn') || e.target.classList.contains('rotate-comp-btn')) return;
+                    startDragging(e, el.id);
+                }, { passive: false });
+            }
 
-            canvas.appendChild(compDiv);
+            canvasDiv.appendChild(compDiv);
         }
     });
 }
@@ -650,6 +934,16 @@ function startDragging(e, elementId) {
     if (!activeDragElement) return;
 
     activeCanvas = e.currentTarget.closest(".layout-preview");
+
+    // Dynamic width & height calculation from DOM
+    const domEl = document.querySelector(`[data-layout-id="${elementId}"]`);
+    if (domEl) {
+        activeDragElement.width = domEl.offsetWidth;
+        activeDragElement.height = domEl.offsetHeight;
+    } else {
+        activeDragElement.width = activeDragElement.type === 'stage' ? 300 : (activeDragElement.type === 'component' ? 150 : 120);
+        activeDragElement.height = activeDragElement.type === 'stage' ? 64 : (activeDragElement.type === 'component' ? 48 : 120);
+    }
 
     const clientX = e.clientX || (e.touches && e.touches[0] && e.touches[0].clientX);
     const clientY = e.clientY || (e.touches && e.touches[0] && e.touches[0].clientY);
@@ -674,28 +968,22 @@ function dragMove(e) {
     const clientY = e.clientY || (e.touches && e.touches[0] && e.touches[0].clientY);
     if (clientX === undefined || clientY === undefined) return;
 
-    const dx = clientX - dragStartX;
-    const dy = clientY - dragStartY;
+    const isModal = activeCanvas && !!activeCanvas.closest("#modalLayoutPreview");
+    const currentScale = isModal ? plannerZoom : 1.0;
+    const dx = (clientX - dragStartX) / currentScale;
+    const dy = (clientY - dragStartY) / currentScale;
 
     let newX = elementStartX + dx;
     let newY = elementStartY + dy;
 
-    // Boundary check relative to parent canvas
-    const canvas = activeCanvas || document.querySelector(".layout-preview");
-    if (!canvas) return;
+    // Use dynamic width/height read during startDragging
+    let elWidth = activeDragElement.width || 120;
+    let elHeight = activeDragElement.height || 120;
 
-    let elWidth = 120;
-    let elHeight = 120;
-    if (activeDragElement.type === 'stage') {
-        elWidth = 300;
-        elHeight = 64;
-    } else if (activeDragElement.type === 'component') {
-        elWidth = 150;
-        elHeight = 48;
-    }
-
-    newX = Math.max(0, Math.min(newX, canvas.clientWidth - elWidth));
-    newY = Math.max(0, Math.min(newY, canvas.scrollHeight - elHeight));
+    const maxW = getWorkspaceWidth();
+    const maxH = 3000;
+    newX = Math.max(20, Math.min(newX, maxW - elWidth - 20));
+    newY = Math.max(20, Math.min(newY, maxH - elHeight - 20));
 
     activeDragElement.x = newX;
     activeDragElement.y = newY;
@@ -734,10 +1022,52 @@ window.deleteComponent = function (id, event) {
     layoutElements = layoutElements.filter(el => el.id !== id);
     localStorage.setItem("eventLayout", JSON.stringify(layoutElements));
 
-    const mainCanvas = document.querySelector(".planner-right > .planner-card > .layout-preview");
-    if (mainCanvas) renderLayout(mainCanvas);
+    const mainCanvas = document.querySelector(".planner-right > .planner-card > .layout-preview-container > .layout-preview");
+    if (mainCanvas) renderLayout(mainCanvas, true);
 
     syncModalPreview();
+};
+
+window.rotateComponent = function (id, event) {
+    if (event) event.stopPropagation();
+    const el = layoutElements.find(item => item.id === id);
+    if (el) {
+        // Toggle rotation
+        const prevRotation = el.rotation || 0;
+        const nextRotation = (prevRotation + 90) % 360;
+        el.rotation = nextRotation;
+
+        // Find DOM element to get current size before rendering
+        const domEl = document.querySelector(`[data-layout-id="${id}"]`);
+        if (domEl) {
+            const currentW = domEl.offsetWidth;
+            const currentH = domEl.offsetHeight;
+
+            // Swap size dimensions because rotation toggles orientation
+            const newW = currentH;
+            const newH = currentW;
+
+            const maxW = getWorkspaceWidth();
+            const maxH = 3000;
+
+            // Clamp within layout bounds
+            if (el.x + newW > maxW) {
+                el.x = maxW - newW;
+            }
+            if (el.y + newH > maxH) {
+                el.y = maxH - newH;
+            }
+            if (el.x < 0) el.x = 0;
+            if (el.y < 0) el.y = 0;
+        }
+
+        localStorage.setItem("eventLayout", JSON.stringify(layoutElements));
+
+        const mainCanvas = document.querySelector(".planner-right > .planner-card > .layout-preview-container > .layout-preview");
+        if (mainCanvas) renderLayout(mainCanvas, true);
+
+        syncModalPreview();
+    }
 };
 
 function initSidebarComponents() {
@@ -753,8 +1083,15 @@ function initSidebarComponents() {
 function bindCanvasEvents(canvas) {
     if (!canvas) return;
 
+    let lastDragX = 0;
+    let lastDragY = 0;
+
     canvas.addEventListener("dragover", (e) => {
         e.preventDefault();
+        if (e.clientX || e.clientY) {
+            lastDragX = e.clientX;
+            lastDragY = e.clientY;
+        }
     });
 
     canvas.addEventListener("drop", (e) => {
@@ -763,11 +1100,22 @@ function bindCanvasEvents(canvas) {
         if (!componentName) return;
 
         const rect = canvas.getBoundingClientRect();
-        let x = e.clientX - rect.left + canvas.scrollLeft - 75;
-        let y = e.clientY - rect.top + canvas.scrollTop - 24;
+        const workspaceWidth = getWorkspaceWidth();
 
-        x = Math.max(0, Math.min(x, canvas.clientWidth - 150));
-        y = Math.max(0, Math.min(y, canvas.scrollHeight - 48));
+        // Modal canvas is displayed at custom scale, dashboard is scaled
+        const isModal = !!canvas.closest("#modalLayoutPreview");
+        const scale = isModal ? plannerZoom : (rect.width / workspaceWidth);
+
+        const scrollLeft = canvas.scrollLeft || 0;
+        const scrollTop = canvas.scrollTop || 0;
+
+        let x = (lastDragX - rect.left + scrollLeft) / scale - 75;
+        let y = (lastDragY - rect.top + scrollTop) / scale - 24;
+
+        const maxW = getWorkspaceWidth();
+        const maxH = 3000;
+        x = Math.max(20, Math.min(x, maxW - 150 - 20));
+        y = Math.max(20, Math.min(y, maxH - 48 - 20));
 
         const newId = "comp-" + Date.now();
         layoutElements.push({
@@ -780,12 +1128,561 @@ function bindCanvasEvents(canvas) {
 
         localStorage.setItem("eventLayout", JSON.stringify(layoutElements));
 
-        const mainCanvas = document.querySelector(".planner-right > .planner-card > .layout-preview");
-        if (mainCanvas) renderLayout(mainCanvas);
+        // Render both minimized and maximized workspaces
+        const mainCanvas = document.querySelector(".planner-right > .planner-card > .layout-preview-container > .layout-preview");
+        if (mainCanvas) renderLayout(mainCanvas, true);
 
         syncModalPreview();
     });
 }
+
+// Layout preset arrangements
+let lastAppliedPreset = null;
+window.applyLayoutPreset = function (presetType) {
+    lastAppliedPreset = presetType;
+    const attendeeCount = eventData ? (parseInt(eventData.required_capacity) || 50) : 50;
+    const tablesNeeded = Math.ceil(attendeeCount / 10);
+    const canvasWidth = getWorkspaceWidth();
+
+    layoutElements = [];
+
+    // 1. Stage always top center
+    layoutElements.push({
+        id: "stage",
+        type: "stage",
+        label: "STAGE",
+        x: Math.floor((canvasWidth - 300) / 2),
+        y: 20
+    });
+
+    if (presetType === 'banquet') {
+        const maxLeftToLeftSpan = canvasWidth - 180;
+
+        let cols = 4;
+        if (tablesNeeded > 16) cols = 6;
+        else if (tablesNeeded > 8) cols = 5;
+        if (canvasWidth > 1500) cols = 8;
+        if (canvasWidth > 2000) cols = 10;
+
+        // Clamp column count to prevent horizontal overlapping
+        const maxCols = Math.max(2, Math.floor(maxLeftToLeftSpan / 140) + 1);
+        cols = Math.min(maxCols, cols);
+
+        const rows = Math.ceil(tablesNeeded / cols);
+        const spacingX = cols > 1 ? Math.min(220, maxLeftToLeftSpan / (cols - 1)) : 220;
+
+        // Use a fixed spacingY of 135px to prevent vertical table overlapping
+        const spacingY = 135;
+        const startTop = 140;
+
+        for (let i = 1; i <= tablesNeeded; i++) {
+            const index = i - 1;
+            const row = Math.floor(index / cols);
+            const col = index % cols;
+
+            const totalColsThisRow = Math.min(cols, tablesNeeded - row * cols);
+            const rowWidth = (totalColsThisRow - 1) * spacingX;
+            const rowStartLeft = (canvasWidth - 120 - rowWidth) / 2; // centers the table wrappers exactly
+
+            const x = Math.floor(rowStartLeft + col * spacingX);
+            const y = Math.floor(startTop + row * spacingY);
+
+            layoutElements.push({
+                id: "table-" + i,
+                type: "table",
+                label: "Table " + i,
+                x: x,
+                y: y
+            });
+        }
+    } else if (presetType === 'classroom') {
+        const startTop = 130;
+
+        let colsCount = 2;
+        if (tablesNeeded > 6) colsCount = 4;
+        if (canvasWidth > 1500) colsCount = 6;
+        if (canvasWidth > 2000) colsCount = 8;
+
+        // Clamp column count to prevent horizontal overlapping
+        const maxColsCount = Math.max(1, Math.floor((canvasWidth - 280) / 140) + 1);
+        colsCount = Math.min(maxColsCount, colsCount);
+
+        const colSpacing = colsCount > 1 ? (canvasWidth - 280) / (colsCount - 1) : 0;
+        let xCoords = [];
+        for (let i = 0; i < colsCount; i++) {
+            xCoords.push(80 + i * colSpacing);
+        }
+
+        const rowsNeeded = Math.ceil(tablesNeeded / colsCount);
+        // Use a fixed rowSpacing of 130px to prevent vertical table overlapping
+        const rowSpacing = 130;
+
+        for (let i = 1; i <= tablesNeeded; i++) {
+            const index = i - 1;
+            const colIndex = index % colsCount;
+            const rowIndex = Math.floor(index / colsCount);
+
+            const x = xCoords[colIndex];
+            const y = Math.floor(startTop + rowIndex * rowSpacing);
+
+            layoutElements.push({
+                id: "table-" + i,
+                type: "table",
+                label: "Table " + i,
+                x: x,
+                y: y
+            });
+        }
+    } else if (presetType === 'ushape') {
+        const leftColX = 80;
+        const rightColX = canvasWidth - 200;
+
+        let tempTables = tablesNeeded;
+        let layerConfigs = [];
+        let L = 0;
+
+        // Calculate maxVerticalCount dynamically to prevent overlaps and leftovers
+        let maxVerticalCount = 8;
+        while (true) {
+            let tempCapacity = 0;
+            let innerL = 0;
+            const bottomRowY_temp = 160 + (maxVerticalCount - 1) * 135;
+            
+            while (true) {
+                const leftX = leftColX + innerL * 200;
+                const rightX = rightColX - innerL * 200;
+                const widthSpan = rightX - leftX;
+                const maxBottom = Math.max(0, Math.floor(widthSpan / 165) - 1);
+                
+                const startY = 160;
+                const endY = bottomRowY_temp - innerL * 180;
+                const layerMaxRows = Math.floor((endY - startY) / 135);
+                
+                if (maxBottom <= 0 || layerMaxRows <= 0) {
+                    break;
+                }
+                
+                tempCapacity += 2 * layerMaxRows + maxBottom;
+                innerL++;
+            }
+            
+            if (tempCapacity >= tablesNeeded || maxVerticalCount >= 25) {
+                break;
+            }
+            maxVerticalCount++;
+        }
+
+        const spacingY = 135;
+        const bottomRowY = 160 + (maxVerticalCount - 1) * spacingY;
+
+        // Distribute tables into nested, concentric layers using solved geometry
+        while (tempTables > 0) {
+            const leftX = leftColX + L * 200;
+            const rightX = rightColX - L * 200;
+            const widthSpan = rightX - leftX;
+            const maxBottom = Math.max(0, Math.floor(widthSpan / 165) - 1);
+            
+            const startY = 160;
+            const endY = bottomRowY - L * 180;
+            const layerMaxRows = Math.max(2, Math.floor((endY - startY) / 135));
+
+            if (maxBottom <= 0 && L > 0) {
+                break;
+            }
+            
+            // Prevent standalone floating inner U-shape tables
+            if (L > 0 && tempTables < 8) {
+                break;
+            }
+            
+            const layerCapacity = 2 * layerMaxRows + maxBottom;
+            const numOnLayer = Math.min(tempTables, layerCapacity);
+            
+            let bCount = 0;
+            let leftCount = 0;
+            let rightCount = 0;
+            
+            if (numOnLayer <= 3) {
+                if (numOnLayer === 3) {
+                    leftCount = 1;
+                    rightCount = 1;
+                    bCount = 1;
+                } else if (numOnLayer === 2) {
+                    leftCount = 1;
+                    rightCount = 1;
+                    bCount = 0;
+                } else {
+                    leftCount = 0;
+                    rightCount = 0;
+                    bCount = 1;
+                }
+            } else {
+                bCount = Math.min(maxBottom, Math.floor(numOnLayer / 3));
+                leftCount = Math.min(layerMaxRows, Math.ceil((numOnLayer - bCount) / 2));
+                rightCount = numOnLayer - bCount - leftCount;
+                if (rightCount > layerMaxRows) {
+                    const diff = rightCount - layerMaxRows;
+                    rightCount = layerMaxRows;
+                    bCount = Math.min(maxBottom, bCount + diff);
+                }
+            }
+            
+            layerConfigs.push({
+                L: L,
+                leftX: leftX,
+                rightX: rightX,
+                bCount: bCount,
+                leftCount: leftCount,
+                rightCount: rightCount
+            });
+            
+            tempTables -= numOnLayer;
+            L++;
+            if (tempTables <= 0) break;
+        }
+        
+        // Handle leftovers safely if any remain
+        if (tempTables > 0 && layerConfigs.length > 0) {
+            const extraLeft = Math.ceil(tempTables / 2);
+            const extraRight = tempTables - extraLeft;
+            layerConfigs[0].leftCount += extraLeft;
+            layerConfigs[0].rightCount += extraRight;
+        }
+        
+        let tId = 1;
+        layerConfigs.forEach(conf => {
+            const startY = 160;
+            const endY = bottomRowY - conf.L * 180;
+            
+            // Left Column
+            if (conf.leftCount > 0) {
+                for (let i = 0; i < conf.leftCount; i++) {
+                    const y = startY + i * 135;
+                    layoutElements.push({
+                        id: "table-" + tId,
+                        type: "table",
+                        label: "Table " + tId,
+                        x: conf.leftX,
+                        y: Math.floor(y)
+                    });
+                    tId++;
+                }
+            }
+            
+            // Right Column
+            if (conf.rightCount > 0) {
+                for (let i = 0; i < conf.rightCount; i++) {
+                    const y = startY + i * 135;
+                    layoutElements.push({
+                        id: "table-" + tId,
+                        type: "table",
+                        label: "Table " + tId,
+                        x: conf.rightX,
+                        y: Math.floor(y)
+                    });
+                    tId++;
+                }
+            }
+            
+            // Bottom Row
+            if (conf.bCount > 0) {
+                const startX = conf.leftX;
+                const endX = conf.rightX;
+                const spanX = endX - startX;
+                const stepX = spanX / (conf.bCount + 1);
+                for (let i = 0; i < conf.bCount; i++) {
+                    const x = startX + (i + 1) * stepX;
+                    layoutElements.push({
+                        id: "table-" + tId,
+                        type: "table",
+                        label: "Table " + tId,
+                        x: Math.floor(x),
+                        y: Math.floor(endY)
+                    });
+                    tId++;
+                }
+            }
+        });
+    } else if (presetType === 'boardroom') {
+        let tempTables = tablesNeeded;
+        let layerConfigs = [];
+        let L = 0;
+        
+        // Solve for maxVerticalCount dynamically to prevent overlapping concentric rows
+        let maxVerticalCount = 8;
+        while (true) {
+            let tempCapacity = 0;
+            let innerL = 0;
+            const bottomRowY_temp = 160 + (maxVerticalCount + 1) * 135;
+            
+            while (true) {
+                const leftX = 80 + innerL * 200;
+                const rightX = canvasWidth - 200 - innerL * 200;
+                const widthSpan = rightX - leftX;
+                const maxTop = Math.max(0, Math.floor(widthSpan / 165) - 1);
+                
+                const startY = 160 + innerL * 180;
+                const endY = bottomRowY_temp - innerL * 180;
+                const layerMaxRows = Math.floor((endY - startY) / 135) - 1;
+                
+                if (maxTop <= 0 || layerMaxRows <= 0) {
+                    break;
+                }
+                
+                tempCapacity += 2 * layerMaxRows + 2 * maxTop;
+                innerL++;
+            }
+            
+            if (tempCapacity >= tablesNeeded || maxVerticalCount >= 25) {
+                break;
+            }
+            maxVerticalCount++;
+        }
+
+        const spacingY = 135;
+        const bottomRowY = 160 + (maxVerticalCount + 1) * spacingY;
+        
+        // Distribute tables into nested Boardroom loops
+        while (tempTables > 0) {
+            const leftX = 80 + L * 200;
+            const rightX = canvasWidth - 200 - L * 200;
+            const widthSpan = rightX - leftX;
+            const maxTop = Math.max(0, Math.floor(widthSpan / 165) - 1);
+            
+            const startY = 160 + L * 180;
+            const endY = bottomRowY - L * 180;
+            const layerMaxRows = Math.max(2, Math.floor((endY - startY) / 135) - 1);
+
+            if (maxTop <= 0 && L > 0) {
+                break;
+            }
+            
+            // Prevent standalone floating inner boardroom tables
+            if (L > 0 && tempTables < 12) {
+                break;
+            }
+            
+            const layerCapacity = 2 * layerMaxRows + 2 * maxTop;
+            const numOnLayer = Math.min(tempTables, layerCapacity);
+            
+            let topCount = 0;
+            let bottomCount = 0;
+            let leftCount = 0;
+            let rightCount = 0;
+            
+            if (numOnLayer <= 4) {
+                if (numOnLayer === 4) {
+                    topCount = 1;
+                    bottomCount = 1;
+                    leftCount = 1;
+                    rightCount = 1;
+                } else if (numOnLayer === 3) {
+                    topCount = 1;
+                    bottomCount = 1;
+                    leftCount = 1;
+                    rightCount = 0;
+                } else if (numOnLayer === 2) {
+                    topCount = 1;
+                    bottomCount = 1;
+                    leftCount = 0;
+                    rightCount = 0;
+                } else {
+                    topCount = 1;
+                    bottomCount = 0;
+                    leftCount = 0;
+                    rightCount = 0;
+                }
+            } else {
+                topCount = Math.min(maxTop, Math.floor(numOnLayer / 4));
+                bottomCount = topCount;
+                leftCount = Math.min(layerMaxRows, Math.ceil((numOnLayer - topCount - bottomCount) / 2));
+                rightCount = numOnLayer - topCount - bottomCount - leftCount;
+                if (rightCount > layerMaxRows) {
+                    const diff = rightCount - layerMaxRows;
+                    rightCount = layerMaxRows;
+                    topCount = Math.min(maxTop, topCount + Math.floor(diff / 2));
+                    bottomCount = topCount;
+                }
+            }
+            
+            layerConfigs.push({
+                L: L,
+                leftX: leftX,
+                rightX: rightX,
+                topCount: topCount,
+                bottomCount: bottomCount,
+                leftCount: leftCount,
+                rightCount: rightCount
+            });
+            
+            tempTables -= numOnLayer;
+            L++;
+            if (tempTables <= 0) break;
+        }
+        
+        // Handle leftovers safely if any remain
+        if (tempTables > 0 && layerConfigs.length > 0) {
+            const extraLeft = Math.ceil(tempTables / 2);
+            const extraRight = tempTables - extraLeft;
+            layerConfigs[0].leftCount += extraLeft;
+            layerConfigs[0].rightCount += extraRight;
+        }
+        
+        let tId = 1;
+        layerConfigs.forEach(conf => {
+            const startY = 160 + conf.L * 180;
+            const endY = bottomRowY - conf.L * 180;
+            
+            // Top Row
+            if (conf.topCount > 0) {
+                const stepX = (conf.rightX - conf.leftX) / (conf.topCount + 1);
+                for (let i = 0; i < conf.topCount; i++) {
+                    const x = conf.leftX + (i + 1) * stepX;
+                    layoutElements.push({
+                        id: "table-" + tId,
+                        type: "table",
+                        label: "Table " + tId,
+                        x: Math.floor(x),
+                        y: Math.floor(startY)
+                    });
+                    tId++;
+                }
+            }
+            
+            // Bottom Row
+            if (conf.bottomCount > 0) {
+                const stepX = (conf.rightX - conf.leftX) / (conf.bottomCount + 1);
+                for (let i = 0; i < conf.bottomCount; i++) {
+                    const x = conf.rightX - (i + 1) * stepX;
+                    layoutElements.push({
+                        id: "table-" + tId,
+                        type: "table",
+                        label: "Table " + tId,
+                        x: Math.floor(x),
+                        y: Math.floor(endY)
+                    });
+                    tId++;
+                }
+            }
+            
+            // Left Column
+            if (conf.leftCount > 0) {
+                for (let i = 0; i < conf.leftCount; i++) {
+                    const y = startY + (i + 1) * 135;
+                    layoutElements.push({
+                        id: "table-" + tId,
+                        type: "table",
+                        label: "Table " + tId,
+                        x: conf.leftX,
+                        y: Math.floor(y)
+                    });
+                    tId++;
+                }
+            }
+            
+            // Right Column
+            if (conf.rightCount > 0) {
+                for (let i = 0; i < conf.rightCount; i++) {
+                    const y = startY + (i + 1) * 135;
+                    layoutElements.push({
+                        id: "table-" + tId,
+                        type: "table",
+                        label: "Table " + tId,
+                        x: conf.rightX,
+                        y: Math.floor(y)
+                    });
+                    tId++;
+                }
+            }
+        });
+    } else if (presetType === 'cabaret') {
+        const originX = canvasWidth / 2;
+        const originY = 60;
+
+        let tempTables = tablesNeeded;
+        let rings = [];
+        let ringIndex = 0;
+        const radStart = 260;
+        const radStep = 145;
+
+        // Maximum allowed distance from originX to canvas side edges (with 80px margin buffer)
+        const maxAllowedXSpan = Math.max(300, (canvasWidth / 2) - 100);
+
+        // Dynamically compute optimal ring capacities and add concentric arcs outward
+        while (tempTables > 0) {
+            const radius = radStart + ringIndex * radStep;
+
+            // Calculate start angle such that radius * cos(startAngle) never exceeds maxAllowedXSpan
+            let startRad = Math.PI / 12; // default ~15 deg
+            if (radius * Math.cos(startRad) > maxAllowedXSpan) {
+                const ratio = Math.min(0.96, maxAllowedXSpan / radius);
+                startRad = Math.acos(ratio);
+            }
+            const endRad = Math.PI - startRad;
+            const spanRad = endRad - startRad;
+
+            // Max capacity of this ring with at least 145px spacing
+            const ringCapacity = Math.max(2, Math.floor((radius * spanRad) / 145) + 1);
+            const tablesOnRing = Math.min(tempTables, ringCapacity);
+
+            rings.push({
+                radius: radius,
+                tables: tablesOnRing,
+                startRad: startRad,
+                endRad: endRad
+            });
+
+            tempTables -= tablesOnRing;
+            ringIndex++;
+            if (ringIndex > 25) break;
+        }
+
+        if (tempTables > 0 && rings.length > 0) {
+            rings[rings.length - 1].tables += tempTables;
+        }
+
+        let tInserted = 0;
+        rings.forEach(ring => {
+            const span = ring.endRad - ring.startRad;
+            const step = ring.tables > 1 ? (span / (ring.tables - 1)) : span;
+
+            for (let i = 0; i < ring.tables; i++) {
+                const angle = ring.startRad + i * step;
+                let x = originX + ring.radius * Math.cos(angle) - 60;
+                let y = originY + ring.radius * Math.sin(angle) - 60;
+
+                // Clamp within canvas safety bounds (padding of 30px left and right)
+                x = Math.max(30, Math.min(x, canvasWidth - 150));
+                y = Math.max(30, y);
+
+                layoutElements.push({
+                    id: "table-" + (tInserted + i + 1),
+                    type: "table",
+                    label: "Table " + (tInserted + i + 1),
+                    x: Math.floor(x),
+                    y: Math.floor(y)
+                });
+            }
+            tInserted += ring.tables;
+        });
+    }
+
+    localStorage.setItem("eventLayout", JSON.stringify(layoutElements));
+
+    const mainCanvas = document.querySelector(".planner-right > .planner-card > .layout-preview-container > .layout-preview");
+    if (mainCanvas) renderLayout(mainCanvas, true);
+
+    const modalCanvas = document.querySelector("#modalLayoutPreview > .layout-preview");
+    if (modalCanvas) renderLayout(modalCanvas, false);
+
+    Swal.fire({
+        icon: 'success',
+        title: 'Layout Preset Applied',
+        text: `Applied the ${presetType} layout configuration successfully!`,
+        timer: 1500,
+        showConfirmButton: false
+    });
+};
 
 // Set up Maximize Modal Trigger Listeners
 document.addEventListener("DOMContentLoaded", () => {
@@ -799,11 +1696,16 @@ document.addEventListener("DOMContentLoaded", () => {
             modalLayoutPreview.innerHTML = `<div class="layout-preview"></div>`;
             const modalCanvas = modalLayoutPreview.querySelector(".layout-preview");
 
-            renderLayout(modalCanvas);
+            renderLayout(modalCanvas, false);
             bindCanvasEvents(modalCanvas);
+            initSidebarComponents(); // Initialize draggable components inside modal sidebar
 
             layoutModal.style.display = "flex";
             document.body.style.overflow = "hidden";
+
+            // Reset modal sidebar scroll to top
+            const sidebar = document.querySelector(".modal-sidebar");
+            if (sidebar) sidebar.scrollTop = 0;
         });
 
         closeBtn.addEventListener("click", () => {
@@ -821,3 +1723,67 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 });
+
+window.goToVRVisualizer = function () {
+    localStorage.setItem("eventLayout", JSON.stringify(layoutElements));
+    localStorage.setItem("eventTimeline", JSON.stringify(timelineEvents));
+    window.location.href = "vr-backdrop.html";
+};
+
+// Add listeners to ensure the minimized layout preview resizes dynamically and measures correctly on load
+window.addEventListener("load", () => {
+    const mainCanvas = document.querySelector(".planner-right > .planner-card > .layout-preview-container > .layout-preview");
+    if (mainCanvas) {
+        renderLayout(mainCanvas, true);
+    }
+});
+
+window.addEventListener("resize", () => {
+    const mainCanvas = document.querySelector(".planner-right > .planner-card > .layout-preview-container > .layout-preview");
+    if (mainCanvas) {
+        renderLayout(mainCanvas, true);
+    }
+});
+
+function showDemoBadge() {
+    // Add badge to card title
+    const cardTitle = document.querySelector(".planner-left > .planner-card > .card-title");
+    if (cardTitle && !document.getElementById("demoBadge")) {
+        const badge = document.createElement("span");
+        badge.id = "demoBadge";
+        badge.style.background = "#c8a96b";
+        badge.style.color = "#111827";
+        badge.style.fontSize = "14px";
+        badge.style.padding = "6px 12px";
+        badge.style.borderRadius = "12px";
+        badge.style.marginLeft = "15px";
+        badge.style.fontWeight = "bold";
+        badge.style.verticalAlign = "middle";
+        badge.innerText = "DEMO MODE";
+        cardTitle.appendChild(badge);
+    }
+}
+
+window.setPlannerZoom = function (zoomValue) {
+    plannerZoom = zoomValue;
+
+    // Update zoom buttons style
+    const zoomButtons = document.querySelectorAll(".zoom-controls button");
+    zoomButtons.forEach(btn => {
+        const val = parseFloat(btn.getAttribute("data-zoom"));
+        if (val === zoomValue) {
+            btn.style.background = "#c8a96b";
+            btn.style.color = "#111827";
+            btn.style.fontWeight = "bold";
+        } else {
+            btn.style.background = "transparent";
+            btn.style.color = "white";
+            btn.style.fontWeight = "normal";
+        }
+    });
+
+    const modalCanvas = document.querySelector("#modalLayoutPreview > .layout-preview");
+    if (modalCanvas) {
+        renderLayout(modalCanvas, false);
+    }
+};

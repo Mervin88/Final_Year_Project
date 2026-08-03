@@ -12,10 +12,18 @@
 
     <link rel="stylesheet"
     href="css/my-events.css">
+    <link rel="stylesheet"
+    href="css/layout-preview-modal.css?v=3">
+    <script>
+        // Immediately load dark mode setting to avoid flash of light theme
+        if (localStorage.getItem("theme") === "dark") {
+            document.documentElement.classList.add("dark-theme");
+        }
+    </script>
 
 </head>
 
-<body>
+<body class="theme-transition">
 
     <div class="dashboard-container">
 
@@ -102,6 +110,12 @@
 
                     <h1>My Events</h1>
 
+                    <div class="filters" style="display: flex; gap: 10px; margin: 15px 0 25px 0;">
+                        <button class="active" onclick="filterMyEvents('All', this)" style="padding: 10px 20px; border: none; background: #c8a96b; color: #111827; border-radius: 20px; font-weight: bold; cursor: pointer; transition: 0.3s;">All Events</button>
+                        <button onclick="filterMyEvents('Upcoming', this)" style="padding: 10px 20px; border: 1px solid #e5e7eb; background: white; color: #374151; border-radius: 20px; font-weight: bold; cursor: pointer; transition: 0.3s;">🟢 Upcoming</button>
+                        <button onclick="filterMyEvents('Completed', this)" style="padding: 10px 20px; border: 1px solid #e5e7eb; background: white; color: #374151; border-radius: 20px; font-weight: bold; cursor: pointer; transition: 0.3s;">🏁 Completed</button>
+                    </div>
+
                     <div class="my-events-grid">
 
                     </div>
@@ -110,6 +124,39 @@
 
         </main>
 
+    </div>
+
+    <div id="layoutModal" class="layout-modal">
+        <div class="layout-modal-content">
+            <div class="layout-modal-header">
+                <h2>Venue Layout Preview</h2>
+                <div class="modal-zoom-controls">
+                    <span>Zoom:</span>
+                    <button class="zoom-btn" id="modalZoomOutBtn">-</button>
+                    <span id="modalZoomPercent">100%</span>
+                    <button class="zoom-btn" id="modalZoomInBtn">+</button>
+                    <button class="zoom-reset-btn" id="modalZoomResetBtn">Fit</button>
+                </div>
+                <button class="layout-modal-close" id="closeLayoutModalBtn">&times;</button>
+            </div>
+            <div class="layout-modal-body" id="modalLayoutPreview">
+            </div>
+        </div>
+    </div>
+
+    <!-- 3D BACKDROP PREVIEW MODAL -->
+    <div id="backdropModal" class="layout-modal">
+        <div class="layout-modal-content">
+            <div class="layout-modal-header">
+                <h2>3D Backdrop Preview</h2>
+                <button class="layout-modal-close" id="closeBackdropModalBtn">&times;</button>
+            </div>
+            <div class="layout-modal-body" style="justify-content: center; align-items: center;">
+                <div class="vr-venue-canvas" id="modalBackdropPreview">
+                    <div class="stage-backdrop" id="modalStageBackdrop" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

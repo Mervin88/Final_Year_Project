@@ -1,10 +1,12 @@
 from flask import Flask, request, jsonify
 from flask_mysqldb import MySQL
+import MySQLdb
 from datetime import datetime, date
 from flask_cors import CORS
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadTimeSignature
 import smtplib
 from email.mime.text import MIMEText
+from werkzeug.security import generate_password_hash, check_password_hash
 
 import os
 from dotenv import load_dotenv
@@ -48,6 +50,53 @@ mysql = MySQL(app)
 # PASSWORD RESET SERIALIZER
 serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 
+# ADMIN SETTINGS JSON STORAGE
+import json
+SETTINGS_FILE = os.path.join(BASE_DIR, "admin_settings.json")
+
+def load_admin_settings():
+    default_settings = {
+        "maintenance_mode": False,
+        "auto_approve_venues": False,
+        "gemini_model": "gemini-2.5-flash",
+        "gemini_system_instruction": (
+            "You are EventSync AI, a professional corporate event management assistant.\n"
+            "Rules of behavior:\n"
+            "1. Keep answers concise (less than 150 words).\n"
+            "2. Use short bullet points, lists, and markdown tables where appropriate.\n"
+            "3. Focus only on event management, venue suggestion, scheduling, and planning. If asked about unrelated things, politely refuse.\n"
+            "4. If the user asks about their own events, use the following database context to answer:\n\n"
+            "{events_context}"
+        )
+    }
+    if not os.path.exists(SETTINGS_FILE):
+        try:
+            with open(SETTINGS_FILE, 'w') as f:
+                json.dump(default_settings, f, indent=4)
+        except Exception as e:
+            print("Error writing default admin settings:", e)
+        return default_settings
+    try:
+        with open(SETTINGS_FILE, 'r') as f:
+            data = json.load(f)
+            # Ensure all keys exist, merge with defaults if missing
+            for key, val in default_settings.items():
+                if key not in data:
+                    data[key] = val
+            return data
+    except Exception as e:
+        print("Error reading admin settings:", e)
+        return default_settings
+
+def save_admin_settings(settings):
+    try:
+        with open(SETTINGS_FILE, 'w') as f:
+            json.dump(settings, f, indent=4)
+        return True
+    except Exception as e:
+        print("Error saving admin settings:", e)
+        return False
+
 # TEST ROUTE
 @app.route('/')
 def home():
@@ -84,6 +133,9 @@ def register():
                 "message": "This email is already registered."
             })
 
+        # Hash password securely
+        hashed_password = generate_password_hash(password)
+
         query = """
         INSERT INTO users(fullname, email, password, role)
         VALUES(%s, %s, %s, %s)
@@ -91,7 +143,7 @@ def register():
 
         cursor.execute(
             query,
-            (fullname, email, password, role)
+            (fullname, email, hashed_password, role)
         )
 
         try:
@@ -127,32 +179,41 @@ def login():
 
     cursor = mysql.connection.cursor()
 
+    # Query by email only to compare hash
     query = """
     SELECT * FROM users
-    WHERE email = %s AND password = %s
+    WHERE email = %s
     """
 
-    cursor.execute(query, (email, password))
+    cursor.execute(query, (email,))
 
     user = cursor.fetchone()
 
     cursor.close()
 
     if user:
+        db_password = user[3]
+        # Verify the hashed password securely (no plaintext fallback allowed)
+        if check_password_hash(db_password, password):
+            role = user[4]
+            # Maintenance Mode check
+            settings = load_admin_settings()
+            if settings.get("maintenance_mode") and role != "Admin":
+                return jsonify({
+                    "success": False,
+                    "message": "The platform is currently undergoing maintenance. Please try again later."
+                })
+            return jsonify({
+                "success": True,
+                "message": "Login successful",
+                "fullname": user[1],
+                "role": role
+            })
 
-        return jsonify({
-            "success": True,
-            "message": "Login successful",
-            "fullname": user[1],
-            "role": user[4]
-        })
-
-    else:
-
-        return jsonify({
-            "success": False,
-            "message": "Invalid email or password"
-        })
+    return jsonify({
+        "success": False,
+        "message": "Invalid email or password"
+    })
 
 # fetch events in Dashboard
 @app.route('/events/<username>')
@@ -161,7 +222,9 @@ def get_events(username):
     cursor = mysql.connection.cursor()
 
     cursor.execute(
-        "SELECT id, created_by, title, category, event_date, selected_venue, timeline FROM events WHERE created_by=%s",
+        """SELECT id, created_by, title, category, event_date, event_date_end, selected_venue, timeline, banner_image,
+                  (SELECT COUNT(*) FROM registrations r WHERE r.event_id = events.id) AS attendee_count 
+           FROM events WHERE created_by=%s""",
         (username,)
     )
 
@@ -178,8 +241,11 @@ def get_events(username):
             "title": event[2],
             "category": event[3],
             "event_date": str(event[4]),
-            "venue": event[5],
-            "timeline": event[6]
+            "event_date_end": str(event[5]) if event[5] else None,
+            "venue": event[6],
+            "timeline": event[7],
+            "banner_image": event[8],
+            "attendee_count": event[9]
 
         })
 
@@ -189,21 +255,22 @@ def get_events(username):
 
 #Create Event
 def validate_event_data(data):
-    title = data.get('title', '').strip()
-    category = data.get('category', '')
-    description = data.get('description', '').strip()
-    event_date = data.get('event_date', '')
-    start_time = data.get('start_time', '')
-    end_time = data.get('end_time', '')
+    title = (data.get('title') or '').strip()
+    category = data.get('category') or ''
+    description = (data.get('description') or '').strip()
+    event_date = data.get('event_date') or ''
+    event_date_end = data.get('event_date_end') or ''
+    start_time = data.get('start_time') or ''
+    end_time = data.get('end_time') or ''
     participants = data.get('participants')
-    preferred_location = data.get('preferred_location', '').strip()
+    preferred_location = (data.get('preferred_location') or '').strip()
     budget = data.get('budget')
     required_capacity = data.get('required_capacity')
-    venue_type = data.get('venue_type', '')
-    other_requirements = data.get('other_requirements', '').strip()
+    venue_type = data.get('venue_type') or ''
+    other_requirements = (data.get('other_requirements') or '').strip()
 
     # 1. Required fields
-    if not (title and category and description and event_date and start_time and end_time and preferred_location and venue_type):
+    if not (title and category and description and event_date and event_date_end and start_time and end_time and preferred_location and venue_type):
         return False, "Missing required event fields."
 
     # 2. Length restrictions
@@ -216,11 +283,14 @@ def validate_event_data(data):
     if len(preferred_location) > 100:
         return False, "Preferred location exceeds 100 characters."
 
-    # 3. Date check (cannot be in the past)
+    # 3. Date check (cannot be in the past, End Date >= Start Date)
     try:
-        input_date = datetime.strptime(event_date, "%Y-%m-%d").date()
-        if input_date < date.today():
-            return False, "Event date cannot be in the past."
+        start = datetime.strptime(event_date, "%Y-%m-%d").date()
+        end = datetime.strptime(event_date_end, "%Y-%m-%d").date()
+        if start < date.today():
+            return False, "Start date cannot be in the past."
+        if end < start:
+            return False, "End date cannot be before start date."
     except Exception:
         pass
 
@@ -269,6 +339,7 @@ def create_event():
     description = data['description']
 
     event_date = data['event_date']
+    event_date_end = data['event_date_end']
     start_time = data['start_time']
     end_time = data['end_time']
 
@@ -299,6 +370,7 @@ def create_event():
         category,
         description,
         event_date,
+        event_date_end,
         start_time,
         end_time,
         participants,
@@ -315,9 +387,13 @@ def create_event():
         other_requirements,
         selected_venue,
         created_by,
-        timeline
+        timeline,
+        layout,
+        backdrop_setup,
+        banner_image,
+        privacy
     )
-    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
     """
 
     values = (
@@ -326,6 +402,7 @@ def create_event():
         category,
         description,
         event_date,
+        event_date_end,
         start_time,
         end_time,
         participants,
@@ -342,7 +419,11 @@ def create_event():
         other_requirements,
         selected_venue,
         created_by,
-        data.get('timeline', '[]')
+        data.get('timeline', '[]'),
+        data.get('layout', '[]'),
+        data.get('backdrop_setup', 'null'),
+        data.get('banner_image', None),
+        data.get('privacy', 'Public')
 
     )
     cursor = mysql.connection.cursor()
@@ -368,7 +449,8 @@ def my_events(username):
     cursor = mysql.connection.cursor()
 
     query = """
-    SELECT id, title, category, event_date, selected_venue, created_by, timeline, status, rejection_feedback
+    SELECT id, title, category, event_date, event_date_end, selected_venue, created_by, timeline, status, rejection_feedback, layout, backdrop_setup, banner_image,
+           (SELECT COUNT(*) FROM registrations r WHERE r.event_id = events.id) AS attendee_count
     FROM events
     WHERE created_by = %s
     """
@@ -387,11 +469,16 @@ def my_events(username):
             "title": event[1],
             "category": event[2],
             "event_date": str(event[3]),
-            "selected_venue": event[4],
-            "created_by": event[5],
-            "timeline": event[6],
-            "status": event[7],
-            "rejection_feedback": event[8]
+            "event_date_end": str(event[4]) if event[4] else None,
+            "selected_venue": event[5],
+            "created_by": event[6],
+            "timeline": event[7],
+            "status": event[8],
+            "rejection_feedback": event[9],
+            "layout": event[10],
+            "backdrop_setup": event[11],
+            "banner_image": event[12],
+            "attendee_count": event[13]
 
         })
 
@@ -403,6 +490,18 @@ def my_events(username):
 def delete_event(event_id):
 
     cursor = mysql.connection.cursor()
+
+    # Fetch event title and creator before deletion
+    cursor.execute("SELECT title, created_by FROM events WHERE id=%s", (event_id,))
+    row = cursor.fetchone()
+    if row:
+        title = row[0]
+        created_by = row[1]
+        try:
+            cursor.execute("INSERT INTO notifications (message, username, type) VALUES (%s, %s, %s)", 
+                           (f"Event '{title}' has been deleted.", created_by, "info"))
+        except Exception as notify_err:
+            print("Failed to log deletion notification:", notify_err)
 
     cursor.execute(
         "DELETE FROM events WHERE id=%s",
@@ -424,16 +523,20 @@ def get_event(event_id):
     cursor = mysql.connection.cursor()
 
     cursor.execute("""
-        SELECT id, title, category, description, event_date, start_time, end_time, 
+        SELECT id, title, category, description, event_date, event_date_end, start_time, end_time, 
                participants, preferred_location, budget, required_capacity, venue_type, 
                parking_required, wifi_required, projector_required, catering_required, 
                sound_system_required, stage_setup_required, other_requirements, 
-               selected_venue, timeline 
+               selected_venue, timeline, layout, backdrop_setup, banner_image, privacy
         FROM events 
         WHERE id=%s
     """, (event_id,))
 
     event = cursor.fetchone()
+
+    cursor.execute("SELECT COUNT(*) FROM registrations WHERE event_id = %s", (event_id,))
+    reg_count_row = cursor.fetchone()
+    reg_count = reg_count_row[0] if reg_count_row else 0
 
     cursor.close()
 
@@ -445,27 +548,33 @@ def get_event(event_id):
     "description": event[3],
 
     "event_date": str(event[4]),
+    "event_date_end": str(event[5]) if event[5] else None,
 
-    "start_time": str(event[5]),
-    "end_time": str(event[6]),
+    "start_time": str(event[6]),
+    "end_time": str(event[7]),
 
-    "participants": event[7],
+    "participants": event[8],
 
-    "preferred_location": event[8],
-    "budget": event[9],
-    "required_capacity": event[10],
-    "venue_type": event[11],
+    "preferred_location": event[9],
+    "budget": event[10],
+    "required_capacity": event[11],
+    "venue_type": event[12],
 
-    "parking_required": event[12],
-    "wifi_required": event[13],
-    "projector_required": event[14],
-    "catering_required": event[15],
-    "sound_system_required": event[16],
-    "stage_setup_required": event[17],
+    "parking_required": event[13],
+    "wifi_required": event[14],
+    "projector_required": event[15],
+    "catering_required": event[16],
+    "sound_system_required": event[17],
+    "stage_setup_required": event[18],
 
-    "other_requirements": event[18],
-    "selected_venue": event[19],
-    "timeline": event[20]
+    "other_requirements": event[19],
+    "selected_venue": event[20],
+    "timeline": event[21],
+    "layout": event[22],
+    "backdrop_setup": event[23],
+    "banner_image": event[24],
+    "privacy": event[25],
+    "attendees_registered": reg_count
 
 })
 
@@ -490,6 +599,7 @@ def update_event(event_id):
         category=%s,
         description=%s,
         event_date=%s,
+        event_date_end=%s,
         start_time=%s,
         end_time=%s,
         participants=%s,
@@ -505,7 +615,13 @@ def update_event(event_id):
         stage_setup_required=%s,
         other_requirements=%s,
         selected_venue=%s,
-        timeline=%s
+        timeline=%s,
+        layout=%s,
+        backdrop_setup=%s,
+        banner_image=%s,
+        privacy=%s,
+        status='Pending Review',
+        rejection_feedback=NULL
     WHERE id=%s
     """
 
@@ -515,6 +631,7 @@ def update_event(event_id):
         data['category'],
         data['description'],
         data['event_date'],
+        data['event_date_end'],
         data['start_time'],
         data['end_time'],
         data['participants'],
@@ -533,12 +650,50 @@ def update_event(event_id):
         data['other_requirements'],
         data['selected_venue'],
         data.get('timeline', '[]'),
+        data.get('layout', '[]'),
+        data.get('backdrop_setup', 'null'),
+        data.get('banner_image', None),
+        data.get('privacy', 'Public'),
 
         event_id
 
     )
 
+    # Fetch existing event details for notification context
+    activity = "details"
+    created_by = "Guest"
+    title = data.get('title', 'Unknown')
+    
+    try:
+        cursor.execute("SELECT created_by, title, backdrop_setup, layout, timeline FROM events WHERE id = %s", (event_id,))
+        row = cursor.fetchone()
+        if row:
+            created_by = row[0]
+            title = row[1]
+            old_backdrop = row[2]
+            old_layout = row[3]
+            old_timeline = row[4]
+            
+            new_backdrop = data.get('backdrop_setup')
+            new_layout = data.get('layout')
+            new_timeline = data.get('timeline')
+            
+            if new_backdrop != old_backdrop:
+                activity = "3D backdrop setup"
+            elif new_layout != old_layout:
+                activity = "interactive floor plan layout"
+            elif new_timeline != old_timeline:
+                activity = "timeline schedule"
+    except Exception as fetch_err:
+        print("Failed to fetch event context for notification:", fetch_err)
+
     cursor.execute(sql, values)
+
+    try:
+        cursor.execute("INSERT INTO notifications (message, username, type) VALUES (%s, %s, %s)", 
+                       (f"Event '{title}' {activity} updated successfully.", created_by, "success"))
+    except Exception as notify_err:
+        print("Failed to log update notification:", notify_err)
 
     mysql.connection.commit()
 
@@ -614,21 +769,19 @@ def ai_chat():
     else:
         events_context = "No specific user logged in (Guest session). No account events context available.\n"
 
-    system_instruction = f"""
-    You are EventSync AI, a professional corporate event management assistant.
-    Rules of behavior:
-    1. Keep answers concise (less than 150 words).
-    2. Use short bullet points, lists, and markdown tables where appropriate.
-    3. Focus only on event management, venue suggestion, scheduling, and planning. If asked about unrelated things, politely refuse.
-    4. If the user asks about their own events, use the following database context to answer:
+    settings = load_admin_settings()
+    model_name = settings.get("gemini_model", "gemini-2.5-flash")
+    raw_instruction = settings.get("gemini_system_instruction", "")
 
-    {events_context}
-    """
+    if "{events_context}" in raw_instruction:
+        system_instruction = raw_instruction.replace("{events_context}", events_context)
+    else:
+        system_instruction = raw_instruction + "\n\n" + events_context
 
     try:
-        # Create a model instance with dynamic system instructions
+        # Create a model instance with dynamic system instructions and model name
         dynamic_model = genai.GenerativeModel(
-            "gemini-2.5-flash",
+            model_name,
             system_instruction=system_instruction
         )
 
@@ -704,7 +857,17 @@ def forgot_password():
 
         # Generate signed token (valid for 1 hour)
         token = serializer.dumps(email, salt='password-reset-salt')
-        reset_url = f"http://127.0.0.1:5500/frontend/reset-password.html?token={token}"
+        
+        # Dynamically determine the frontend base URL from the Referer header to match the user's local host/port
+        referer = request.headers.get("Referer")
+        frontend_base = "http://127.0.0.1:5500/frontend"
+        if referer:
+            if "/frontend/" in referer:
+                frontend_base = referer.split("/frontend/")[0] + "/frontend"
+            elif "/frontend" in referer:
+                frontend_base = referer.split("/frontend")[0] + "/frontend"
+                
+        reset_url = f"{frontend_base}/reset-password.html?token={token}"
 
         # Get SMTP details
         smtp_server = os.getenv("SMTP_SERVER", "")
@@ -747,7 +910,8 @@ def forgot_password():
         if email_sent:
             return jsonify({
                 "success": True,
-                "message": "Password reset link has been sent to your email."
+                "message": "Password reset link has been sent to your email.",
+                "token": token
             })
         else:
             # Inform the user SMTP failed but reset link was printed on the server console
@@ -758,7 +922,8 @@ def forgot_password():
                 "success": True,
                 "message": message,
                 "console_fallback": True,
-                "reset_url": reset_url
+                "reset_url": reset_url,
+                "token": token
             })
 
     except Exception as e:
@@ -806,8 +971,9 @@ def reset_password():
                 "message": "User associated with this token not found."
             })
 
-        # Update user's password (plaintext to match local database logic)
-        cursor.execute("UPDATE users SET password = %s WHERE email = %s", (new_password, email))
+        # Hash password securely
+        hashed_password = generate_password_hash(new_password)
+        cursor.execute("UPDATE users SET password = %s WHERE email = %s", (hashed_password, email))
         mysql.connection.commit()
         cursor.close()
 
@@ -869,7 +1035,8 @@ def admin_events():
     try:
         cursor = mysql.connection.cursor()
         cursor.execute("""
-            SELECT id, title, category, selected_venue, event_date, created_by, status 
+            SELECT id, title, category, selected_venue, event_date, event_date_end, created_by, status, timeline, layout, backdrop_setup,
+                   (SELECT COUNT(*) FROM registrations r WHERE r.event_id = events.id) AS attendee_count 
             FROM events 
             ORDER BY id DESC
         """)
@@ -884,8 +1051,13 @@ def admin_events():
                 "category": event[2],
                 "selected_venue": event[3],
                 "event_date": str(event[4]),
-                "created_by": event[5],
-                "status": event[6]
+                "event_date_end": str(event[5]) if event[5] else None,
+                "created_by": event[6],
+                "status": event[7],
+                "timeline": event[8],
+                "layout": event[9],
+                "backdrop_setup": event[10],
+                "attendee_count": event[11]
             })
 
         return jsonify(result)
@@ -960,7 +1132,7 @@ def admin_update_status(event_id):
 def admin_users():
     try:
         cursor = mysql.connection.cursor()
-        cursor.execute("SELECT id, fullname, email, role FROM users WHERE role != 'Organizer' ORDER BY id DESC")
+        cursor.execute("SELECT id, fullname, email, role FROM users WHERE role != 'Admin' ORDER BY id DESC")
         users = cursor.fetchall()
         cursor.close()
 
@@ -1099,25 +1271,30 @@ def upload_venue():
         uploaded_by = data['uploaded_by']
         document_url = data.get('document_url', '').strip()
 
+        # Check settings for auto-approval
+        settings = load_admin_settings()
+        status = "Approved" if settings.get("auto_approve_venues") else "Pending Review"
+
         cursor = mysql.connection.cursor()
         query = """
         INSERT INTO venues (
             name, location, capacity, type, price, description,
             parking_available, wifi_available, projector_available,
             catering_available, sound_system_available, stage_setup_available,
-            uploaded_by, document_url
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            uploaded_by, document_url, status
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         cursor.execute(query, (
             name, location, capacity, venue_type, price, description,
             parking_available, wifi_available, projector_available,
             catering_available, sound_system_available, stage_setup_available,
-            uploaded_by, document_url
+            uploaded_by, document_url, status
         ))
         
         try:
-            cursor.execute("INSERT INTO notifications (message) VALUES (%s)", 
-                           (f"New venue '{name}' has been submitted for review by {uploaded_by}.", ))
+            notify_msg = f"New venue '{name}' has been uploaded and auto-approved." if status == "Approved" else f"New venue '{name}' has been submitted for review by {uploaded_by}."
+            cursor.execute("INSERT INTO notifications (message, username, type) VALUES (%s, %s, %s)", 
+                           (notify_msg, uploaded_by, "info"))
         except Exception as notify_err:
             print("Failed to log notification:", notify_err)
 
@@ -1133,6 +1310,78 @@ def upload_venue():
             "success": False,
             "message": str(e)
         })
+
+# VENDOR UPDATE OWN VENUE
+@app.route('/venues/update/<int:venue_id>', methods=['PUT', 'POST'])
+def vendor_update_venue(venue_id):
+    try:
+        data = request.get_json()
+        is_valid, err_msg = validate_venue_data(data)
+        if not is_valid:
+            return jsonify({"success": False, "message": err_msg})
+
+        name = data['name'].strip()
+        location = data['location'].strip()
+        capacity = int(data['capacity'])
+        venue_type = data['type']
+        price = float(data['price'])
+        description = data['description'].strip()
+        parking_available = data.get('parking_available', 0)
+        wifi_available = data.get('wifi_available', 0)
+        projector_available = data.get('projector_available', 0)
+        catering_available = data.get('catering_available', 0)
+        sound_system_available = data.get('sound_system_available', 0)
+        stage_setup_available = data.get('stage_setup_available', 0)
+        uploaded_by = data.get('uploaded_by', '')
+        document_url = data.get('document_url', '').strip()
+
+        cursor = mysql.connection.cursor()
+        query = """
+        UPDATE venues SET 
+            name = %s, location = %s, capacity = %s, type = %s, price = %s, 
+            description = %s, parking_available = %s, wifi_available = %s, 
+            projector_available = %s, catering_available = %s, sound_system_available = %s, 
+            stage_setup_available = %s, document_url = %s, status = 'Pending Review', rejection_feedback = NULL
+        WHERE id = %s
+        """
+        cursor.execute(query, (
+            name, location, capacity, venue_type, price, description,
+            parking_available, wifi_available, projector_available,
+            catering_available, sound_system_available, stage_setup_available,
+            document_url, venue_id
+        ))
+
+        try:
+            notify_msg = f"Venue '{name}' has been updated by {uploaded_by} and resubmitted for review."
+            cursor.execute("INSERT INTO notifications (message, username, type) VALUES (%s, %s, %s)", 
+                           (notify_msg, uploaded_by, "info"))
+        except Exception as notify_err:
+            print("Failed to log notification:", notify_err)
+
+        mysql.connection.commit()
+        cursor.close()
+
+        return jsonify({
+            "success": True,
+            "message": "Venue listing updated and resubmitted for review."
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        })
+
+# VENDOR DELETE OWN VENUE
+@app.route('/venues/delete/<int:venue_id>', methods=['DELETE'])
+def vendor_delete_venue(venue_id):
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute("DELETE FROM venues WHERE id = %s", (venue_id,))
+        mysql.connection.commit()
+        cursor.close()
+        return jsonify({"success": True, "message": "Venue deleted successfully."})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
 
 # FETCH VENDOR'S OWN UPLOADED VENUES
 @app.route('/venues/my-uploaded/<username>')
@@ -1436,9 +1685,11 @@ def participant_events():
     try:
         cursor = mysql.connection.cursor()
         cursor.execute("""
-            SELECT id, title, category, selected_venue, event_date, created_by, description 
+            SELECT id, title, category, selected_venue, event_date, event_date_end, created_by, description, banner_image 
             FROM events 
-            WHERE status = 'Approved'
+            WHERE status = 'Approved' 
+              AND (privacy = 'Public' OR privacy IS NULL)
+              AND COALESCE(NULLIF(NULLIF(event_date_end, 'None'), 'null'), event_date) >= CURDATE()
             ORDER BY event_date ASC
         """)
         events = cursor.fetchall()
@@ -1452,8 +1703,10 @@ def participant_events():
                 "category": event[2],
                 "selected_venue": event[3],
                 "event_date": str(event[4]),
-                "created_by": event[5],
-                "description": event[6] or ""
+                "event_date_end": str(event[5]) if event[5] else None,
+                "created_by": event[6],
+                "description": event[7] or "",
+                "banner_image": event[8]
             })
         return jsonify(result)
     except Exception as e:
@@ -1461,6 +1714,344 @@ def participant_events():
             "success": False,
             "message": str(e)
         })
+
+# FETCH USER PROFILE
+@app.route('/user/profile/<username>')
+def get_user_profile(username):
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT fullname, email, role FROM users WHERE fullname = %s", (username,))
+        user = cursor.fetchone()
+        cursor.close()
+        if user:
+            return jsonify({
+                "success": True,
+                "fullname": user[0],
+                "email": user[1],
+                "role": user[2]
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": "User not found."
+            })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        })
+
+# UPDATE USER PROFILE & PASSWORD
+@app.route('/user/profile/update', methods=['POST'])
+def update_user_profile():
+    try:
+        data = request.get_json()
+        current_username = data.get('current_username')
+        new_fullname = data.get('fullname')
+        new_email = data.get('email')
+        current_password = data.get('current_password')
+        new_password = data.get('new_password')
+
+        if not current_username or not new_fullname or not new_email:
+            return jsonify({
+                "success": False,
+                "message": "Required fields are missing."
+            })
+
+        cursor = mysql.connection.cursor()
+        
+        # Get current user record
+        cursor.execute("SELECT id, password FROM users WHERE fullname = %s", (current_username,))
+        user = cursor.fetchone()
+        
+        if not user:
+            cursor.close()
+            return jsonify({
+                "success": False,
+                "message": "User not found."
+            })
+            
+        user_id = user[0]
+        db_password = user[1]
+        
+        # If user wants to change password, verify current password first
+        if new_password:
+            if not current_password:
+                cursor.close()
+                return jsonify({
+                    "success": False,
+                    "message": "Current password is required to set a new password."
+                })
+            if not check_password_hash(db_password, current_password):
+                cursor.close()
+                return jsonify({
+                    "success": False,
+                    "message": "Incorrect current password."
+                })
+            hashed_new_password = generate_password_hash(new_password)
+            cursor.execute("UPDATE users SET fullname = %s, email = %s, password = %s WHERE id = %s", 
+                           (new_fullname, new_email, hashed_new_password, user_id))
+        else:
+            cursor.execute("UPDATE users SET fullname = %s, email = %s WHERE id = %s", 
+                           (new_fullname, new_email, user_id))
+                           
+        # If username changed, update events created_by and notifications username
+        if current_username != new_fullname:
+            cursor.execute("UPDATE events SET created_by = %s WHERE created_by = %s", (new_fullname, current_username))
+            cursor.execute("UPDATE notifications SET username = %s WHERE username = %s", (new_fullname, current_username))
+            
+        mysql.connection.commit()
+        cursor.close()
+        
+        return jsonify({
+            "success": True,
+            "message": "Profile updated successfully."
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        })
+
+# CREATE A NOTIFICATION FROM FRONTEND
+@app.route('/notifications/add', methods=['POST'])
+def add_notification():
+    try:
+        data = request.get_json()
+        message = data.get('message')
+        username = data.get('username')
+        notification_type = data.get('type', 'success')
+        
+        if not message or not username:
+            return jsonify({
+                "success": False,
+                "message": "Message and username are required."
+            })
+            
+        cursor = mysql.connection.cursor()
+        cursor.execute("INSERT INTO notifications (message, username, type) VALUES (%s, %s, %s)", 
+                       (message, username, notification_type))
+        mysql.connection.commit()
+        cursor.close()
+        return jsonify({
+            "success": True,
+            "message": "Notification created successfully."
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        })
+
+# REGISTER FOR AN EVENT (PARTICIPANT)
+@app.route('/register-event', methods=['POST'])
+def register_event():
+    try:
+        data = request.get_json()
+        event_id = data.get('event_id')
+        username = data.get('username')
+
+        if not event_id or not username:
+            return jsonify({
+                "success": False,
+                "message": "Event ID and Username are required."
+            })
+
+        cursor = mysql.connection.cursor()
+        
+        # Get event title and creator for notification messages
+        cursor.execute("SELECT title, created_by FROM events WHERE id = %s", (event_id,))
+        event = cursor.fetchone()
+        if not event:
+            cursor.close()
+            return jsonify({
+                "success": False,
+                "message": "Event not found."
+            })
+        title = event[0]
+        creator = event[1]
+
+        # Insert registration record
+        try:
+            cursor.execute("INSERT INTO registrations (event_id, username) VALUES (%s, %s)", (event_id, username))
+            # Create a success notification for participant
+            cursor.execute("INSERT INTO notifications (message, username, type) VALUES (%s, %s, %s)",
+                           (f"You have successfully registered for '{title}'!", username, "success"))
+            
+            mysql.connection.commit()
+        except MySQLdb.IntegrityError:
+            cursor.close()
+            return jsonify({
+                "success": False,
+                "message": "You are already registered for this event."
+            })
+
+        cursor.close()
+        return jsonify({
+            "success": True,
+            "message": f"Successfully registered for '{title}'!"
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        })
+
+# GET PARTICIPANT REGISTRATIONS
+@app.route('/registrations/<username>', methods=['GET'])
+def get_registrations(username):
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute("""
+            SELECT e.id, e.title, e.category, e.event_date, e.event_date_end, e.selected_venue, e.banner_image, r.registration_date
+            FROM registrations r
+            JOIN events e ON r.event_id = e.id
+            WHERE r.username = %s
+            ORDER BY e.event_date ASC
+        """, (username,))
+        rows = cursor.fetchall()
+        cursor.close()
+
+        result = []
+        for r in rows:
+            result.append({
+                "id": r[0],
+                "title": r[1],
+                "category": r[2],
+                "event_date": str(r[3]),
+                "event_date_end": str(r[4]) if r[4] else None,
+                "selected_venue": r[5],
+                "banner_image": r[6],
+                "registration_date": str(r[7])
+            })
+        return jsonify(result)
+    except Exception as e:
+        return jsonify([])
+
+# UNREGISTER FROM AN EVENT (PARTICIPANT)
+@app.route('/unregister-event', methods=['POST'])
+def unregister_event():
+    try:
+        data = request.get_json()
+        event_id = data.get('event_id')
+        username = data.get('username')
+
+        if not event_id or not username:
+            return jsonify({
+                "success": False,
+                "message": "Event ID and Username are required."
+            })
+
+        cursor = mysql.connection.cursor()
+        
+        # Get event title and creator
+        cursor.execute("SELECT title, created_by FROM events WHERE id = %s", (event_id,))
+        event = cursor.fetchone()
+        if not event:
+            cursor.close()
+            return jsonify({
+                "success": False,
+                "message": "Event not found."
+            })
+        title = event[0]
+        creator = event[1]
+
+        # Delete registration
+        cursor.execute("DELETE FROM registrations WHERE event_id = %s AND username = %s", (event_id, username))
+        # Add notification for participant
+        cursor.execute("INSERT INTO notifications (message, username, type) VALUES (%s, %s, %s)",
+                       (f"You cancelled your registration for '{title}'.", username, "info"))
+        
+        mysql.connection.commit()
+        cursor.close()
+        return jsonify({
+            "success": True,
+            "message": "Registration cancelled successfully."
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        })
+
+# GET EVENT ATTENDEES (ORGANIZER/ADMIN)
+@app.route('/event/<int:event_id>/attendees', methods=['GET'])
+def get_event_attendees(event_id):
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT username, registration_date FROM registrations WHERE event_id = %s ORDER BY registration_date DESC", (event_id,))
+        rows = cursor.fetchall()
+        cursor.close()
+
+        result = []
+        for r in rows:
+            result.append({
+                "username": r[0],
+                "registration_date": str(r[1])
+            })
+        return jsonify(result)
+    except Exception as e:
+        return jsonify([])
+
+# GET ADMIN SETTINGS
+@app.route('/admin/settings', methods=['GET'])
+def get_admin_settings():
+    settings = load_admin_settings()
+    return jsonify(settings)
+
+# UPDATE ADMIN SETTINGS
+@app.route('/admin/settings', methods=['POST'])
+def update_admin_settings():
+    try:
+        data = request.get_json()
+        settings = load_admin_settings()
+
+        if "maintenance_mode" in data:
+            settings["maintenance_mode"] = bool(data["maintenance_mode"])
+        if "auto_approve_venues" in data:
+            settings["auto_approve_venues"] = bool(data["auto_approve_venues"])
+        if "gemini_model" in data:
+            settings["gemini_model"] = str(data["gemini_model"])
+        if "gemini_system_instruction" in data:
+            settings["gemini_system_instruction"] = str(data["gemini_system_instruction"])
+
+        if save_admin_settings(settings):
+            return jsonify({"success": True, "message": "Admin settings updated successfully."})
+        else:
+            return jsonify({"success": False, "message": "Failed to write settings file."})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
+
+# TRIGGER PLATFORM BACKUP SYNC
+@app.route('/admin/trigger-backup', methods=['POST'])
+def admin_trigger_backup():
+    try:
+        import subprocess
+        project_root = os.path.dirname(BASE_DIR)
+        
+        # Check if there are active changes
+        status_check = subprocess.run(["git", "status", "--porcelain"], cwd=project_root, capture_output=True, text=True)
+        if not status_check.stdout.strip():
+            # No changes to commit, but push existing commits
+            subprocess.run(["git", "push", "origin", "main"], cwd=project_root, check=True)
+            return jsonify({"success": True, "message": "No new local changes to backup, but pushed local history successfully."})
+            
+        # Stage all files
+        subprocess.run(["git", "add", "-A"], cwd=project_root, check=True)
+        
+        # Commit with timestamp
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        commit_msg = f"Auto-backup (Admin Panel): {timestamp}"
+        subprocess.run(["git", "commit", "-m", commit_msg], cwd=project_root, check=True)
+        
+        # Push to origin main
+        subprocess.run(["git", "push", "origin", "main"], cwd=project_root, check=True)
+        
+        return jsonify({"success": True, "message": "Git backup sync completed successfully!"})
+    except subprocess.CalledProcessError as err:
+        return jsonify({"success": False, "message": f"Git command failed: {str(err)}"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
 
 if __name__ == "__main__":
     app.run(debug=True)

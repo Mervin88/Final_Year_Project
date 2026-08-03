@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>My Settings | EventSync</title>
+
+    <link rel="stylesheet" href="css/events.css">
+    <link rel="stylesheet" href="css/participant-settings.css">
+    <script>
+        // Immediately load dark mode setting to avoid flash of light theme
+        if (localStorage.getItem("theme") === "dark") {
+            document.documentElement.classList.add("dark-theme");
+        }
+    </script>
+
+</head>
+
+<body class="theme-transition">
+
+    <!-- NAVBAR -->
+
+    <nav class="navbar">
+        <a href="landing.html" class="logo-text">
+            <span class="logo-dark">Event</span><span class="logo-gold">Sync</span>
+        </a>
+        <ul class="nav-links">
+            <li style="display: none;"><a href="participant-dashboard.html" id="navDashboard">Dashboard</a></li>
+            <li><a href="events.html" id="navEvents">Events</a></li>
+            <li><a href="venues.html" id="navVenues">Venues</a></li>
+            <li style="display: none;"><a href="registrations.html" id="navRegistrations">My Registrations</a></li>
+            <li style="display: none;"><a href="participant-settings.html" id="navSettings">Settings</a></li>
+            <li><a href="login.html" id="navLogin" class="login-btn">Login</a></li>
+        </ul>
+    </nav>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const username = localStorage.getItem("username");
+            const role = (localStorage.getItem("role") || "").toLowerCase();
+
+            const navDashboard = document.getElementById("navDashboard");
+            const navRegistrations = document.getElementById("navRegistrations");
+            const navSettings = document.getElementById("navSettings");
+            const navLogin = document.getElementById("navLogin");
+
+            if (username) {
+                if (navLogin) {
+                    navLogin.parentElement.style.display = "block";
+                    navLogin.textContent = "Logout";
+                    navLogin.href = "#";
+                    navLogin.onclick = (e) => {
+                        e.preventDefault();
+                        localStorage.removeItem("username");
+                        localStorage.removeItem("role");
+                        localStorage.removeItem("userRole");
+                        localStorage.removeItem("selectedVenue");
+                        localStorage.removeItem("eventDraft");
+                        localStorage.removeItem("eventTimeline");
+                        localStorage.removeItem("editEventId");
+                        localStorage.removeItem("compareVenues");
+                        window.location.href = "login.html";
+                    };
+                }
+                if (navDashboard) {
+                    navDashboard.parentElement.style.display = "block";
+                    if (role === "participant") {
+                        navDashboard.href = "participant-dashboard.html";
+                    } else if (role === "vendor") {
+                        navDashboard.href = "vendor-dashboard.html";
+                    } else if (role === "admin") {
+                        navDashboard.href = "admin-dashboard.html";
+                    } else {
+                        navDashboard.href = "user-dashboard.html";
+                    }
+                }
+                if (role === "participant") {
+                    if (navRegistrations) navRegistrations.parentElement.style.display = "block";
+                    if (navSettings) {
+                        navSettings.parentElement.style.display = "block";
+                        navSettings.href = "participant-settings.html";
+                    }
+                } else {
+                    if (navRegistrations) navRegistrations.parentElement.style.display = "none";
+                    if (navSettings) {
+                        navSettings.parentElement.style.display = "block";
+                        navSettings.href = "settings.html";
+                    }
+                }
+            } else {
+                if (navLogin) {
+                    navLogin.parentElement.style.display = "block";
+                    navLogin.textContent = "Login";
+                    navLogin.href = "login.html";
+                    navLogin.onclick = null;
+                }
+                if (navDashboard) navDashboard.parentElement.style.display = "none";
+                if (navRegistrations) navRegistrations.parentElement.style.display = "none";
+                if (navSettings) navSettings.parentElement.style.display = "none";
+            }
+
+            const pagePath = window.location.pathname.split("/").pop();
+            const navLinks = document.querySelectorAll(".nav-links a");
+            navLinks.forEach(link => {
+                const linkPath = link.getAttribute("href");
+                if (linkPath === pagePath) {
+                    link.classList.add("active");
+                } else {
+                    link.classList.remove("active");
+                }
+            });
+        });
+    </script>
+
+    <!-- CONTENT WRAPPER -->
+
+    <main class="settings-container">
+
+        <div class="settings-header">
+
+            <h1>
+                Account Settings
+            </h1>
+
+            <p>
+                Manage your personal details, password security, and theme preferences.
+            </p>
+
+        </div>
+
+        <div class="settings-grid">
+
+            <!-- PROFILE CARD -->
+
+            <div class="settings-card">
+
+                <h2>
+                    Personal Information
+                </h2>
+
+                <form id="profileForm">
+
+                    <div class="form-group">
+
+                        <label for="fullName">Full Name</label>
+
+                        <input type="text" id="fullName" required placeholder="John Doe">
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label for="email">Email Address</label>
+
+                        <input type="email" id="email" required placeholder="john@example.com">
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label for="userRole">Account Role</label>
+
+                        <input type="text" id="userRole" disabled
+                            style="background-color: rgba(0,0,0,0.05); cursor: not-allowed;">
+
+                    </div>
+
+                    <button type="submit" class="save-btn">
+                        Save Profile
+                    </button>
+
+                </form>
+
+            </div>
+
+            <!-- SECURITY CARD -->
+
+            <div class="settings-card">
+
+                <h2>
+                    Change Password
+                </h2>
+
+                <form id="passwordForm">
+
+                    <div class="form-group">
+
+                        <label for="currentPassword">Current Password</label>
+
+                        <input type="password" id="currentPassword" placeholder="••••••••">
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label for="newPassword">New Password</label>
+
+                        <input type="password" id="newPassword" placeholder="••••••••">
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label for="confirmPassword">Confirm New Password</label>
+
+                        <input type="password" id="confirmPassword" placeholder="••••••••">
+
+                    </div>
+
+                    <button type="submit" class="save-btn font-bold">
+                        Update Password
+                    </button>
+
+                </form>
+
+            </div>
+
+            <!-- THEME SWITCH CARD -->
+
+            <div class="settings-card theme-card"
+                style="grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+
+                <div style="flex-grow: 1;">
+
+                    <h2 style="margin-bottom: 8px;">
+                        Dark Mode Theme
+                    </h2>
+
+                    <p style="color: #6b7280; font-size: 14px;" id="themeDesc">
+                        Toggle to switch between light and dark themes across the app.
+                    </p>
+
+                </div>
+
+                <div class="toggle-container">
+
+                    <label class="switch-lbl">
+                        <input type="checkbox" id="darkModeToggle">
+                        <span class="slider-round"></span>
+                    </label>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/settings.js"></script>
+
+</body>
+
+</html>

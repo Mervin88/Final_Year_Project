@@ -14,6 +14,16 @@
 
     <link rel="stylesheet"
     href="css/admin-dashboard.css">
+    <link rel="stylesheet"
+    href="css/layout-preview-modal.css?v=3">
+    <link rel="stylesheet"
+    href="css/admin-settings.css">
+    <script>
+        // Immediately load dark mode setting to avoid flash of light theme
+        if (localStorage.getItem("theme") === "dark") {
+            document.documentElement.classList.add("dark-theme");
+        }
+    </script>
 
     <style media="print">
         body {
@@ -117,7 +127,7 @@
 
                     </li>
 
-                    <li onclick="window.location.href='admin-dashboard.html'">
+                    <li onclick="window.location.href='admin-dashboard.html#admin-settings-section'">
 
                         Settings
 
@@ -353,6 +363,8 @@
 
                             <option value="All">All Roles</option>
 
+                            <option value="Organizer">Organizer</option>
+
                             <option value="Participant">Participant</option>
 
                             <option value="Vendor">Vendor</option>
@@ -501,8 +513,145 @@
 
             </section>
 
+            <!-- ADMIN SETTINGS & PLATFORM CONTROLS -->
+            <section class="section" id="admin-settings-section">
+                <div class="section-header">
+                    <h2>
+                        Admin Settings & System Controls
+                    </h2>
+                </div>
+                
+                <div class="admin-settings-container">
+                    <form id="adminSettingsForm" class="settings-grid">
+                        
+                        <!-- Card 1: Platform & Rules -->
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <span class="card-icon">⚙️</span>
+                                <h3>Platform Rules</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group-toggle">
+                                    <label class="switch">
+                                        <input type="checkbox" id="settingMaintenanceMode">
+                                        <span class="slider round"></span>
+                                    </label>
+                                    <div class="toggle-details">
+                                        <span class="toggle-title">Maintenance Mode</span>
+                                        <span class="toggle-desc">Prevent non-admin users from logging in to the portal.</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group-toggle">
+                                    <label class="switch">
+                                        <input type="checkbox" id="settingAutoApproveVenues">
+                                        <span class="slider round"></span>
+                                    </label>
+                                    <div class="toggle-details">
+                                        <span class="toggle-title">Auto-Approve Venues</span>
+                                        <span class="toggle-desc">Automatically approve new venues uploaded by vendors without manual review.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: AI Assistant Config -->
+                        <div class="settings-card col-span-2">
+                            <div class="card-header">
+                                <span class="card-icon">🤖</span>
+                                <h3>Gemini AI Chatbot Tuner</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label for="settingGeminiModel">AI Model Type</label>
+                                    <select id="settingGeminiModel" class="form-select">
+                                        <option value="gemini-2.5-flash">Gemini 2.5 Flash (Recommended)</option>
+                                        <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                                        <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="settingSystemInstruction">System Instruction Template</label>
+                                    <span class="field-hint">Use <code>{events_context}</code> where user events info should be injected.</span>
+                                    <textarea id="settingSystemInstruction" class="form-textarea" rows="8"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 3: Backups & System Maintenance -->
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <span class="card-icon">💾</span>
+                                <h3>Backup & Maintenance</h3>
+                            </div>
+                            <div class="card-body system-actions">
+                                <p>Automate local repository git staging, commits, and pushes directly to your remote branch.</p>
+                                <button type="button" id="triggerBackupBtn" class="primary-btn w-full">
+                                    <span>Trigger Manual Auto-Backup</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                    </form>
+                    
+                    <div class="settings-footer">
+                        <button type="submit" form="adminSettingsForm" class="save-settings-btn">
+                            Save Configuration Changes
+                        </button>
+                    </div>
+                </div>
+            </section>
+
         </main>
 
+    </div>
+
+    <div id="layoutModal" class="layout-modal">
+        <div class="layout-modal-content">
+            <div class="layout-modal-header">
+                <h2>Venue Layout Preview (Admin)</h2>
+                <div class="modal-zoom-controls">
+                    <span>Zoom:</span>
+                    <button class="zoom-btn" id="modalZoomOutBtn">-</button>
+                    <span id="modalZoomPercent">100%</span>
+                    <button class="zoom-btn" id="modalZoomInBtn">+</button>
+                    <button class="zoom-reset-btn" id="modalZoomResetBtn">Fit</button>
+                </div>
+                <button class="layout-modal-close" id="closeLayoutModalBtn">&times;</button>
+            </div>
+            <div class="layout-modal-body" id="modalLayoutPreview">
+            </div>
+        </div>
+    </div>
+
+    <!-- 3D BACKDROP PREVIEW MODAL -->
+    <div id="backdropModal" class="layout-modal">
+        <div class="layout-modal-content">
+            <div class="layout-modal-header">
+                <h2>3D Backdrop Preview</h2>
+                <button class="layout-modal-close" id="closeBackdropModalBtn">&times;</button>
+            </div>
+            <div class="layout-modal-body" style="justify-content: center; align-items: center;">
+                <div class="vr-venue-canvas" id="modalBackdropPreview">
+                    <div class="stage-backdrop" id="modalStageBackdrop" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TIMELINE PREVIEW MODAL -->
+    <div id="timelineModal" class="layout-modal">
+        <div class="layout-modal-content" style="max-width: 500px;">
+            <div class="layout-modal-header">
+                <h2>Event Timeline Preview</h2>
+                <button class="layout-modal-close" id="closeTimelineModalBtn">&times;</button>
+            </div>
+            <div class="layout-modal-body" style="padding: 20px 25px;">
+                <div id="modalTimelinePreview" style="display: flex; flex-direction: column; gap: 10px; width: 100%; max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                    <!-- Timeline items will be rendered dynamically -->
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

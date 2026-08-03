@@ -10,10 +10,16 @@
     <title>Explore Events | EventSync</title>
 
     <link rel="stylesheet" href="css/events.css">
+    <script>
+        // Immediately load dark mode setting to avoid flash of light theme
+        if (localStorage.getItem("theme") === "dark") {
+            document.documentElement.classList.add("dark-theme");
+        }
+    </script>
 
 </head>
 
-<body>
+<body class="theme-transition">
 
     <!-- NAVBAR -->
 
@@ -22,25 +28,31 @@
             <span class="logo-dark">Event</span><span class="logo-gold">Sync</span>
         </a>
         <ul class="nav-links">
-            <li><a href="events.html" id="navEvents" class="active">Events</a></li>
+            <li style="display: none;"><a href="participant-dashboard.html" id="navDashboard">Dashboard</a></li>
+            <li><a href="events.html" id="navEvents">Events</a></li>
             <li><a href="venues.html" id="navVenues">Venues</a></li>
-            <li><a href="planner.html" id="navPlanner">Planner</a></li>
-            <li><a href="communication.html" id="navCommunication">Communication</a></li>
-            <li><a href="user-dashboard.html" id="navDashboard">Dashboard</a></li>
+            <li style="display: none;"><a href="registrations.html" id="navRegistrations">My Registrations</a></li>
+            <li style="display: none;"><a href="participant-settings.html" id="navSettings">Settings</a></li>
+            <li style="display: none;"><a href="planner.html" id="navPlanner">Planner</a></li>
+            <li style="display: none;"><a href="communication.html" id="navCommunication">Communication</a></li>
             <li><a href="login.html" id="navLogin" class="login-btn">Login</a></li>
         </ul>
     </nav>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const username = localStorage.getItem("username");
-            const role = localStorage.getItem("role");
+            const role = (localStorage.getItem("role") || "").toLowerCase();
+
+            const navDashboard = document.getElementById("navDashboard");
+            const navRegistrations = document.getElementById("navRegistrations");
+            const navSettings = document.getElementById("navSettings");
             const navPlanner = document.getElementById("navPlanner");
             const navCommunication = document.getElementById("navCommunication");
-            const navDashboard = document.getElementById("navDashboard");
             const navLogin = document.getElementById("navLogin");
-            
+
             if (username) {
                 if (navLogin) {
+                    navLogin.parentElement.style.display = "block";
                     navLogin.textContent = "Logout";
                     navLogin.href = "#";
                     navLogin.onclick = (e) => {
@@ -57,37 +69,57 @@
                     };
                 }
                 if (navDashboard) {
-                    if (role === "Participant") {
-                        navDashboard.parentElement.style.display = "none";
+                    navDashboard.parentElement.style.display = "block";
+                    if (role === "participant") {
+                        navDashboard.href = "participant-dashboard.html";
+                    } else if (role === "vendor") {
+                        navDashboard.href = "vendor-dashboard.html";
+                    } else if (role === "admin") {
+                        navDashboard.href = "admin-dashboard.html";
                     } else {
-                        navDashboard.parentElement.style.display = "block";
-                        if (role === "Vendor") {
-                            navDashboard.href = "vendor-dashboard.html";
-                        } else if (role === "Admin") {
-                            navDashboard.href = "admin-dashboard.html";
-                        } else {
-                            navDashboard.href = "user-dashboard.html";
-                        }
+                        navDashboard.href = "user-dashboard.html";
                     }
                 }
-                if (role === "Participant") {
-                    if (navPlanner) navPlanner.parentElement.style.display = "none";
-                    if (navCommunication) navCommunication.parentElement.style.display = "none";
-                } else {
+                if (role === "organizer" || role === "vendor" || role === "admin") {
+                    if (navRegistrations) navRegistrations.parentElement.style.display = "none";
+                    if (navSettings) {
+                        navSettings.parentElement.style.display = "none";
+                    }
                     if (navPlanner) navPlanner.parentElement.style.display = "block";
                     if (navCommunication) navCommunication.parentElement.style.display = "block";
+                } else {
+                    if (navRegistrations) navRegistrations.parentElement.style.display = "block";
+                    if (navSettings) {
+                        navSettings.parentElement.style.display = "block";
+                        navSettings.href = "participant-settings.html";
+                    }
+                    if (navPlanner) navPlanner.parentElement.style.display = "none";
+                    if (navCommunication) navCommunication.parentElement.style.display = "none";
                 }
             } else {
                 if (navLogin) {
-                    navLogin.style.display = "block";
+                    navLogin.parentElement.style.display = "block";
                     navLogin.textContent = "Login";
                     navLogin.href = "login.html";
                     navLogin.onclick = null;
                 }
                 if (navDashboard) navDashboard.parentElement.style.display = "none";
+                if (navRegistrations) navRegistrations.parentElement.style.display = "none";
+                if (navSettings) navSettings.parentElement.style.display = "none";
                 if (navPlanner) navPlanner.parentElement.style.display = "none";
                 if (navCommunication) navCommunication.parentElement.style.display = "none";
             }
+
+            const pagePath = window.location.pathname.split("/").pop();
+            const navLinks = document.querySelectorAll(".nav-links a");
+            navLinks.forEach(link => {
+                const linkPath = link.getAttribute("href");
+                if (linkPath === pagePath) {
+                    link.classList.add("active");
+                } else {
+                    link.classList.remove("active");
+                }
+            });
         });
     </script>
 
@@ -156,148 +188,10 @@
     <!-- EVENTS GRID -->
 
     <section class="events-grid">
-
-        <!-- CARD 1 -->
-
-        <div class="event-card">
-
-            <img src="https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=1200&auto=format&fit=crop"
-                alt="Event">
-
-            <div class="event-content">
-
-                <div class="event-tag">
-                    Conference
-                </div>
-
-                <h2>
-                    Business Leadership Summit 2026
-                </h2>
-
-                <p>
-                    Kuala Lumpur Convention Centre
-                </p>
-
-                <span>
-                    📅 15 May 2026
-                </span>
-
-                <button onclick="window.location.href='event-details.html'">
-
-                    Register Now
-
-                </button>
-
-            </div>
-
-        </div>
-
-        <!-- CARD 2 -->
-
-        <div class="event-card">
-
-            <img src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=1200&auto=format&fit=crop"
-                alt="Event">
-
-            <div class="event-content">
-
-                <div class="event-tag">
-                    Networking
-                </div>
-
-                <h2>
-                    Corporate Networking Night
-                </h2>
-
-                <p>
-                    EQ Hotel Kuala Lumpur
-                </p>
-
-                <span>
-                    📅 20 May 2026
-                </span>
-
-                <button onclick="window.location.href='event-details.html'">
-
-                    Register Now
-
-                </button>
-
-            </div>
-
-        </div>
-
-        <!-- CARD 3 -->
-
-        <div class="event-card">
-
-            <img src="https://images.unsplash.com/photo-1505373877841-8d25f7d46678?q=80&w=1200&auto=format&fit=crop"
-                alt="Event">
-
-            <div class="event-content">
-
-                <div class="event-tag">
-                    Workshop
-                </div>
-
-                <h2>
-                    Tech Innovation Workshop
-                </h2>
-
-                <p>
-                    MITEC Kuala Lumpur
-                </p>
-
-                <span>
-                    📅 28 May 2026
-                </span>
-
-                <button onclick="window.location.href='event-details.html'">
-
-                    Register Now
-
-                </button>
-
-            </div>
-
-        </div>
-
-        <!-- CARD 4 -->
-
-        <div class="event-card">
-
-            <img src="https://images.unsplash.com/photo-1515169067868-5387ec356754?q=80&w=1200&auto=format&fit=crop"
-                alt="Event">
-
-            <div class="event-content">
-
-                <div class="event-tag">
-                    Seminar
-                </div>
-
-                <h2>
-                    Executive Growth Seminar
-                </h2>
-
-                <p>
-                    Sunway Resort Hotel
-                </p>
-
-                <span>
-                    📅 30 May 2026
-                </span>
-
-                <button onclick="window.location.href='event-details.html'">
-
-                    Register Now
-
-                </button>
-
-            </div>
-
-        </div>
-
+        <!-- Dynamically populated by js/events.js from approved backend database events -->
     </section>
+
+    <script src="js/events.js"></script>
 
 </body>
 

@@ -52,26 +52,39 @@ body{
 
 .navbar ul{
     display:flex;
-
-    gap:50px;
-
+    align-items:center;
+    gap:55px;
     list-style:none;
 }
 
 .navbar ul li a{
     text-decoration:none;
-
     color:#1e293b;
-
     font-size:18px;
-
     font-weight:600;
-
     transition:0.3s;
+    position:relative;
 }
 
 .navbar ul li a:hover{
     color:#c8a96b;
+}
+
+.navbar ul li a::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -10px;
+    width: 0%;
+    height: 3px;
+    background: #c8a96b;
+    border-radius: 10px;
+    transition: 0.3s;
+}
+
+.navbar ul li a:hover::after,
+.navbar ul li a.active::after {
+    width: 100%;
 }
 
 .active{
@@ -178,6 +191,15 @@ body{
     background:#111827;
 
     color:white;
+}
+
+.header-row .compare-feature,
+.header-row .compare-card {
+    border-right: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.header-row .compare-card:last-child {
+    border-right: none;
 }
 
 /* FEATURE */
@@ -325,4 +347,46 @@ body{
 
 .navbar ul li a.login-btn::after {
     display: none !important;
+}
+
+/* DARK THEME SUPPORT */
+html.dark-theme body {
+    background: #0b0f19;
+    color: #f3f4f6;
+}
+
+html.dark-theme .navbar {
+    background: rgba(17, 24, 39, 0.85);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+html.dark-theme .logo-dark {
+    color: #ffffff;
+}
+
+html.dark-theme .navbar ul li a {
+    color: #cbd5e1;
+}
+
+html.dark-theme .navbar ul li a:hover {
+    color: #c8a96b;
+}
+
+html.dark-theme .compare-table {
+    background: #111827;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+}
+
+html.dark-theme .compare-row {
+    border-bottom: 1px solid #1f2937;
+}
+
+html.dark-theme .compare-feature,
+html.dark-theme .compare-card {
+    border-right: 1px solid #1f2937;
+    color: #e5e7eb;
+}
+
+html.dark-theme .header-row {
+    background: #0f172a;
 }

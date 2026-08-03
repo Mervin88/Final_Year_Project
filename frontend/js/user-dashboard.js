@@ -74,107 +74,247 @@ async function loadEvents() {
             `;
 
             return;
-        }
-
-        // Generate event cards
+        }        // Generate event cards
         events.forEach(event => {
-            let timelineHtml = '';
-            try {
-                let timelineData = event.timeline;
-                if (timelineData && typeof timelineData === 'string' && timelineData !== "None" && timelineData !== "null") {
-                    try {
-                        timelineData = JSON.parse(timelineData);
-                    } catch (err) {
-                        console.error("JSON parse error:", err);
-                        timelineData = null;
-                    }
-                }
-                
-                if (Array.isArray(timelineData) && timelineData.length > 0) {
-                    timelineHtml = `
-                        <div class="timeline-preview" style="display:none; margin-top: 15px; border-top: 1px solid #f3f4f6; padding-top: 12px;">
-                            <h4 style="font-size: 14px; color: #111827; margin-bottom: 8px; font-weight: 600;">Event Timeline</h4>
-                            <div style="display: flex; flex-direction: column; gap: 8px;">
-                                ${timelineData.map(item => `
-                                    <div style="display: flex; gap: 10px; font-size: 13px;">
-                                        <span style="font-weight: bold; color: #c8a96b; min-width: 50px;">${item.time}</span>
-                                        <span style="color: #4b5563;">${item.activity}</span>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                        <button class="toggle-timeline-btn" onclick="toggleTimeline(this)" style="margin-top: 15px; background: transparent; border: 1px solid #c8a96b; color: #c8a96b; padding: 8px 12px; border-radius: 10px; font-size: 12px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s;">Show Timeline</button>
-                    `;
-                } else {
-                    timelineHtml = `
-                        <div style="margin-top: 15px; font-size: 12px; color: #9ca3af; text-align: center; border-top: 1px solid #f3f4f6; padding-top: 12px;">No timeline activities scheduled.</div>
-                    `;
-                }
-            } catch (e) {
-                console.error("Error parsing timeline for event card:", e);
-                timelineHtml = `
-                    <div style="margin-top: 15px; font-size: 12px; color: #ef4444; text-align: center; border-top: 1px solid #f3f4f6; padding-top: 12px;">Failed to load timeline.</div>
-                `;
-            }
-
-           eventGrid.innerHTML += `
-
-            <div class="event-card">
-
-                <div class="event-content">
-
-                    <h3>${event.title}</h3>
-
-                    <p>${event.category}</p>
-
-                    <p>${event.venue}</p>
-
-                    <p>${event.event_date}</p>
-
-                    <small>
-                        Created By: ${event.created_by}
-                    </small>
-
-                    ${timelineHtml}
-
-                </div>
-            
-            </div>
-
+            eventGrid.innerHTML += `
+             <div class="event-card">
+                 <img src="${event.banner_image || 'https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=1200'}" alt="Event Banner">
+                 <div class="event-content">
+                     <h3 style="margin: 0 0 8px 0; font-size: 20px; font-weight: bold; color: #111827;">${event.title}</h3>
+                     <p style="margin: 0 0 4px 0; font-size: 13px; color: #6b7280;"><strong>Category:</strong> ${event.category}</p>
+                     <p style="margin: 0 0 4px 0; font-size: 13px; color: #6b7280;"><strong>Venue:</strong> ${event.venue}</p>
+                     <p style="margin: 0 0 10px 0; font-size: 13px; color: #6b7280;"><strong>Attendees:</strong> ${event.attendee_count} Registered</p>
+                     <span style="color: #c8a96b; font-weight: bold; font-size: 14px; display: block; margin-bottom: 8px;">${
+                          (event.event_date_end && event.event_date_end !== 'None' && event.event_date_end !== 'null' && event.event_date_end !== event.event_date)
+                              ? `${event.event_date} to ${event.event_date_end}`
+                              : event.event_date
+                      }</span>
+                     <small style="color: #9ca3af; font-size: 11px; display: block;">Created By: ${event.created_by}</small>
+                 </div>
+             </div>
             `;
-
         });
 
     } catch (error) {
-
         console.log("Error loading events:", error);
-
     }
-
 }
 
 // ========================================
-// TOGGLE TIMELINE VIEW
+// LOAD NOTIFICATIONS FROM FLASK
 // ========================================
 
-window.toggleTimeline = function(btn) {
-    const card = btn.closest('.event-card');
-    const preview = card.querySelector('.timeline-preview');
-    if (preview.style.display === 'none') {
-        preview.style.display = 'block';
-        btn.textContent = 'Hide Timeline';
-        btn.style.background = '#c8a96b';
-        btn.style.color = '#111827';
-    } else {
-        preview.style.display = 'none';
-        btn.textContent = 'Show Timeline';
-        btn.style.background = 'transparent';
-        btn.style.color = '#c8a96b';
+async function loadNotifications() {
+    try {
+        const response = await fetch(`http://127.0.0.1:5000/notifications/${username}`);
+        const notifications = await response.json();
+        const notificationList = document.querySelector(".notification-list");
+        
+        if (notificationList) {
+            notificationList.innerHTML = "";
+            if (notifications.length === 0) {
+                notificationList.innerHTML = `
+                    <div style="font-size: 14px; color: #9ca3af; text-align: center; padding: 20px 0;">
+                        No recent notifications.
+                    </div>`;
+                return;
+            }
+            // Display top 3 notifications
+            notifications.slice(0, 3).forEach(n => {
+                notificationList.innerHTML += `
+                    <div class="notification-item">
+                        <div class="dot"></div>
+                        <p>${n.message}</p>
+                    </div>
+                `;
+            });
+        }
+    } catch (error) {
+        console.error("Error loading notifications:", error);
     }
-};
+}
+
+// ========================================
+// LOAD RECOMMENDED VENUES (PERSONALIZED AI + OPTION A COLD-START FALLBACK)
+// ========================================
+
+let userEventsData = [];
+let allApprovedVenuesData = [];
+
+async function loadRecommendedVenues() {
+    const venueGrid = document.getElementById("recommendedVenueGrid") || document.querySelector(".venue-grid");
+    if (!venueGrid) return;
+
+    try {
+        // Fetch user events & approved venues concurrently
+        const [eventsRes, venuesRes] = await Promise.all([
+            fetch(`http://127.0.0.1:5000/events/${username}`).catch(() => null),
+            fetch("http://127.0.0.1:5000/venues/approved").catch(() => null)
+        ]);
+
+        if (eventsRes && eventsRes.ok) {
+            userEventsData = await eventsRes.json();
+        }
+        if (venuesRes && venuesRes.ok) {
+            allApprovedVenuesData = await venuesRes.json();
+        }
+
+        renderRecommendedVenues();
+    } catch (error) {
+        console.error("Error loading recommended venues:", error);
+    }
+}
+
+function renderRecommendedVenues() {
+    const venueGrid = document.getElementById("recommendedVenueGrid") || document.querySelector(".venue-grid");
+    const subtitle = document.getElementById("venueRecommendSubtitle");
+    if (!venueGrid) return;
+
+    venueGrid.innerHTML = "";
+
+    if (!allApprovedVenuesData || allApprovedVenuesData.length === 0) {
+        venueGrid.innerHTML = `
+            <div style="font-size: 14px; color: #9ca3af; text-align: center; padding: 30px 0; grid-column: 1/-1;">
+                No recommended venues found. Ensure backend server is running.
+            </div>`;
+        return;
+    }
+
+    const hasEvents = userEventsData && userEventsData.length > 0;
+    const latestEvent = hasEvents ? userEventsData[userEventsData.length - 1] : null;
+
+    // Set contextual subtitle
+    if (subtitle) {
+        if (hasEvents) {
+            subtitle.textContent = `AI Personalized matches based on your event "${latestEvent.title}"`;
+        } else {
+            // Option A Cold Start Subtitle for New Organizers
+            subtitle.textContent = `Welcome! Explore top-rated corporate venues below or create an event to enable AI matching.`;
+        }
+    }
+
+    // Compute Match Score / Badges for candidate venues
+    const scoredVenues = allApprovedVenuesData.map((v, idx) => {
+        let score = 0;
+        let badge = "";
+        let reason = "";
+
+        if (hasEvents && latestEvent) {
+            // Personalized Scoring Formula
+            // 1. Location (25 pts)
+            if (latestEvent.preferred_location && v.location.toLowerCase().includes(latestEvent.preferred_location.toLowerCase())) {
+                score += 25;
+            } else {
+                score += 10;
+            }
+
+            // 2. Capacity (25 pts)
+            const reqCap = latestEvent.required_capacity || latestEvent.participants || 0;
+            if (reqCap > 0) {
+                if (v.capacity >= reqCap && v.capacity <= reqCap * 1.6) score += 25;
+                else if (v.capacity >= reqCap) score += 15;
+                else score += 5;
+            } else {
+                score += 15;
+            }
+
+            // 3. Category & Type (25 pts)
+            if (latestEvent.venue_type && v.type === latestEvent.venue_type) score += 15;
+            const desc = (v.name + " " + (v.description || "")).toLowerCase();
+            if (latestEvent.category && desc.includes(latestEvent.category.toLowerCase())) score += 10;
+            else score += 5;
+
+            // 4. Amenities (25 pts)
+            let amenityScore = 0;
+            if (latestEvent.wifi_required && v.wifi_available) amenityScore += 5;
+            if (latestEvent.parking_required && v.parking_available) amenityScore += 5;
+            if (latestEvent.projector_required && v.projector_available) amenityScore += 5;
+            if (latestEvent.catering_required && v.catering_available) amenityScore += 5;
+            if (latestEvent.stage_setup_required && v.stage_setup_available) amenityScore += 5;
+            score += amenityScore > 0 ? amenityScore : 15;
+
+            badge = `🎯 ${score}% Match`;
+            reason = `Matched for your event "${latestEvent.title}" (${latestEvent.category})`;
+        } else {
+            // Option A Cold Start Badges for New Organizers
+            const coldStartBadges = ["⭐ Featured Venue", "🔥 Popular Choice", "🏆 Top Rated"];
+            const coldStartReasons = [
+                `Popular corporate choice in ${v.location} for high-capacity events`,
+                `High availability & full event amenity support in ${v.location}`,
+                `Frequently selected for corporate dinners and summits`
+            ];
+            badge = coldStartBadges[idx % coldStartBadges.length];
+            reason = coldStartReasons[idx % coldStartReasons.length];
+            score = 85 - (idx * 3);
+        }
+
+        return {
+            ...v,
+            matchScore: score,
+            badge: badge,
+            reason: reason
+        };
+    });
+
+    // Sort by match score descending
+    scoredVenues.sort((a, b) => b.matchScore - a.matchScore);
+
+    // Display top 3 venues
+    scoredVenues.slice(0, 3).forEach(v => {
+        // Image selection
+        let img = "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=1200&auto=format&fit=crop";
+        if (v.type === "Indoor") {
+            img = "https://images.unsplash.com/photo-1497366412874-3415097a27e7?q=80&w=1200&auto=format&fit=crop";
+        } else if (v.type === "Outdoor") {
+            img = "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?q=80&w=1200&auto=format&fit=crop";
+        }
+
+        // Amenities list
+        let amenities = [];
+        if (v.parking_available) amenities.push("🅿️ Parking");
+        if (v.wifi_available) amenities.push("📶 WiFi");
+        if (v.projector_available) amenities.push("🎥 Projector");
+        if (v.catering_available) amenities.push("🍽️ Catering");
+        if (v.stage_setup_available) amenities.push("🎤 Stage");
+        if (amenities.length === 0) amenities.push("✨ Standard Amenities");
+
+        const amenitiesHtml = amenities.slice(0, 3).map(a => `<span class="amenity-tag">${a}</span>`).join("");
+        const priceFormatted = parseFloat(v.price).toLocaleString(undefined, { minimumFractionDigits: 0 });
+
+        venueGrid.innerHTML += `
+            <div class="venue-card">
+                <img src="${img}" alt="${v.name}" class="venue-card-header-img">
+                <div class="venue-card-badge">${v.badge}</div>
+                <div class="venue-card-body">
+                    <h3>${v.name}</h3>
+                    <div class="venue-location-tag">📍 ${v.location}, Malaysia</div>
+                    
+                    <div class="venue-specs-row">
+                        <span class="venue-spec-item">👥 ${v.capacity} Pax Capacity</span>
+                        <span class="venue-price-tag">RM ${priceFormatted} / day</span>
+                    </div>
+
+                    <div class="venue-amenities-list">
+                        ${amenitiesHtml}
+                    </div>
+
+                    <div class="venue-reason-note">💡 ${v.reason}</div>
+
+                    <button class="venue-card-btn" onclick="window.location.href='venues.html'">
+                        Explore Venue Details
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+}
 
 // ========================================
 // INITIALIZE PAGE
 // ========================================
 
-loadEvents();
+document.addEventListener("DOMContentLoaded", () => {
+    loadNotifications();
+    loadEvents();
+    loadRecommendedVenues();
+});

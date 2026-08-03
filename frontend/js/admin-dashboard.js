@@ -16,6 +16,10 @@ if (!role || role !== "Admin") {
     }
 }
 
+const eventLayouts = {};
+const eventBackdrops = {};
+const eventTimelines = {};
+
 // ========================================
 // INITIALIZE
 // ========================================
@@ -79,6 +83,70 @@ async function loadEvents() {
             if (event.status === "Approved") badgeBg = "#10b981";
             if (event.status === "Rejected") badgeBg = "#ef4444";
 
+            let layoutHtml = "";
+            try {
+                let layoutData = event.layout;
+                let parsedLayout = null;
+                if (layoutData && typeof layoutData === 'string' && layoutData !== "None" && layoutData !== "null") {
+                    try {
+                        const parsedObj = JSON.parse(layoutData);
+                        if (parsedObj && Array.isArray(parsedObj.elements)) {
+                            parsedLayout = parsedObj.elements;
+                        } else if (Array.isArray(parsedObj)) {
+                            parsedLayout = parsedObj;
+                        }
+                    } catch (err) {
+                        parsedLayout = null;
+                    }
+                }
+                if (Array.isArray(parsedLayout) && parsedLayout.length > 0) {
+                    eventLayouts[event.id] = parsedLayout;
+                    layoutHtml += `
+                        <button onclick="showLayoutPreview(${event.id})" style="width: 100%; margin-top: 5px; margin-bottom: 5px; background: transparent; border: 1px solid #c8a96b; color: #c8a96b; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.3s;">Show Layout</button>
+                    `;
+                }
+            } catch (layoutErr) {
+                console.error("Error parsing layout for admin card:", layoutErr);
+            }
+
+            // Check for timeline setup
+            let timelineHtml = "";
+            try {
+                let timelineData = event.timeline;
+                let parsedTimeline = null;
+                if (timelineData && typeof timelineData === 'string' && timelineData !== "None" && timelineData !== "null" && timelineData !== "[]" && timelineData !== "") {
+                    try {
+                        parsedTimeline = JSON.parse(timelineData);
+                    } catch (err) {
+                        parsedTimeline = null;
+                    }
+                }
+                if (Array.isArray(parsedTimeline) && parsedTimeline.length > 0) {
+                    eventTimelines[event.id] = parsedTimeline;
+                    timelineHtml += `
+                        <button onclick="showTimelinePreview(${event.id})" style="width: 100%; margin-top: 5px; margin-bottom: 5px; background: transparent; border: 1px solid #10b981; color: #10b981; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.3s;" onmouseover="this.style.background='#10b981';this.style.color='white';" onmouseout="this.style.background='transparent';this.style.color='#10b981';">Show Timeline</button>
+                    `;
+                }
+            } catch (timelineErr) {
+                console.error("Error parsing timeline setup:", timelineErr);
+            }
+
+            // Check for backdrop setup
+            try {
+                let backdropData = event.backdrop_setup;
+                if (backdropData && typeof backdropData === 'string' && backdropData !== "None" && backdropData !== "null" && backdropData !== "") {
+                    const parsedBackdrop = JSON.parse(backdropData);
+                    if (parsedBackdrop && (parsedBackdrop.id || parsedBackdrop.elements)) {
+                        eventBackdrops[event.id] = parsedBackdrop;
+                        layoutHtml += `
+                            <button class="show-3d-btn" onclick="show3DPreview(${event.id})" style="width: 100%; margin-top: 5px; margin-bottom: 12px; background: #c8a96b; border: 1px solid #c8a96b; color: #111827; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.3s;">Show 3D View</button>
+                        `;
+                    }
+                }
+            } catch (backdropErr) {
+                console.error("Error parsing backdrop setup:", backdropErr);
+            }
+
             grid.innerHTML += `
             <div class="event-card" style="box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-radius: 18px; overflow: hidden; background: white;">
                 <img src="${img}" style="width: 100%; height: 160px; object-fit: cover;">
@@ -86,12 +154,19 @@ async function loadEvents() {
                     <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 8px; color: #111827;">${event.title}</h3>
                     <p style="font-size: 14px; color: #4b5563; margin-bottom: 4px;"><strong>Category:</strong> ${event.category}</p>
                     <p style="font-size: 14px; color: #4b5563; margin-bottom: 4px;"><strong>Venue:</strong> ${event.selected_venue}</p>
-                    <p style="font-size: 14px; color: #4b5563; margin-bottom: 4px;"><strong>Date:</strong> ${event.event_date}</p>
+                    <p style="font-size: 14px; color: #4b5563; margin-bottom: 4px;"><strong>Date:</strong> ${
+                        (event.event_date_end && event.event_date_end !== 'None' && event.event_date_end !== 'null' && event.event_date_end !== event.event_date)
+                            ? `${event.event_date} to ${event.event_date_end}`
+                            : event.event_date
+                    }</p>
                     <p style="font-size: 14px; color: #4b5563; margin-bottom: 12px;"><strong>Organizer:</strong> ${event.created_by}</p>
                     
                     <span style="background: ${badgeBg}; color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; margin-bottom: 15px;">
                         ${event.status}
                     </span>
+
+                    ${timelineHtml}
+                    ${layoutHtml}
 
                     <div style="display: flex; gap: 10px; border-top: 1px dashed #e5e7eb; padding-top: 15px;">
                         ${event.status === 'Pending Review' ? `
@@ -284,7 +359,7 @@ function renderVenueItems(venues) {
             <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 8px; color: #111827;">${venue.name}</h3>
             <p style="font-size: 14px; color: #4b5563; margin-bottom: 4px;"><strong>Location:</strong> ${venue.location}</p>
             <p style="font-size: 14px; color: #4b5563; margin-bottom: 4px;"><strong>Capacity:</strong> ${venue.capacity} Pax</p>
-            <p style="font-size: 14px; color: #4b5563; margin-bottom: 4px;"><strong>Price:</strong> RM ${parseFloat(venue.price).toLocaleString(undefined, {minimumFractionDigits: 2})}/day</p>
+            <p style="font-size: 14px; color: #4b5563; margin-bottom: 4px;"><strong>Price:</strong> RM ${parseFloat(venue.price).toLocaleString(undefined, { minimumFractionDigits: 2 })}/day</p>
             <p style="font-size: 14px; color: #4b5563; margin-bottom: 4px;"><strong>Type:</strong> ${venue.type}</p>
             ${docHtml}
             <p style="font-size: 13px; color: #6b7280; margin-bottom: 12px; line-height: 1.4;"><strong>Facilities:</strong> ${facilitiesStr}</p>
@@ -714,7 +789,7 @@ async function exportCSV() {
 
         // Build CSV Content
         let csvContent = "data:text/csv;charset=utf-8,";
-        
+
         // Header Row
         csvContent += "Event ID,Title,Category,Venue,Date,Organizer,Status\n";
 
@@ -723,7 +798,10 @@ async function exportCSV() {
             const title = `"${(event.title || '').replace(/"/g, '""')}"`;
             const category = `"${(event.category || '').replace(/"/g, '""')}"`;
             const venue = `"${(event.selected_venue || '').replace(/"/g, '""')}"`;
-            const date = `"${(event.event_date || '').replace(/"/g, '""')}"`;
+            const dateStr = (event.event_date_end && event.event_date_end !== 'None' && event.event_date_end !== 'null' && event.event_date_end !== event.event_date)
+                ? `${event.event_date} to ${event.event_date_end}`
+                : event.event_date;
+            const date = `"${(dateStr || '').replace(/"/g, '""')}"`;
             const organizer = `"${(event.created_by || '').replace(/"/g, '""')}"`;
             const status = `"${(event.status || '').replace(/"/g, '""')}"`;
 
@@ -734,7 +812,7 @@ async function exportCSV() {
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `EventSync_System_Report_${new Date().toISOString().slice(0,10)}.csv`);
+        link.setAttribute("download", `EventSync_System_Report_${new Date().toISOString().slice(0, 10)}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -800,7 +878,8 @@ window.addEventListener("scroll", () => {
         { id: "manage-venues-section", menuIndex: 3 }, // Manage Venues
         { id: "user-management-section", menuIndex: 4 }, // User Management
         { id: "reports-section", menuIndex: 5 },        // Reports
-        { id: "notifications-section", menuIndex: 6 }  // Notifications
+        { id: "notifications-section", menuIndex: 6 },  // Notifications
+        { id: "admin-settings-section", menuIndex: 7 }  // Settings
     ];
 
     let currentSectionId = null;
@@ -916,3 +995,487 @@ function renderNotificationItems(items) {
         `;
     });
 }
+
+// ========================================
+// VENUE LAYOUT PREVIEW MODAL LOGIC (ADMIN)
+// ========================================
+const baseWidth = 600;
+let modalZoom = 1.0;
+let currentPreviewElements = null;
+let currentPreviewCanvas = null;
+let defaultFitScale = 1.0;
+
+window.showLayoutPreview = function (eventId) {
+    const layoutData = eventLayouts[eventId];
+    if (!layoutData) return;
+
+    const layoutModal = document.getElementById("layoutModal");
+    const modalLayoutPreview = document.getElementById("modalLayoutPreview");
+
+    // Show modal first to ensure clientWidth is calculated correctly
+    layoutModal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+
+    // Cache current preview state
+    currentPreviewElements = layoutData;
+    currentPreviewCanvas = modalLayoutPreview;
+
+    modalLayoutPreview.innerHTML = `<div class="layout-preview"></div>`;
+    const modalCanvas = modalLayoutPreview.querySelector(".layout-preview");
+
+    requestAnimationFrame(() => {
+        renderLayoutPreview(modalCanvas, layoutData, null); // Pass null to trigger auto-fit
+    });
+};
+
+function renderLayoutPreview(canvas, elements, zoomVal = null) {
+    if (!canvas || !elements) return;
+    canvas.innerHTML = "";
+
+    // Calculate bounding box of layout elements to determine dimensions
+    let maxX = 0;
+    let maxY = 0;
+    elements.forEach(el => {
+        let w = 120; // default for table
+        let h = 120;
+        if (el.type === 'stage') {
+            w = 300;
+            h = 64;
+        } else if (el.type === 'component') {
+            const rot = parseInt(el.rotation) || 0;
+            const isRotated = (rot === 90 || rot === 270);
+            w = isRotated ? 80 : 200;
+            h = isRotated ? 200 : 80;
+        }
+        if (el.x + w > maxX) maxX = el.x + w;
+        if (el.y + h > maxY) maxY = el.y + h;
+    });
+
+    const workspaceWidth = Math.max(1200, maxX + 150);
+    const workspaceHeight = Math.max(900, maxY + 150);
+
+    // Calculate scale factor to fit layout in the modal body
+    const containerWidth = canvas.clientWidth || 800;
+    const containerHeight = canvas.clientHeight || 500;
+    const scaleX = (containerWidth - 40) / workspaceWidth;
+    const scaleY = (containerHeight - 40) / workspaceHeight;
+    defaultFitScale = Math.min(scaleX, scaleY, 1.0);
+
+    if (zoomVal === null) {
+        modalZoom = defaultFitScale;
+    } else {
+        modalZoom = zoomVal;
+    }
+    const scale = modalZoom;
+
+    const scaledW = workspaceWidth * scale;
+    const scaledH = workspaceHeight * scale;
+
+    const leftOffset = containerWidth > scaledW ? (containerWidth - scaledW) / 2 : 20;
+    const topOffset = containerHeight > scaledH ? (containerHeight - scaledH) / 2 : 20;
+
+    // Create a layout-canvas inner container
+    const canvasDiv = document.createElement("div");
+    canvasDiv.className = "layout-canvas";
+    canvasDiv.style.width = workspaceWidth + "px";
+    canvasDiv.style.height = workspaceHeight + "px";
+    canvasDiv.style.position = "absolute";
+    canvasDiv.style.transformOrigin = "top left";
+    canvasDiv.style.transform = `scale(${scale})`;
+    canvasDiv.style.left = leftOffset + "px";
+    canvasDiv.style.top = topOffset + "px";
+    
+    // Configure parent canvas
+    canvas.style.display = "block";
+    canvas.style.position = "relative";
+    canvas.style.overflow = "auto";
+
+    canvas.appendChild(canvasDiv);
+
+    // Add a spacer to define scroll boundaries
+    const spacer = document.createElement("div");
+    spacer.className = "layout-spacer";
+    spacer.style.width = (leftOffset + scaledW + 20) + "px";
+    spacer.style.height = (topOffset + scaledH + 20) + "px";
+    spacer.style.pointerEvents = "none";
+    spacer.style.position = "absolute";
+    spacer.style.left = "0";
+    spacer.style.top = "0";
+    canvas.appendChild(spacer);
+
+    // Update zoom percentage text
+    const percentSpan = document.getElementById("modalZoomPercent");
+    if (percentSpan) {
+        percentSpan.innerText = Math.round(scale * 100) + "%";
+    }
+
+    elements.forEach(el => {
+        if (el.type === 'stage') {
+            const stageDiv = document.createElement("div");
+            stageDiv.className = "stage";
+            stageDiv.style.left = el.x + "px";
+            stageDiv.style.top = el.y + "px";
+            stageDiv.innerText = el.label;
+            canvasDiv.appendChild(stageDiv);
+        } else if (el.type === 'table') {
+            const tableDiv = document.createElement("div");
+            tableDiv.className = "table-wrapper";
+            tableDiv.style.left = el.x + "px";
+            tableDiv.style.top = el.y + "px";
+            tableDiv.innerHTML = `
+                <div class="chair top"></div>
+                <div class="chair bottom"></div>
+                <div class="chair left"></div>
+                <div class="chair right"></div>
+                <div class="table-box">
+                    ${el.label}
+                </div>
+            `;
+            canvasDiv.appendChild(tableDiv);
+        } else if (el.type === 'component') {
+            const compDiv = document.createElement("div");
+            compDiv.className = "component-wrapper";
+            compDiv.style.left = el.x + "px";
+            compDiv.style.top = el.y + "px";
+            
+            if (el.rotation === 90 || el.rotation === 270) {
+                compDiv.classList.add("rotated");
+            }
+            
+            compDiv.innerHTML = `<span>${el.label}</span>`;
+            canvasDiv.appendChild(compDiv);
+        }
+    });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const layoutModal = document.getElementById("layoutModal");
+    const closeBtn = document.getElementById("closeLayoutModalBtn");
+    const modalLayoutPreview = document.getElementById("modalLayoutPreview");
+
+    if (closeBtn && layoutModal && modalLayoutPreview) {
+        closeBtn.addEventListener("click", () => {
+            layoutModal.style.display = "none";
+            document.body.style.overflow = "";
+            modalLayoutPreview.innerHTML = "";
+            currentPreviewElements = null;
+            currentPreviewCanvas = null;
+        });
+
+        layoutModal.addEventListener("click", (e) => {
+            if (e.target === layoutModal) {
+                layoutModal.style.display = "none";
+                document.body.style.overflow = "";
+                modalLayoutPreview.innerHTML = "";
+                currentPreviewElements = null;
+                currentPreviewCanvas = null;
+            }
+        });
+    }
+
+    // Zoom control click listeners
+    const zoomInBtn = document.getElementById("modalZoomInBtn");
+    const zoomOutBtn = document.getElementById("modalZoomOutBtn");
+    const zoomResetBtn = document.getElementById("modalZoomResetBtn");
+
+    if (zoomInBtn && zoomOutBtn && zoomResetBtn) {
+        zoomInBtn.addEventListener("click", () => {
+            if (currentPreviewElements && currentPreviewCanvas) {
+                modalZoom = Math.min(2.0, modalZoom + 0.1);
+                const modalCanvas = currentPreviewCanvas.querySelector(".layout-preview");
+                renderLayoutPreview(modalCanvas, currentPreviewElements, modalZoom);
+            }
+        });
+
+        zoomOutBtn.addEventListener("click", () => {
+            if (currentPreviewElements && currentPreviewCanvas) {
+                modalZoom = Math.max(0.2, modalZoom - 0.1);
+                const modalCanvas = currentPreviewCanvas.querySelector(".layout-preview");
+                renderLayoutPreview(modalCanvas, currentPreviewElements, modalZoom);
+            }
+        });
+
+        zoomResetBtn.addEventListener("click", () => {
+            if (currentPreviewElements && currentPreviewCanvas) {
+                const modalCanvas = currentPreviewCanvas.querySelector(".layout-preview");
+                renderLayoutPreview(modalCanvas, currentPreviewElements, null);
+            }
+        });
+    }
+
+    const backdropModal = document.getElementById("backdropModal");
+    const closeBackdropBtn = document.getElementById("closeBackdropModalBtn");
+
+    if (closeBackdropBtn && backdropModal) {
+        closeBackdropBtn.addEventListener("click", () => {
+            backdropModal.style.display = "none";
+            document.body.style.overflow = "";
+        });
+
+        backdropModal.addEventListener("click", (e) => {
+            if (e.target === backdropModal) {
+                backdropModal.style.display = "none";
+                document.body.style.overflow = "";
+            }
+        });
+    }
+
+    const timelineModal = document.getElementById("timelineModal");
+    const closeTimelineBtn = document.getElementById("closeTimelineModalBtn");
+
+    if (closeTimelineBtn && timelineModal) {
+        closeTimelineBtn.addEventListener("click", () => {
+            timelineModal.style.display = "none";
+            document.body.style.overflow = "";
+        });
+
+        timelineModal.addEventListener("click", (e) => {
+            if (e.target === timelineModal) {
+                timelineModal.style.display = "none";
+                document.body.style.overflow = "";
+            }
+        });
+    }
+
+    // ========================================
+    // ADMIN SETTINGS LOAD & PERSISTENCE
+    // ========================================
+    async function loadAdminSettings() {
+        try {
+            const response = await fetch("http://127.0.0.1:5000/admin/settings");
+            const data = await response.json();
+            
+            const mmInput = document.getElementById("settingMaintenanceMode");
+            const aaInput = document.getElementById("settingAutoApproveVenues");
+            const modelSelect = document.getElementById("settingGeminiModel");
+            const promptArea = document.getElementById("settingSystemInstruction");
+
+            if (mmInput) mmInput.checked = data.maintenance_mode;
+            if (aaInput) aaInput.checked = data.auto_approve_venues;
+            if (modelSelect) modelSelect.value = data.gemini_model;
+            if (promptArea) promptArea.value = data.gemini_system_instruction;
+        } catch (error) {
+            console.error("Error loading admin settings:", error);
+        }
+    }
+    loadAdminSettings();
+
+    const settingsForm = document.getElementById("adminSettingsForm");
+    if (settingsForm) {
+        settingsForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            
+            const maintenance = document.getElementById("settingMaintenanceMode").checked;
+            const autoApprove = document.getElementById("settingAutoApproveVenues").checked;
+            const model = document.getElementById("settingGeminiModel").value;
+            const instruction = document.getElementById("settingSystemInstruction").value;
+            
+            try {
+                const response = await fetch("http://127.0.0.1:5000/admin/settings", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        maintenance_mode: maintenance,
+                        auto_approve_venues: autoApprove,
+                        gemini_model: model,
+                        gemini_system_instruction: instruction
+                    })
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    Swal.fire({
+                        icon: "success",
+                        title: "Settings Saved",
+                        text: "Configuration changes have been successfully persisted.",
+                        confirmButtonColor: "#c8a96b"
+                    });
+                } else {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Failed to Save Settings",
+                        text: result.message,
+                        confirmButtonColor: "#d9534f"
+                    });
+                }
+            } catch (err) {
+                console.error("Error saving settings:", err);
+                Swal.fire({
+                    icon: "error",
+                    title: "Network Error",
+                    text: "Could not connect to the server.",
+                    confirmButtonColor: "#d9534f"
+                });
+            }
+        });
+    }
+
+    const backupBtn = document.getElementById("triggerBackupBtn");
+    if (backupBtn) {
+        backupBtn.addEventListener("click", async () => {
+            const confirmBackup = await Swal.fire({
+                title: "Run Platform Auto-Backup?",
+                text: "This will run git processes to stage, commit, and push the active repository changes directly to remote main.",
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonColor: "#c8a96b",
+                cancelButtonColor: "#6b7280",
+                confirmButtonText: "Yes, trigger backup"
+            });
+            
+            if (!confirmBackup.isConfirmed) return;
+            
+            Swal.fire({
+                title: "Processing Backup...",
+                text: "Syncing changes to GitHub. Please wait...",
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            try {
+                const response = await fetch("http://127.0.0.1:5000/admin/trigger-backup", {
+                    method: "POST"
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    Swal.fire({
+                        icon: "success",
+                        title: "Backup Complete",
+                        text: result.message,
+                        confirmButtonColor: "#c8a96b"
+                    });
+                } else {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Backup Failed",
+                        text: result.message,
+                        confirmButtonColor: "#d9534f"
+                    });
+                }
+            } catch (err) {
+                console.error("Error triggering backup:", err);
+                Swal.fire({
+                    icon: "error",
+                    title: "Network Error",
+                    text: "Failed to reach the backup API endpoint.",
+                    confirmButtonColor: "#d9534f"
+                });
+            }
+        });
+    }
+});
+
+window.scaleBackdropCanvas = function() {
+    const modalBody = document.querySelector("#backdropModal .layout-modal-body");
+    const canvas = document.getElementById("modalBackdropPreview");
+    if (!modalBody || !canvas) return;
+
+    const bodyWidth = modalBody.clientWidth;
+    const bodyHeight = modalBody.clientHeight;
+
+    const canvasWidth = 900;
+    const canvasHeight = 550;
+
+    const padding = 40;
+    const scaleX = (bodyWidth - padding) / canvasWidth;
+    const scaleY = (bodyHeight - padding) / canvasHeight;
+    const scaleFactor = Math.min(scaleX, scaleY, 2.5);
+
+    canvas.style.transform = `scale(${scaleFactor})`;
+};
+
+window.addEventListener("resize", () => {
+    const backdropModal = document.getElementById("backdropModal");
+    if (backdropModal && backdropModal.style.display === "flex") {
+        window.scaleBackdropCanvas();
+    }
+});
+
+window.show3DPreview = function(eventId) {
+    const backdropSetup = eventBackdrops[eventId];
+    if (!backdropSetup) return;
+
+    const backdropModal = document.getElementById("backdropModal");
+    const modalBackdropPreview = document.getElementById("modalBackdropPreview");
+
+    if (backdropModal && modalBackdropPreview) {
+        // Clear previous dynamically created elements
+        const oldDynamic = modalBackdropPreview.querySelectorAll(".stage-backdrop");
+        oldDynamic.forEach(el => el.remove());
+
+        // Set dynamic ballroom background
+        const ballroomFile = backdropSetup.ballroom || "eq_grand_ballroom.jpg";
+        modalBackdropPreview.style.backgroundImage = `url('images/ballrooms/${ballroomFile}')`;
+
+        // Migrate old format to array list if needed
+        let elements = [];
+        if (backdropSetup.id) {
+            elements = [{
+                id: backdropSetup.id,
+                width: backdropSetup.width,
+                height: backdropSetup.height,
+                left: backdropSetup.left,
+                top: backdropSetup.top,
+                opacity: backdropSetup.opacity,
+                scale: backdropSetup.scale
+            }];
+        } else {
+            elements = backdropSetup.elements || [];
+        }
+
+        // Render each saved element
+        elements.forEach(el => {
+            const div = document.createElement("div");
+            div.className = "stage-backdrop";
+            div.style.backgroundImage = `url('images/backdrops/${el.id}.png')`;
+            div.style.width = el.width + "px";
+            div.style.height = el.height + "px";
+            div.style.left = el.left + "px";
+            div.style.top = el.top + "px";
+            div.style.opacity = el.opacity;
+            div.style.transform = `scale(${el.scale})`;
+            div.style.display = "block";
+            div.style.position = "absolute";
+            div.style.backgroundSize = "contain";
+            div.style.backgroundRepeat = "no-repeat";
+            div.style.backgroundPosition = "bottom center";
+            
+            modalBackdropPreview.appendChild(div);
+        });
+
+        backdropModal.style.display = "flex";
+        document.body.style.overflow = "hidden";
+
+        // Trigger scale on next layout cycle
+        setTimeout(window.scaleBackdropCanvas, 50);
+    }
+};
+
+window.showTimelinePreview = function (eventId) {
+    const timelineData = eventTimelines[eventId];
+    if (!timelineData) return;
+
+    const timelineModal = document.getElementById("timelineModal");
+    const modalTimelinePreview = document.getElementById("modalTimelinePreview");
+    if (!timelineModal || !modalTimelinePreview) return;
+
+    modalTimelinePreview.innerHTML = "";
+
+    timelineData.forEach((item, idx) => {
+        modalTimelinePreview.innerHTML += `
+            <div style="display: flex; gap: 15px; align-items: center; padding: 12px 15px; border-radius: 10px; background: #f9fafb; border: 1px solid #e5e7eb; font-family: 'Inter', sans-serif; margin-bottom: 8px;">
+                <div style="font-weight: 700; color: #c8a96b; font-size: 14px; min-width: 60px;">${item.time}</div>
+                <div style="width: 2px; height: 20px; background: #e5e7eb;"></div>
+                <div style="color: #374151; font-size: 13.5px; font-weight: 500;">${item.activity}</div>
+            </div>
+        `;
+    });
+
+    timelineModal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+};

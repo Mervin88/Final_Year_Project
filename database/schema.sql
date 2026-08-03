@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS `events` (
     `category` VARCHAR(100) NOT NULL,
     `description` TEXT,
     `event_date` DATE NOT NULL,
+    `event_date_end` DATE NULL,
     `start_time` TIME NOT NULL,
     `end_time` TIME NOT NULL,
     `participants` INT NOT NULL,
@@ -33,6 +34,8 @@ CREATE TABLE IF NOT EXISTS `events` (
     `other_requirements` TEXT,
     `selected_venue` VARCHAR(255),
     `timeline` TEXT NULL,
+    `layout` TEXT NULL,
+    `backdrop_setup` TEXT NULL,
     `status` VARCHAR(50) DEFAULT 'Pending Review',
     `rejection_feedback` TEXT NULL
 );
@@ -61,7 +64,18 @@ CREATE TABLE IF NOT EXISTS `venues` (
 CREATE TABLE IF NOT EXISTS `notifications` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `message` VARCHAR(255) NOT NULL,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    `username` VARCHAR(255) NULL,
+    `type` VARCHAR(50) DEFAULT 'info',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`username`) REFERENCES `users`(`email`) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS `registrations` (
+    `event_id` INT NOT NULL,
+    `username` VARCHAR(255) NOT NULL,
+    `registration_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`event_id`, `username`),
+    FOREIGN KEY (`event_id`) REFERENCES `events`(`id`) ON DELETE CASCADE
 );
 
 

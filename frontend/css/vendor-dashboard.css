@@ -326,3 +326,72 @@ body {
         padding: 30px;
     }
 }
+
+/* DARK MODE SUPPORT */
+.theme-transition {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html.dark-theme body {
+    background: #0b0f17;
+    color: #f9fafb;
+}
+
+html.dark-theme .form-container,
+html.dark-theme .table-card {
+    background: #111827;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    border: 1px solid #1f2937;
+}
+
+html.dark-theme .section-header h2 {
+    color: #f9fafb;
+}
+
+html.dark-theme .input-group label {
+    color: #e5e7eb;
+}
+
+html.dark-theme .input-group input,
+html.dark-theme .input-group select,
+html.dark-theme .input-group textarea {
+    background: #1f2937;
+    border-color: #374151;
+    color: #f9fafb;
+}
+
+html.dark-theme .input-group input:focus,
+html.dark-theme .input-group select:focus,
+html.dark-theme .input-group textarea:focus {
+    border-color: #c8a96b;
+    background: #111827;
+}
+
+html.dark-theme .checkbox-wrapper {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+html.dark-theme .checkbox-wrapper:hover {
+    border-color: #c8a96b;
+    background: rgba(200, 169, 107, 0.15);
+}
+
+html.dark-theme .checkbox-wrapper span {
+    color: #e5e7eb;
+}
+
+html.dark-theme .venues-table th {
+    color: #9ca3af;
+    border-bottom-color: #1f2937;
+}
+
+html.dark-theme .venues-table td {
+    color: #e5e7eb;
+    border-bottom-color: #1f2937;
+}
+
+html.dark-theme .facility-tag {
+    background: #1f2937;
+    color: #d1d5db;
+}
