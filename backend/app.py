@@ -4,9 +4,8 @@ try:
 except ImportError:
     pass
 
-from flask import Flask, request, jsonify
-from flask_mysqldb import MySQL
-import MySQLdb
+from flask import Flask, request, jsonify, g
+import pymysql
 from datetime import datetime, date
 from flask_cors import CORS
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadTimeSignature
@@ -52,10 +51,36 @@ app.config['MYSQL_USER'] = os.getenv('MYSQL_USER', 'root')
 app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD', '')
 app.config['MYSQL_DB'] = os.getenv('MYSQL_DB', 'eventsync')
 app.config['MYSQL_PORT'] = int(os.getenv('MYSQL_PORT', 3306))
-if mysql_host != 'localhost' and mysql_host != '127.0.0.1':
-    app.config['MYSQL_CUSTOM_OPTIONS'] = {'ssl': {}}
 
-mysql = MySQL(app)
+class PyMySQLWrapper:
+    def __init__(self, app=None):
+        if app is not None:
+            self.init_app(app)
+
+    def init_app(self, app):
+        self.app = app
+
+    @property
+    def connection(self):
+        if not hasattr(g, 'pymysql_db') or g.pymysql_db is None or not getattr(g.pymysql_db, 'open', False):
+            host = os.getenv('MYSQL_HOST', 'localhost')
+            port = int(os.getenv('MYSQL_PORT', 3306))
+            user = os.getenv('MYSQL_USER', 'root')
+            passwd = os.getenv('MYSQL_PASSWORD', '')
+            db = os.getenv('MYSQL_DB', 'eventsync')
+            ssl_opts = {'ssl': {}} if host not in ('localhost', '127.0.0.1') else None
+            g.pymysql_db = pymysql.connect(
+                host=host,
+                port=port,
+                user=user,
+                password=passwd,
+                database=db,
+                autocommit=True,
+                ssl=ssl_opts
+            )
+        return g.pymysql_db
+
+mysql = PyMySQLWrapper(app)
 
 # PASSWORD RESET SERIALIZER
 serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
