@@ -12,12 +12,20 @@
   ],
   "routes": [
     {
+      "src": "/",
+      "dest": "frontend/login.html"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "backend/app.py"
     },
     {
-      "src": "/(.*)",
+      "src": "/(.*\\.(html|css|js|png|jpg|jpeg|svg|ico|json|woff|woff2|ttf|otf))",
       "dest": "frontend/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "backend/app.py"
     }
   ]
 }

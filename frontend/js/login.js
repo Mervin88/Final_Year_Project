@@ -1,3 +1,5 @@
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') ? 'http://127.0.0.1:5000' : '';
+
 document.getElementById("loginForm").addEventListener("submit", async function(e){
 
     e.preventDefault();
@@ -7,7 +9,7 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
 
     try{
 
-        const response = await fetch("http://127.0.0.1:5000/login", {
+        const response = await fetch(`${API_BASE}/login`, {
 
             method: "POST",
 
