@@ -40,10 +40,14 @@ CORS(app)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_secret_key_eventsync_123456')
 
 # DATABASE CONFIG
-app.config['MYSQL_HOST'] = os.getenv('MYSQL_HOST', 'localhost')
+mysql_host = os.getenv('MYSQL_HOST', 'localhost')
+app.config['MYSQL_HOST'] = mysql_host
 app.config['MYSQL_USER'] = os.getenv('MYSQL_USER', 'root')
 app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD', '')
 app.config['MYSQL_DB'] = os.getenv('MYSQL_DB', 'eventsync')
+app.config['MYSQL_PORT'] = int(os.getenv('MYSQL_PORT', 3306))
+if mysql_host != 'localhost' and mysql_host != '127.0.0.1':
+    app.config['MYSQL_CUSTOM_OPTIONS'] = {'ssl': {}}
 
 mysql = MySQL(app)
 
@@ -2052,6 +2056,29 @@ def admin_trigger_backup():
         return jsonify({"success": False, "message": f"Git command failed: {str(err)}"})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
+
+@app.route('/seed-db', methods=['GET', 'POST'])
+@app.route('/api/seed-db', methods=['GET', 'POST'])
+def seed_db_route():
+    try:
+        import sys
+        sys.path.append(os.path.join(BASE_DIR, '..'))
+        from database.import_all_data import cleanup_orphaned_tables, import_sql_file, get_connection
+        cleanup_orphaned_tables()
+        import_sql_file('schema.sql')
+        import_sql_file('venues_dataset.sql')
+        import_sql_file('full_dataset.sql')
+        
+        conn = get_connection(with_db=True)
+        cur = conn.cursor()
+        summary = {}
+        for table in ['users', 'venues', 'events', 'registrations', 'notifications']:
+            cur.execute(f"SELECT COUNT(*) FROM `{table}`")
+            summary[table] = cur.fetchone()[0]
+        conn.close()
+        return jsonify({"success": True, "message": "Cloud Database seeded successfully!", "summary": summary})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
