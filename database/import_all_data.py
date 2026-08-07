@@ -1,3 +1,9 @@
+try:
+    import pymysql
+    pymysql.install_as_MySQLdb()
+except ImportError:
+    pass
+
 import MySQLdb
 import os
 
@@ -68,8 +74,13 @@ def import_sql_file(filename):
         print(f"Error: {sql_file_path} not found.")
         return False
 
+    db_name = get_db_name()
     with open(sql_file_path, 'r', encoding='utf-8') as f:
         sql_content = f.read()
+
+    # Replace hardcoded 'eventsync' database references with target db_name
+    sql_content = sql_content.replace('`eventsync`', f'`{db_name}`')
+    sql_content = sql_content.replace('eventsync;', f'{db_name};')
 
     connection = get_connection(with_db=True)
     connection.autocommit(True)

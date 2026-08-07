@@ -1,3 +1,9 @@
+try:
+    import pymysql
+    pymysql.install_as_MySQLdb()
+except ImportError:
+    pass
+
 from flask import Flask, request, jsonify
 from flask_mysqldb import MySQL
 import MySQLdb
