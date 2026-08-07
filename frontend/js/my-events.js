@@ -2,6 +2,8 @@
 // SESSION CHECK & INITIALIZATION
 // ========================================
 
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') ? 'http://127.0.0.1:5000' : '';
+
 const username = localStorage.getItem("username");
 const eventLayouts = {};
 const eventBackdrops = {};
@@ -52,7 +54,7 @@ async function loadMyEvents() {
     if (!username) return;
     try {
         const response = await fetch(
-            `http://127.0.0.1:5000/my-events/${encodeURIComponent(username)}`
+            `${API_BASE}/my-events/${encodeURIComponent(username)}`
         );
         allMyEvents = await response.json();
         renderMyEventsGrid();
@@ -419,7 +421,7 @@ async function deleteEvent(eventId) {
 
         await fetch(
 
-            `http://127.0.0.1:5000/delete-event/${eventId}`,
+            `${API_BASE}/delete-event/${eventId}`,
 
             {
                 method: "DELETE"
@@ -860,7 +862,7 @@ window.show3DPreview = function(eventId) {
 window.viewAttendees = async function(eventId, eventTitle, e) {
     if (e) e.preventDefault();
     try {
-        const response = await fetch(`http://127.0.0.1:5000/event/${eventId}/attendees`);
+        const response = await fetch(`${API_BASE}/event/${eventId}/attendees`);
         const attendees = await response.json();
         
         if (attendees.length === 0) {

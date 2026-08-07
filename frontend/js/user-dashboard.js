@@ -1,3 +1,5 @@
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') ? 'http://127.0.0.1:5000' : '';
+
 // ========================================
 // SESSION PROTECTION
 // ========================================
@@ -45,7 +47,7 @@ async function loadEvents() {
     try {
 
         const response = await fetch(
-            `http://127.0.0.1:5000/events/${username}`
+            `${API_BASE}/events/${username}`
         );
 
         const events = await response.json();
@@ -106,7 +108,7 @@ async function loadEvents() {
 
 async function loadNotifications() {
     try {
-        const response = await fetch(`http://127.0.0.1:5000/notifications/${username}`);
+        const response = await fetch(`${API_BASE}/notifications/${username}`);
         const notifications = await response.json();
         const notificationList = document.querySelector(".notification-list");
         
@@ -148,8 +150,8 @@ async function loadRecommendedVenues() {
     try {
         // Fetch user events & approved venues concurrently
         const [eventsRes, venuesRes] = await Promise.all([
-            fetch(`http://127.0.0.1:5000/events/${username}`).catch(() => null),
-            fetch("http://127.0.0.1:5000/venues/approved").catch(() => null)
+            fetch(`${API_BASE}/events/${username}`).catch(() => null),
+            fetch(`${API_BASE}/venues/approved`).catch(() => null)
         ]);
 
         if (eventsRes && eventsRes.ok) {

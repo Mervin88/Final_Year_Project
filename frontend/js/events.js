@@ -1,3 +1,5 @@
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') ? 'http://127.0.0.1:5000' : '';
+
 let allEvents = [];
 let selectedCategory = "All";
 let searchQuery = "";
@@ -8,7 +10,7 @@ let searchQuery = "";
 
 async function loadPublicEvents() {
     try {
-        const response = await fetch("http://127.0.0.1:5000/participant/events");
+        const response = await fetch(`${API_BASE}/participant/events`);
         const data = await response.json();
         if (Array.isArray(data)) {
             allEvents = data;

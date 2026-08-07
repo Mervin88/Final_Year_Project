@@ -1,6 +1,6 @@
 // vr-backdrop.js
 
-const API_BASE = "http://127.0.0.1:5000";
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') ? 'http://127.0.0.1:5000' : '';
 const editEventId = localStorage.getItem("editEventId");
 const eventDraft = JSON.parse(localStorage.getItem("eventDraft") || "null");
 

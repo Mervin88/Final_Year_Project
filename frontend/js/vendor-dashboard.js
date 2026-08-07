@@ -1,6 +1,8 @@
 // ========================================
 // SESSION CHECK
 // ========================================
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') ? 'http://127.0.0.1:5000' : '';
+
 const role = localStorage.getItem("userRole") || localStorage.getItem("role");
 const username = localStorage.getItem("username");
 
@@ -68,7 +70,7 @@ async function loadMyVenues() {
     if (!tableBody) return;
 
     try {
-        const response = await fetch(`http://127.0.0.1:5000/venues/my-uploaded/${encodeURIComponent(username)}`);
+        const response = await fetch(`${API_BASE}/venues/my-uploaded/${encodeURIComponent(username)}`);
         const venues = await response.json();
         window.fetchedVenues = venues;
 
@@ -223,7 +225,7 @@ async function uploadVenue(e) {
     };
 
     try {
-        const response = await fetch("http://127.0.0.1:5000/venues/upload", {
+        const response = await fetch(`${API_BASE}/venues/upload`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -330,7 +332,7 @@ async function submitEditVenue(e) {
     };
 
     try {
-        const response = await fetch(`http://127.0.0.1:5000/venues/update/${venueId}`, {
+        const response = await fetch(`${API_BASE}/venues/update/${venueId}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
@@ -368,7 +370,7 @@ window.deleteVenue = async function(venueId, venueName) {
     if (!confirmRes.isConfirmed) return;
 
     try {
-        const response = await fetch(`http://127.0.0.1:5000/venues/delete/${venueId}`, {
+        const response = await fetch(`${API_BASE}/venues/delete/${venueId}`, {
             method: "DELETE"
         });
         const resData = await response.json();

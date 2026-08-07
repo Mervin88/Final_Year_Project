@@ -1,3 +1,5 @@
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') ? 'http://127.0.0.1:5000' : '';
+
 // ==========================
 // GET EVENT DATA
 // ==========================
@@ -92,7 +94,7 @@ async function initializeWorkspace() {
     const editEventId = localStorage.getItem("editEventId");
     if (editEventId) {
         try {
-            const response = await fetch(`http://127.0.0.1:5000/event/${editEventId}`);
+            const response = await fetch(`${API_BASE}/event/${editEventId}`);
             const dbEvent = await response.json();
             if (dbEvent && dbEvent.id) {
                 eventData = {
@@ -320,7 +322,7 @@ async function initTimeline() {
         const editEventId = localStorage.getItem("editEventId");
         if (editEventId) {
             try {
-                const response = await fetch(`http://127.0.0.1:5000/event/${editEventId}`);
+                const response = await fetch(`${API_BASE}/event/${editEventId}`);
                 const dbEvent = await response.json();
                 if (dbEvent.timeline && dbEvent.timeline !== "[]" && dbEvent.timeline !== "") {
                     timelineEvents = JSON.parse(dbEvent.timeline);
@@ -518,10 +520,8 @@ async function saveEvent() {
             localStorage.getItem("editEventId");
 
         const url = editEventId
-
-            ? `http://127.0.0.1:5000/update-event/${editEventId}`
-
-            : "http://127.0.0.1:5000/create-event";
+            ? `${API_BASE}/update-event/${editEventId}`
+            : `${API_BASE}/create-event`;
 
         const method = editEventId
 
@@ -675,7 +675,7 @@ async function initializeLayout() {
         const editEventId = localStorage.getItem("editEventId");
         if (editEventId) {
             try {
-                const response = await fetch(`http://127.0.0.1:5000/event/${editEventId}`);
+                const response = await fetch(`${API_BASE}/event/${editEventId}`);
                 const dbEvent = await response.json();
                 if (dbEvent.layout && dbEvent.layout !== "[]" && dbEvent.layout !== "") {
                     try {

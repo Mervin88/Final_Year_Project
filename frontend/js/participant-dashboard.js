@@ -1,3 +1,5 @@
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') ? 'http://127.0.0.1:5000' : '';
+
 const username = localStorage.getItem("username");
 
 if (!username) {
@@ -17,11 +19,11 @@ let notificationsList = [];
 async function fetchDashboardData() {
     try {
         // 1. Fetch Registrations
-        const regResponse = await fetch(`http://127.0.0.1:5000/registrations/${username}`);
+        const regResponse = await fetch(`${API_BASE}/registrations/${username}`);
         registrationsList = await regResponse.json();
         
         // 2. Fetch Notifications
-        const notResponse = await fetch(`http://127.0.0.1:5000/notifications/${username}`);
+        const notResponse = await fetch(`${API_BASE}/notifications/${username}`);
         notificationsList = await notResponse.json();
         
         // Populate stats & content

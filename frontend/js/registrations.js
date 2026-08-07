@@ -1,3 +1,5 @@
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') ? 'http://127.0.0.1:5000' : '';
+
 const username = localStorage.getItem("username");
 
 if (!username) {
@@ -27,7 +29,7 @@ window.filterRegistrations = function(filterName, btnElement) {
 
 async function loadRegistrations() {
     try {
-        const response = await fetch(`http://127.0.0.1:5000/registrations/${username}`);
+        const response = await fetch(`${API_BASE}/registrations/${username}`);
         registeredEvents = await response.json();
         renderRegistrations();
     } catch (error) {
@@ -179,7 +181,7 @@ window.cancelRegistration = function(eventId, title) {
     }).then(async (result) => {
         if (result.isConfirmed) {
             try {
-                const response = await fetch("http://127.0.0.1:5000/unregister-event", {
+                const response = await fetch(`${API_BASE}/unregister-event`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"

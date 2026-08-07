@@ -1,3 +1,5 @@
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') ? 'http://127.0.0.1:5000' : '';
+
 let viewingEventId = localStorage.getItem("viewingEventId");
 const username = localStorage.getItem("username") || "Guest";
 
@@ -115,7 +117,7 @@ const speakerLibrary = {
 
 async function loadEventDetails() {
     try {
-        const response = await fetch(`http://127.0.0.1:5000/event/${viewingEventId}`);
+        const response = await fetch(`${API_BASE}/event/${viewingEventId}`);
         const data = await response.json();
         if (data && data.title) {
             eventDetails = data;
@@ -603,7 +605,7 @@ async function renderCapacityProgress() {
     let registeredCount = typeof eventDetails.attendees_registered === 'number' ? eventDetails.attendees_registered : 0;
 
     try {
-        const response = await fetch(`http://127.0.0.1:5000/event/${eventDetails.id}/attendees`);
+        const response = await fetch(`${API_BASE}/event/${eventDetails.id}/attendees`);
         if (response.ok) {
             const attendees = await response.json();
             if (Array.isArray(attendees)) {
@@ -649,7 +651,7 @@ if (registerBtn) {
         if (!eventDetails) return;
         
         try {
-            const response = await fetch("http://127.0.0.1:5000/register-event", {
+            const response = await fetch(`${API_BASE}/register-event`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

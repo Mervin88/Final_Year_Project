@@ -18,7 +18,7 @@ let activeUsername = currentUsername;
 
 async function loadProfile() {
     try {
-        const response = await fetch(`http://127.0.0.1:5000/user/profile/${activeUsername}`);
+        const response = await fetch(`${API_BASE}/user/profile/${activeUsername}`);
         const data = await response.json();
         
         if (data.success) {
@@ -59,7 +59,7 @@ document.getElementById("profileForm").addEventListener("submit", async function
     }
 
     try {
-        const response = await fetch("http://127.0.0.1:5000/user/profile/update", {
+        const response = await fetch(`${API_BASE}/user/profile/update`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -147,7 +147,7 @@ document.getElementById("passwordForm").addEventListener("submit", async functio
     }
 
     try {
-        const response = await fetch("http://127.0.0.1:5000/user/profile/update", {
+        const response = await fetch(`${API_BASE}/user/profile/update`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

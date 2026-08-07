@@ -1,3 +1,5 @@
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') ? 'http://127.0.0.1:5000' : '';
+
 const urlParams = new URLSearchParams(window.location.search);
 const isRecommendFlow = urlParams.get("recommend") === "true";
 
@@ -192,7 +194,7 @@ async function loadApprovedVenues() {
     if (!grid) return;
 
     try {
-        const response = await fetch("http://127.0.0.1:5000/venues/approved");
+        const response = await fetch(`${API_BASE}/venues/approved`);
         allApprovedVenues = await response.json();
         
         // Initial render of all venues

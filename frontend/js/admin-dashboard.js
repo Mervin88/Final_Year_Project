@@ -1,3 +1,5 @@
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') ? 'http://127.0.0.1:5000' : '';
+
 // ========================================
 // SESSION CHECK
 // ========================================
@@ -37,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // ========================================
 async function loadStatistics() {
     try {
-        const response = await fetch("http://127.0.0.1:5000/admin/stats");
+        const response = await fetch(`${API_BASE}/admin/stats`);
         const data = await response.json();
 
         if (data.success) {
@@ -59,7 +61,7 @@ async function loadEvents() {
     if (!grid) return;
 
     try {
-        const response = await fetch("http://127.0.0.1:5000/admin/events");
+        const response = await fetch(`${API_BASE}/admin/events`);
         const events = await response.json();
 
         grid.innerHTML = "";
@@ -194,7 +196,7 @@ async function loadUsers() {
     if (!tableBody) return;
 
     try {
-        const response = await fetch("http://127.0.0.1:5000/admin/users");
+        const response = await fetch(`${API_BASE}/admin/users`);
         cachedUsers = await response.json();
 
         // Bind filter event listener if it exists and hasn't been bound yet
@@ -276,7 +278,7 @@ async function loadVenues() {
     if (!grid) return;
 
     try {
-        const response = await fetch("http://127.0.0.1:5000/admin/venues");
+        const response = await fetch(`${API_BASE}/admin/venues`);
         allVenues = await response.json();
 
         grid.innerHTML = "";
@@ -409,7 +411,7 @@ async function updateStatus(eventId, newStatus) {
     }
 
     try {
-        const response = await fetch(`http://127.0.0.1:5000/admin/update-status/${eventId}`, {
+        const response = await fetch(`${API_BASE}/admin/update-status/${eventId}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json"
@@ -457,7 +459,7 @@ async function deleteEvent(eventId) {
     if (!confirm.isConfirmed) return;
 
     try {
-        const response = await fetch(`http://127.0.0.1:5000/delete-event/${eventId}`, {
+        const response = await fetch(`${API_BASE}/delete-event/${eventId}`, {
             method: "DELETE"
         });
 
@@ -501,7 +503,7 @@ async function deleteUser(userId, fullname) {
     if (!confirm.isConfirmed) return;
 
     try {
-        const response = await fetch(`http://127.0.0.1:5000/admin/delete-user/${userId}`, {
+        const response = await fetch(`${API_BASE}/admin/delete-user/${userId}`, {
             method: "DELETE"
         });
 
@@ -553,7 +555,7 @@ async function updateVenueStatus(venueId, newStatus) {
     }
 
     try {
-        const response = await fetch(`http://127.0.0.1:5000/admin/venues/update-status/${venueId}`, {
+        const response = await fetch(`${API_BASE}/admin/venues/update-status/${venueId}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json"
@@ -601,7 +603,7 @@ async function deleteVenueListing(venueId) {
     if (!confirm.isConfirmed) return;
 
     try {
-        const response = await fetch(`http://127.0.0.1:5000/admin/venues/delete/${venueId}`, {
+        const response = await fetch(`${API_BASE}/admin/venues/delete/${venueId}`, {
             method: "DELETE"
         });
 
@@ -639,7 +641,7 @@ let statusChartInstance = null;
 
 async function loadReports() {
     try {
-        const response = await fetch("http://127.0.0.1:5000/admin/reports/data");
+        const response = await fetch(`${API_BASE}/admin/reports/data`);
         const data = await response.json();
 
         if (!data.success) {
@@ -774,7 +776,7 @@ function renderStatusChart(statusData) {
 // ========================================
 async function exportCSV() {
     try {
-        const response = await fetch("http://127.0.0.1:5000/admin/events");
+        const response = await fetch(`${API_BASE}/admin/events`);
         const events = await response.json();
 
         if (!events || events.length === 0) {
@@ -925,7 +927,7 @@ async function loadNotifications() {
     if (!list) return;
 
     try {
-        const response = await fetch("http://127.0.0.1:5000/admin/notifications");
+        const response = await fetch(`${API_BASE}/admin/notifications`);
         allNotifications = await response.json();
 
         list.innerHTML = "";
@@ -1242,7 +1244,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // ========================================
     async function loadAdminSettings() {
         try {
-            const response = await fetch("http://127.0.0.1:5000/admin/settings");
+            const response = await fetch(`${API_BASE}/admin/settings`);
             const data = await response.json();
             
             const mmInput = document.getElementById("settingMaintenanceMode");
@@ -1271,7 +1273,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const instruction = document.getElementById("settingSystemInstruction").value;
             
             try {
-                const response = await fetch("http://127.0.0.1:5000/admin/settings", {
+                const response = await fetch(`${API_BASE}/admin/settings`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
@@ -1337,7 +1339,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             
             try {
-                const response = await fetch("http://127.0.0.1:5000/admin/trigger-backup", {
+                const response = await fetch(`${API_BASE}/admin/trigger-backup`, {
                     method: "POST"
                 });
                 const result = await response.json();
