@@ -26,16 +26,14 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- ========================================================
 
 INSERT INTO `users` (`id`, `fullname`, `email`, `password`, `role`) VALUES
-(1, 'System Administrator', 'admin@eventsync.com', 'scrypt:32768:8:1$vT0j8c0O0uO1p3Ea$36e4fefc1e95642a8b9f1d019f6a5b6f3a3c2c1a8b9f0e1d2c3b4a5b6c7d8e9f', 'Admin'),
-(2, 'Corporate Event Planner', 'organizer@eventsync.com', 'scrypt:32768:8:1$xP9k2m1N3o5P7q9R$1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b', 'Organizer'),
+(1, 'Mervin', 'admin@eventsync.com', 'scrypt:32768:8:1$GIvgWSWB84xcXtFo$56a55dbc8dc0e51572374c0b09563ebe8ed9506b6fcf2a299d8bd87f1d45aac8c14feb4cc1b8af69cd0c6ada51c7b64a2df1fbe992d291a4ec3b0bd188f19b48', 'Admin'),
+(2, 'Ryan', 'organizer@eventsync.com', 'scrypt:32768:8:1$dqRTZCALyfWYYtMR$99e9f65dafe8b46015d93672e28005a64f09ec14087c44ddb908f9a2676a2de2a29958699098edd681c83054060a95e9afbd521338bc307fe5e2b9cfe9d0d619', 'Organizer'),
 (3, 'Global Venues & Co', 'vendor@eventsync.com', 'scrypt:32768:8:1$yQ0l3n2O4p6Q8r0S$2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c', 'Vendor'),
 (4, 'Jane Participant', 'participant@eventsync.com', 'scrypt:32768:8:1$zR1m4o3P5q7R9s1T$3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d', 'Participant'),
 (5, 'John Doe (TechCorp)', 'john.doe@techcorp.com', 'scrypt:32768:8:1$aS2n5p4Q6r8S0t2U$4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e', 'Organizer'),
 (6, 'Sarah Lee (Luxury Venues)', 'sarah.lee@events.com', 'scrypt:32768:8:1$bT3o6q5R7s9T1u3V$5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f', 'Vendor'),
 (7, 'Alex Wong', 'alex.wong@gmail.com', 'scrypt:32768:8:1$cU4p7r6S8t0U2v4W$6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a', 'Participant'),
-(8, 'Emma Watson', 'emma.watson@enterprise.com', 'scrypt:32768:8:1$dV5q8s7T9u1V3w5X$7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b', 'Participant'),
-(9, 'Mervin', 'mervin@eventsync.com', 'scrypt:32768:8:1$GIvgWSWB84xcXtFo$56a55dbc8dc0e51572374c0b09563ebe8ed9506b6fcf2a299d8bd87f1d45aac8c14feb4cc1b8af69cd0c6ada51c7b64a2df1fbe992d291a4ec3b0bd188f19b48', 'Admin'),
-(10, 'Ryan', 'ryan@eventsync.com', 'scrypt:32768:8:1$dqRTZCALyfWYYtMR$99e9f65dafe8b46015d93672e28005a64f09ec14087c44ddb908f9a2676a2de2a29958699098edd681c83054060a95e9afbd521338bc307fe5e2b9cfe9d0d619', 'Organizer');
+(8, 'Emma Watson', 'emma.watson@enterprise.com', 'scrypt:32768:8:1$dV5q8s7T9u1V3w5X$7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b', 'Participant');
 
 -- ========================================================
 -- 2. EVENTS DATASET
