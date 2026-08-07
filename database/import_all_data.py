@@ -27,9 +27,9 @@ def get_connection(with_db=True):
             s.settimeout(5)
             s.connect((host, port))
             s.close()
-            print(f"✓ TCP Socket test to {host}:{port} SUCCESSFUL!")
+            print(f"[OK] TCP Socket test to {host}:{port} SUCCESSFUL!")
         except Exception as se:
-            print(f"❌ TCP Socket test to {host}:{port} FAILED: {se}")
+            print(f"[FAIL] TCP Socket test to {host}:{port} FAILED: {se}")
 
     kwargs = {
         'host': host,
@@ -64,7 +64,7 @@ def cleanup_orphaned_tables():
         cur.execute(f"USE `{db_name}`;")
         cur.execute("SET FOREIGN_KEY_CHECKS = 1;")
         conn.close()
-        print(f"✓ Rebuilt clean database '{db_name}'")
+        print(f"[OK] Rebuilt clean database '{db_name}'")
     except Exception as e:
         print("Notice during database reset:", e)
 
@@ -111,15 +111,15 @@ def main():
 
     # 1. Import schema first
     if import_sql_file('schema.sql'):
-        print("✓ Successfully imported schema.sql")
+        print("[OK] Successfully imported schema.sql")
 
     # 2. Import venues dataset
     if import_sql_file('venues_dataset.sql'):
-        print("✓ Successfully imported venues_dataset.sql")
+        print("[OK] Successfully imported venues_dataset.sql")
     
     # 3. Import full dataset (users, events, registrations, notifications)
     if import_sql_file('full_dataset.sql'):
-        print("✓ Successfully imported full_dataset.sql")
+        print("[OK] Successfully imported full_dataset.sql")
         
     # Print summary counts
     try:
