@@ -151,6 +151,18 @@ document.addEventListener("DOMContentLoaded", () => {
         if (dateEndInput) {
             dateEndInput.setAttribute("min", today);
         }
+
+        // Real-time schedule time check
+        const validateTimeInputs = () => {
+            const sTime = document.getElementById("startTime")?.value;
+            const eTime = document.getElementById("endTime")?.value;
+            if (sTime && eTime && sTime >= eTime) {
+                showErrorAlert("Invalid Time Range", "Event end time must be strictly after the start time (e.g. Start: 09:00 AM, End: 05:00 PM).");
+            }
+        };
+
+        document.getElementById("startTime")?.addEventListener("change", validateTimeInputs);
+        document.getElementById("endTime")?.addEventListener("change", validateTimeInputs);
     }
 
     const bannerUpload = document.getElementById("bannerUpload");
