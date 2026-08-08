@@ -27,9 +27,12 @@ function renderSummaryTags() {
 
     let tagsHtml = `
         <span>📁 Category: ${eventData.category || "Corporate Event"}</span>
-        <span>👥 Capacity: ${eventData.required_capacity || "0"} Pax</span>
+        <span class="interactive-tag" id="capacityTag" onclick="enableCapacityEdit(this)" style="position: relative; cursor: pointer;">
+            👥 Capacity: <span id="capacityText">${eventData.required_capacity || "0"} Pax</span>
+            <input type="number" id="capacityEditInput" style="display:none; width: 85px; border: 1px solid #c8a96b; border-radius: 6px; padding: 2px 6px; font-size: 14px; outline: none; background: white; color: #111827; font-weight: bold;" value="${eventData.required_capacity || 500}" step="50" min="10" max="10000">
+        </span>
         <span>📍 Location: ${eventData.preferred_location || "Anywhere"}</span>
-        <span class="interactive-tag" id="budgetTag" onclick="enableBudgetEdit(this)" style="position: relative;">
+        <span class="interactive-tag" id="budgetTag" onclick="enableBudgetEdit(this)" style="position: relative; cursor: pointer;">
             💰 Budget: <span id="budgetText">${formattedBudget}</span>
             <input type="number" id="budgetEditInput" style="display:none; width: 90px; border: 1px solid #c8a96b; border-radius: 6px; padding: 2px 6px; font-size: 14px; outline: none; background: white; color: #111827; font-weight: bold;" value="${eventData.budget || 0}">
         </span>
@@ -65,9 +68,50 @@ window.toggleAmenity = function(key) {
     filterAndRenderVenues(true);
 };
 
+window.enableCapacityEdit = function(tagElement) {
+    if (event && event.target.tagName === 'INPUT') return;
+
+    const textSpan = document.getElementById("capacityText");
+    const input = document.getElementById("capacityEditInput");
+    if (!textSpan || !input) return;
+
+    textSpan.style.display = "none";
+    input.style.display = "inline-block";
+    input.focus();
+    input.select();
+
+    input.onblur = function() {
+        saveCapacity(input.value);
+    };
+    
+    input.onkeypress = function(e) {
+        if (e.key === "Enter") {
+            saveCapacity(input.value);
+        }
+    };
+};
+
+function saveCapacity(value) {
+    if (!eventData) return;
+    const parsed = parseInt(value);
+    if (!isNaN(parsed) && parsed > 0) {
+        eventData.required_capacity = parsed;
+        eventData.participants = parsed;
+        localStorage.setItem("eventDraft", JSON.stringify(eventData));
+
+        const searchCapacity = document.getElementById("searchCapacity");
+        if (searchCapacity) {
+            if (parsed >= 1000) searchCapacity.value = "1000+";
+            else if (parsed >= 500) searchCapacity.value = "500-1000";
+            else searchCapacity.value = "100-500";
+        }
+    }
+    renderSummaryTags();
+    filterAndRenderVenues(true);
+}
+
 window.enableBudgetEdit = function(tagElement) {
-    // Avoid re-triggering if the input itself is clicked
-    if (event.target.tagName === 'INPUT') return;
+    if (event && event.target.tagName === 'INPUT') return;
 
     const textSpan = document.getElementById("budgetText");
     const input = document.getElementById("budgetEditInput");
@@ -78,7 +122,6 @@ window.enableBudgetEdit = function(tagElement) {
     input.focus();
     input.select();
 
-    // Bind save event on blur and Enter
     input.onblur = function() {
         saveBudget(input.value);
     };
@@ -157,12 +200,12 @@ function prepopulateSearchFilters() {
     if (searchCapacity && eventData.required_capacity) {
         const capacityVal = parseInt(eventData.required_capacity);
         if (!isNaN(capacityVal)) {
-            if (capacityVal >= 100 && capacityVal <= 500) {
-                searchCapacity.value = "100-500";
-            } else if (capacityVal > 500 && capacityVal <= 1000) {
-                searchCapacity.value = "500-1000";
-            } else if (capacityVal > 1000) {
+            if (capacityVal >= 1000) {
                 searchCapacity.value = "1000+";
+            } else if (capacityVal >= 500) {
+                searchCapacity.value = "500-1000";
+            } else {
+                searchCapacity.value = "100-500";
             }
         }
     }
