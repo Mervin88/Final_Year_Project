@@ -37,7 +37,9 @@ CREATE TABLE IF NOT EXISTS `events` (
     `layout` TEXT NULL,
     `backdrop_setup` TEXT NULL,
     `status` VARCHAR(50) DEFAULT 'Pending Review',
-    `rejection_feedback` TEXT NULL
+    `rejection_feedback` TEXT NULL,
+    `banner_image` VARCHAR(555) NULL,
+    `privacy` VARCHAR(50) DEFAULT 'Public'
 );
 
 CREATE TABLE IF NOT EXISTS `venues` (
