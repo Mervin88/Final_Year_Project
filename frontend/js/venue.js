@@ -343,12 +343,25 @@ function filterAndRenderVenues(resetPage = false) {
                 if (isTypeMatch) matchScore += 25;
             }
 
+            // Apply strict capacity constraint penalty:
+            // A venue that physically cannot accommodate the required capacity (e.g. 120 pax for a 500 pax event)
+            // must be penalized heavily so undersized venues do not receive high match scores.
+            const reqCap = parseInt(eventData.required_capacity);
+            if (!isNaN(reqCap) && reqCap > 0 && venue.capacity < reqCap) {
+                const capacityRatio = venue.capacity / reqCap;
+                if (capacityRatio < 0.5) {
+                    matchScore = Math.min(matchScore, 35); // Cap at max 35% if under 50% capacity
+                } else {
+                    matchScore = Math.round(matchScore * capacityRatio);
+                }
+            }
+
             matchScore = Math.round(matchScore);
             
             return {
                 ...venue,
                 matchScore: matchScore,
-                isRecommended: isLocationMatch && isCapacityMatch && isTypeMatch
+                isRecommended: isLocationMatch && isCapacityMatch && isTypeMatch && isBudgetMatch
             };
         });
 
