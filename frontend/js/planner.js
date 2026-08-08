@@ -795,9 +795,14 @@ async function initializeLayout() {
 }
 
 function getWorkspaceWidth() {
+    const mainCanvas = document.querySelector(".planner-right > .planner-card > .layout-preview-container > .layout-preview") ||
+                       document.querySelector(".layout-preview") ||
+                       document.querySelector(".modal-canvas-container");
+    const containerWidth = mainCanvas ? mainCanvas.clientWidth : 1400;
     const attendeeCount = eventData ? (parseInt(eventData.required_capacity) || 50) : 50;
     const tablesNeeded = Math.ceil(attendeeCount / 10);
-    return Math.max(1200, Math.min(2600, 1200 + (tablesNeeded - 12) * 45));
+    const calculatedWidth = 1200 + (tablesNeeded - 12) * 45;
+    return Math.max(containerWidth, calculatedWidth, 1200);
 }
 
 function getWorkspaceHeight() {
