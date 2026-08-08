@@ -68,14 +68,14 @@ async function loadEventData() {
 
         const parseCapacityRange = (val) => {
             const num = parseInt(val);
-            if (isNaN(num)) return "";
-            if (num >= 100 && num <= 500) return "100";
-            if (num > 500 && num <= 1000) return "500";
-            if (num > 1000) return "1000";
+            if (isNaN(num)) return "100";
+            if (num >= 1000) return "1000";
+            if (num >= 500) return "500";
             return "100";
         };
 
         document.getElementById("participants").value = parseCapacityRange(event.participants);
+        document.getElementById("capacity").value = parseCapacityRange(event.required_capacity || event.participants);
 
         document.getElementById("location").value =
             event.preferred_location;
