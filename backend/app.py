@@ -151,10 +151,38 @@ def register():
         role = data['role']
 
         import re
+        # Strict Email & Domain Typo Validation
         if re.match(r'^[A-Z]', email):
             return jsonify({
                 "success": False,
                 "message": "Email address cannot start with a capital letter. Please use lowercase."
+            })
+
+        email_pattern = r'^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$'
+        if not re.match(email_pattern, email.lower()):
+            return jsonify({
+                "success": False,
+                "message": "Please enter a valid email address format (e.g. user@example.com)."
+            })
+
+        domain = email.split('@')[-1].lower()
+        typo_tlds = ['.copm', '.cmo', '.con', '.cm', '.coom', '.gmai', '.hotmial', '.yaho', '.outlok', '.gmal', '.gmial']
+        for typo in typo_tlds:
+            if domain.endswith(typo):
+                return jsonify({
+                    "success": False,
+                    "message": f"Invalid domain extension '{typo}'. Did you mean '.com'?"
+                })
+
+        if 'gmai.' in domain or 'gmial.' in domain or 'gmal.' in domain:
+            return jsonify({
+                "success": False,
+                "message": "Invalid email domain. Did you mean 'gmail.com'?"
+            })
+        if 'hotmial.' in domain or 'outlok.' in domain:
+            return jsonify({
+                "success": False,
+                "message": "Invalid email domain. Did you mean 'hotmail.com' or 'outlook.com'?"
             })
 
         cursor = mysql.connection.cursor()

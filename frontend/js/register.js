@@ -43,15 +43,36 @@ document.getElementById("registerForm").addEventListener("submit", async functio
         return;
     }
 
-    const emailPattern =
-    /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
-
-    if(!emailPattern.test(email)){
-
+    const emailPattern = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
+    if (!emailPattern.test(email)) {
         Swal.fire({
             icon: "error",
-            title: "Invalid Email",
-            text: "Please enter a valid lowercase email address.",
+            title: "Invalid Email Format",
+            text: "Please enter a valid lowercase email address (e.g. user@example.com).",
+            confirmButtonColor: "#d9534f"
+        });
+        return;
+    }
+
+    const domain = email.split("@")[1];
+    const typoTlds = [".copm", ".cmo", ".con", ".cm", ".coom", ".gmai", ".hotmial", ".yaho", ".outlok", ".gmal", ".gmial"];
+    for (const typo of typoTlds) {
+        if (domain.endsWith(typo)) {
+            Swal.fire({
+                icon: "error",
+                title: "Invalid Email Extension",
+                text: `Invalid domain extension '${typo}'. Did you mean '.com'?`,
+                confirmButtonColor: "#d9534f"
+            });
+            return;
+        }
+    }
+
+    if (domain.includes("gmai.") || domain.includes("gmial.") || domain.includes("gmal.")) {
+        Swal.fire({
+            icon: "error",
+            title: "Invalid Email Domain",
+            text: "Invalid domain name. Did you mean 'gmail.com'?",
             confirmButtonColor: "#d9534f"
         });
         return;
