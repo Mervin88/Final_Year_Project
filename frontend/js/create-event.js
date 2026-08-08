@@ -11,60 +11,40 @@ function newEvent() {
 }
 
 let base64BannerImage = null;
-const editEventId = localStorage.getItem("editEventId");
 
-if (editEventId) {
-    document.getElementById("pageTitle").textContent = "Edit Event";
-
-    loadEventData();
-
-}
-else {
-    document.getElementById("pageTitle").textContent = "Create New Event";
-    localStorage.removeItem("eventDraft");
-    localStorage.removeItem("isDemoMode");
-    localStorage.removeItem("eventLayout");
-    localStorage.removeItem("eventBackdropSetup");
-    localStorage.removeItem("selectedVenue");
-    localStorage.removeItem("eventTimeline");
-}
-
-async function loadEventData() {
-
+async function loadEventData(editEventId) {
     try {
+        const response = await fetch(`${API_BASE}/event/${editEventId}`);
+        const event = await response.json();
 
-        const response = await fetch(
-            `${API_BASE}/event/${editEventId}`
-        );
+        console.log("Loaded Event Data for Edit:", event);
 
-        const event =
-            await response.json();
+        const setTitle = document.getElementById("title");
+        if (setTitle) setTitle.value = event.title || "";
 
-        console.log(event);
+        const setCategory = document.getElementById("category");
+        if (setCategory) setCategory.value = event.category || "Corporate Event";
 
-        document.getElementById("title").value =
-            event.title;
+        const setDesc = document.getElementById("description");
+        if (setDesc) setDesc.value = event.description || "";
 
-        document.getElementById("category").value =
-            event.category;
+        const setEventDate = document.getElementById("eventDate");
+        if (setEventDate) setEventDate.value = event.event_date || "";
 
-        document.getElementById("description").value =
-            event.description;
-
-        document.getElementById("eventDate").value =
-            event.event_date;
-
-        if (event.event_date_end && event.event_date_end !== 'None' && event.event_date_end !== 'null') {
-            document.getElementById("eventDateEnd").value = event.event_date_end;
-        } else {
-            document.getElementById("eventDateEnd").value = event.event_date;
+        const setEventDateEnd = document.getElementById("eventDateEnd");
+        if (setEventDateEnd) {
+            if (event.event_date_end && event.event_date_end !== 'None' && event.event_date_end !== 'null') {
+                setEventDateEnd.value = event.event_date_end;
+            } else {
+                setEventDateEnd.value = event.event_date || "";
+            }
         }
 
-        document.getElementById("startTime").value =
-            event.start_time;
+        const setStartTime = document.getElementById("startTime");
+        if (setStartTime) setStartTime.value = event.start_time || "09:00";
 
-        document.getElementById("endTime").value =
-            event.endTime || event.end_time;
+        const setEndTime = document.getElementById("endTime");
+        if (setEndTime) setEndTime.value = event.endTime || event.end_time || "17:00";
 
         const parseCapacityRange = (val) => {
             const num = parseInt(val);
@@ -74,45 +54,46 @@ async function loadEventData() {
             return "100";
         };
 
-        document.getElementById("participants").value = parseCapacityRange(event.participants);
-        document.getElementById("capacity").value = parseCapacityRange(event.required_capacity || event.participants);
+        const setParticipants = document.getElementById("participants");
+        if (setParticipants) setParticipants.value = parseCapacityRange(event.participants);
 
-        document.getElementById("location").value =
-            event.preferred_location;
+        const setCapacity = document.getElementById("capacity");
+        if (setCapacity) setCapacity.value = parseCapacityRange(event.required_capacity || event.participants);
 
-        document.getElementById("budget").value =
-            event.budget;
+        const setLocation = document.getElementById("location");
+        if (setLocation) setLocation.value = event.preferred_location || "Kuala Lumpur";
 
-        document.getElementById("capacity").value = parseCapacityRange(event.required_capacity);
+        const setBudget = document.getElementById("budget");
+        if (setBudget) setBudget.value = event.budget || 5000;
 
-        document.getElementById("venueType").value =
-            event.venue_type;
+        const setVenueType = document.getElementById("venueType");
+        if (setVenueType) setVenueType.value = event.venue_type || "Indoor";
 
-        document.getElementById("parking").checked =
+        const setParking = document.getElementById("parking");
+        if (setParking) setParking.checked = Boolean(event.parking_required);
 
-            Boolean(event.parking_required);
+        const setWifi = document.getElementById("wifi");
+        if (setWifi) setWifi.checked = Boolean(event.wifi_required);
 
-        document.getElementById("wifi").checked =
-            Boolean(event.wifi_required);
+        const setProjector = document.getElementById("projector");
+        if (setProjector) setProjector.checked = Boolean(event.projector_required);
 
-        document.getElementById("projector").checked =
-            Boolean(event.projector_required);
+        const setCatering = document.getElementById("catering");
+        if (setCatering) setCatering.checked = Boolean(event.catering_required);
 
-        document.getElementById("catering").checked =
-            Boolean(event.catering_required);
+        const setSoundSystem = document.getElementById("soundSystem");
+        if (setSoundSystem) setSoundSystem.checked = Boolean(event.sound_system_required);
 
-        document.getElementById("soundSystem").checked =
-            Boolean(event.sound_system_required);
+        const setStageSetup = document.getElementById("stageSetup");
+        if (setStageSetup) setStageSetup.checked = Boolean(event.stage_setup_required);
 
-        document.getElementById("stageSetup").checked =
-            Boolean(event.stage_setup_required);
+        const setPrivacy = document.getElementById("privacy");
+        if (setPrivacy) setPrivacy.value = event.privacy || "Public";
 
-        document.getElementById("privacy").value = event.privacy || "Public";
+        const setOtherReqs = document.getElementById("otherRequirements");
+        if (setOtherReqs) setOtherReqs.value = event.other_requirements || "";
 
-        document.getElementById("otherRequirements").value =
-            event.other_requirements || "";
-
-        if (event.banner_image) {
+        if (event.banner_image && event.banner_image !== "None" && event.banner_image !== "null") {
             base64BannerImage = event.banner_image;
             const preview = document.getElementById("bannerPreview");
             if (preview) {
@@ -137,26 +118,37 @@ async function loadEventData() {
             localStorage.setItem("eventBackdropSetup", event.backdrop_setup);
         }
 
+    } catch (error) {
+        console.error("Error loading event data:", error);
     }
-
-    catch (error) {
-
-        console.log(error);
-
-    }
-
 }
 
-// Dynamically set date min to today's date and attach banner upload preview listener
 document.addEventListener("DOMContentLoaded", () => {
-    const dateInput = document.getElementById("eventDate");
-    const dateEndInput = document.getElementById("eventDateEnd");
-    const today = new Date().toISOString().split("T")[0];
-    if (dateInput) {
-        dateInput.setAttribute("min", today);
-    }
-    if (dateEndInput) {
-        dateEndInput.setAttribute("min", today);
+    const editEventId = localStorage.getItem("editEventId");
+
+    if (editEventId) {
+        const pageTitle = document.getElementById("pageTitle");
+        if (pageTitle) pageTitle.textContent = "Edit Event";
+
+        loadEventData(editEventId);
+    } else {
+        const pageTitle = document.getElementById("pageTitle");
+        if (pageTitle) pageTitle.textContent = "Create New Event";
+
+        localStorage.removeItem("eventDraft");
+        localStorage.removeItem("isDemoMode");
+        localStorage.removeItem("eventLayout");
+        localStorage.removeItem("eventBackdropSetup");
+        localStorage.removeItem("selectedVenue");
+        const dateInput = document.getElementById("eventDate");
+        const dateEndInput = document.getElementById("eventDateEnd");
+        const today = new Date().toISOString().split("T")[0];
+        if (dateInput) {
+            dateInput.setAttribute("min", today);
+        }
+        if (dateEndInput) {
+            dateEndInput.setAttribute("min", today);
+        }
     }
 
     const bannerUpload = document.getElementById("bannerUpload");
