@@ -152,6 +152,32 @@ async function loadEventData(editEventId) {
             }
         }
 
+        // Store loaded draft object into localStorage so draft state remains 100% synchronized
+        const loadedDraft = {
+            title: event.title || "",
+            category: event.category || "Corporate Event",
+            description: event.description || "",
+            event_date: event.event_date || "",
+            event_date_end: (event.event_date_end && event.event_date_end !== 'None' && event.event_date_end !== 'null') ? event.event_date_end : (event.event_date || ""),
+            start_time: formatTimeHHMM(event.start_time, "09:00"),
+            end_time: formatTimeHHMM(event.endTime || event.end_time, "17:00"),
+            participants: event.participants || 100,
+            preferred_location: event.preferred_location || "Kuala Lumpur",
+            budget: event.budget || 5000,
+            required_capacity: event.required_capacity || event.participants || 100,
+            venue_type: event.venue_type || "Indoor",
+            parking_required: Boolean(event.parking_required),
+            wifi_required: Boolean(event.wifi_required),
+            projector_required: Boolean(event.projector_required),
+            catering_required: Boolean(event.catering_required),
+            sound_system_required: Boolean(event.sound_system_required),
+            stage_setup_required: Boolean(event.stage_setup_required),
+            other_requirements: event.other_requirements || "",
+            banner_image: (event.banner_image && event.banner_image !== "None" && event.banner_image !== "null") ? event.banner_image : null,
+            privacy: event.privacy || "Public"
+        };
+        localStorage.setItem("eventDraft", JSON.stringify(loadedDraft));
+
         // Cache previous design components to LocalStorage so they are preserved during the Edit flow
         if (event.selected_venue) {
             localStorage.setItem("selectedVenue", event.selected_venue);
