@@ -499,9 +499,12 @@ async function saveEvent() {
             elements: parsedLayoutElements
         };
 
+        const latestEventDraft = JSON.parse(localStorage.getItem("eventDraft")) || eventData || {};
+
         const payload = {
 
             ...eventData,
+            ...latestEventDraft,
 
             selected_venue: selectedVenue,
 

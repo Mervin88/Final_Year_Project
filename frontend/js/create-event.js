@@ -180,22 +180,15 @@ document.addEventListener("DOMContentLoaded", () => {
                     bannerUpload.value = "";
                     return;
                 }
+
+                // Compress file to ~50KB JPEG using HTML5 canvas before setting base64BannerImage
                 const reader = new FileReader();
                 reader.onload = function(evt) {
-                    base64BannerImage = evt.target.result;
-                    const preview = document.getElementById("bannerPreview");
-                    if (preview) {
-                        preview.src = base64BannerImage;
-                        preview.style.display = "block";
-                        const prompt = document.getElementById("uploadPrompt");
-                        if (prompt) prompt.style.display = "none";
-                    }
-
                     const img = new Image();
                     img.onload = function() {
                         try {
                             const canvas = document.createElement("canvas");
-                            const MAX_WIDTH = 1000;
+                            const MAX_WIDTH = 800;
                             let width = img.width;
                             let height = img.height;
 
@@ -208,11 +201,23 @@ document.addEventListener("DOMContentLoaded", () => {
                             canvas.height = height;
                             const ctx = canvas.getContext("2d");
                             ctx.drawImage(img, 0, 0, width, height);
-                            base64BannerImage = canvas.toDataURL("image/jpeg", 0.75);
-                            if (preview) preview.src = base64BannerImage;
+
+                            base64BannerImage = canvas.toDataURL("image/jpeg", 0.7);
+
+                            const preview = document.getElementById("bannerPreview");
+                            if (preview) {
+                                preview.src = base64BannerImage;
+                                preview.style.display = "block";
+                                const prompt = document.getElementById("uploadPrompt");
+                                if (prompt) prompt.style.display = "none";
+                            }
                         } catch (err) {
                             console.error("Canvas resize error:", err);
+                            base64BannerImage = evt.target.result;
                         }
+                    };
+                    img.onerror = function() {
+                        base64BannerImage = evt.target.result;
                     };
                     img.src = evt.target.result;
                 };
