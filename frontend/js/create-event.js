@@ -34,7 +34,7 @@ async function loadEventData() {
     try {
 
         const response = await fetch(
-            `http://127.0.0.1:5000/event/${editEventId}`
+            `${API_BASE}/event/${editEventId}`
         );
 
         const event =
@@ -164,28 +164,42 @@ document.addEventListener("DOMContentLoaded", () => {
         bannerUpload.addEventListener("change", (e) => {
             const file = e.target.files[0];
             if (file) {
-                // Verify file is an image
                 if (!file.type.startsWith("image/")) {
                     showErrorAlert("Invalid File", "Please select an image file.");
                     bannerUpload.value = "";
                     return;
                 }
-                // Limit file size to 2MB (Base64 adds overhead, 2MB is a safe DB size)
-                if (file.size > 2 * 1024 * 1024) {
-                    showErrorAlert("File Too Large", "Event banner image cannot exceed 2MB.");
-                    bannerUpload.value = "";
-                    return;
-                }
                 const reader = new FileReader();
                 reader.onload = function(evt) {
-                    base64BannerImage = evt.target.result;
-                    const preview = document.getElementById("bannerPreview");
-                    if (preview) {
-                        preview.src = base64BannerImage;
-                        preview.style.display = "block";
-                        const prompt = document.getElementById("uploadPrompt");
-                        if (prompt) prompt.style.display = "none";
-                    }
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement("canvas");
+                        const MAX_WIDTH = 1000;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > MAX_WIDTH) {
+                            height = Math.round((height * MAX_WIDTH) / width);
+                            width = MAX_WIDTH;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext("2d");
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        // Compress to WebP/JPEG Base64 (~80KB - 150KB)
+                        base64BannerImage = canvas.toDataURL("image/jpeg", 0.75);
+
+                        const preview = document.getElementById("bannerPreview");
+                        if (preview) {
+                            preview.src = base64BannerImage;
+                            preview.style.display = "block";
+                            const prompt = document.getElementById("uploadPrompt");
+                            if (prompt) prompt.style.display = "none";
+                        }
+                    };
+                    img.src = evt.target.result;
                 };
                 reader.readAsDataURL(file);
             }
