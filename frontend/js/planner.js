@@ -206,8 +206,8 @@ function initCapacityTargetSelector() {
         options = [100, 200, 300, 400, 500];
     } else if (rawCap === "500-1000" || (capNum >= 500 && capNum <= 1000)) {
         options = [500, 600, 700, 800, 900, 1000];
-    } else if (rawCap === "1000+" || capNum > 1000) {
-        options = [1000, 1500, 2000, 2500, 3000, 5000];
+    } else if (rawCap === "1000+" || capNum >= 1000) {
+        options = [1000];
     } else {
         options = [100, 200, 300, 400, 500];
     }
