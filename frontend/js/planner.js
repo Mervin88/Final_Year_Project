@@ -196,14 +196,24 @@ function initCapacityTargetSelector() {
     if (!selector) return;
 
     selector.innerHTML = "";
-    const cap = eventData ? (parseInt(eventData.required_capacity) || 100) : 100;
+    const rawCap = eventData ? (eventData.required_capacity || 500) : 500;
+    const capNum = parseInt(rawCap) || 500;
 
-    // Full options range from 100 Pax to 1000 Pax in steps of 100
-    let options = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];
+    let options = [];
 
-    // Ensure current capacity value is in options list
-    if (!options.includes(cap)) {
-        options.push(cap);
+    // Determine dropdown option range matching Create Event user selection
+    if (rawCap === "100-500" || (capNum < 500 && capNum >= 100)) {
+        options = [100, 200, 300, 400, 500];
+    } else if (rawCap === "500-1000" || (capNum >= 500 && capNum <= 1000)) {
+        options = [500, 600, 700, 800, 900, 1000];
+    } else if (rawCap === "1000+" || capNum > 1000) {
+        options = [1000, 1500, 2000, 2500, 3000, 5000];
+    } else {
+        options = [100, 200, 300, 400, 500];
+    }
+
+    if (!options.includes(capNum)) {
+        options.push(capNum);
         options.sort((a, b) => a - b);
     }
 
@@ -211,7 +221,7 @@ function initCapacityTargetSelector() {
         const opt = document.createElement("option");
         opt.value = val;
         opt.innerText = val + " Pax";
-        if (val === cap) {
+        if (val === capNum) {
             opt.selected = true;
         }
         selector.appendChild(opt);
