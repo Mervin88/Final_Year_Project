@@ -343,9 +343,8 @@ function filterAndRenderVenues(resetPage = false) {
                 if (isTypeMatch) matchScore += 25;
             }
 
-            // Apply strict capacity constraint penalty:
-            // A venue that physically cannot accommodate the required capacity (e.g. 120 pax for a 500 pax event)
-            // must be penalized heavily so undersized venues do not receive high match scores.
+            // 1. Apply strict capacity constraint penalty:
+            // Undersized venues (e.g. 120 pax for a 500 pax event) must be penalized.
             const reqCap = parseInt(eventData.required_capacity);
             if (!isNaN(reqCap) && reqCap > 0 && venue.capacity < reqCap) {
                 const capacityRatio = venue.capacity / reqCap;
@@ -353,6 +352,18 @@ function filterAndRenderVenues(resetPage = false) {
                     matchScore = Math.min(matchScore, 35); // Cap at max 35% if under 50% capacity
                 } else {
                     matchScore = Math.round(matchScore * capacityRatio);
+                }
+            }
+
+            // 2. Apply strict budget constraint penalty:
+            // Over-budget venues (e.g. RM 16,000/day for a RM 10,000 budget) must be penalized.
+            const reqBudget = parseFloat(eventData.budget);
+            if (!isNaN(reqBudget) && reqBudget > 0 && venue.price > reqBudget) {
+                const budgetRatio = reqBudget / venue.price;
+                if (budgetRatio < 0.7) {
+                    matchScore = Math.min(matchScore, 40); // Cap at max 40% if >30% over budget
+                } else {
+                    matchScore = Math.round(matchScore * budgetRatio);
                 }
             }
 
