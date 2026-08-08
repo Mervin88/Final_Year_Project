@@ -277,17 +277,21 @@ document.getElementById("continueBtn")
         if (other_requirements.length > 300) { showErrorAlert("Limit Exceeded", "Other requirements cannot exceed 300 characters."); return; }
         if (preferred_location.length > 100) { showErrorAlert("Limit Exceeded", "Preferred location cannot exceed 100 characters."); return; }
 
-        // 4. Date & Time combination check (End DateTime must be strictly after Start DateTime)
-        const startDateObj = new Date(`${event_date}T${start_time}`);
-        const endDateObj = new Date(`${event_date_end}T${end_time}`);
-
-        if (isNaN(startDateObj.getTime()) || isNaN(endDateObj.getTime())) {
-            showErrorAlert("Invalid Date/Time", "Please enter valid event dates and start/end times.");
+        // 3. Date check (not in past, end date >= start date)
+        const todayStr = new Date().toISOString().split("T")[0];
+        if (event_date < todayStr) {
+            showErrorAlert("Invalid Date", "Event start date cannot be in the past.");
             return;
         }
 
-        if (endDateObj <= startDateObj) {
-            showErrorAlert("Invalid Event Schedule", "Event end date & time must be strictly after the start date & time. Please adjust your event times before continuing.");
+        if (event_date_end < event_date) {
+            showErrorAlert("Invalid Date Range", "Event end date cannot be before the start date.");
+            return;
+        }
+
+        // 4. Operating Hours Time check (End time must be after Start time)
+        if (start_time >= end_time) {
+            showErrorAlert("Invalid Time Range", "Event end time must be strictly after the start time (e.g. Start: 09:00 AM, End: 05:00 PM).");
             return;
         }
 
