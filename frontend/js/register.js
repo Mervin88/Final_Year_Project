@@ -43,6 +43,26 @@ document.getElementById("registerForm").addEventListener("submit", async functio
             text: "Please enter a valid email address.",
             confirmButtonColor: "#d9534f"
         });
+        return;
+    }
+
+    // Password Strength Validation
+    const hasMinLength = password.length >= 6;
+    const hasCapital = /[A-Z]/.test(password);
+    const hasSpecialSymbol = /[^A-Za-z0-9]/.test(password);
+
+    if (!hasMinLength || !hasCapital || !hasSpecialSymbol) {
+        let missingRules = [];
+        if (!hasMinLength) missingRules.push("• Minimum 6 characters long");
+        if (!hasCapital) missingRules.push("• At least 1 uppercase capital letter (A-Z)");
+        if (!hasSpecialSymbol) missingRules.push("• At least 1 special symbol (e.g. @, #, ., !)");
+
+        Swal.fire({
+            icon: "warning",
+            title: "Weak Password",
+            html: `Your password must meet the following requirements:<br><br><div style="text-align: left; display: inline-block; color: #d9534f; font-weight: 500;">${missingRules.join("<br>")}</div>`,
+            confirmButtonColor: "#c8a96b"
+        });
 
         return;
     }

@@ -168,6 +168,13 @@ def register():
                 "message": "This email is already registered."
             })
 
+        import re
+        if len(password) < 6 or not re.search(r'[A-Z]', password) or not re.search(r'[^A-Za-z0-9]', password):
+            return jsonify({
+                "success": False,
+                "message": "Password must be at least 6 characters long, contain at least 1 capital letter (A-Z), and include at least 1 special symbol (e.g. @, #, ., !)."
+            })
+
         # Hash password securely
         hashed_password = generate_password_hash(password)
 
