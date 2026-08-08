@@ -513,15 +513,16 @@ def create_event():
 def my_events(username):
 
     cursor = mysql.connection.cursor()
+    email = resolve_user_email(username)
 
     query = """
     SELECT id, title, category, event_date, event_date_end, selected_venue, created_by, timeline, status, rejection_feedback, layout, backdrop_setup, banner_image,
            (SELECT COUNT(*) FROM registrations r WHERE r.event_id = events.id) AS attendee_count
     FROM events
-    WHERE created_by = %s
+    WHERE created_by = %s OR (%s IS NOT NULL AND created_by = %s)
     """
 
-    cursor.execute(query, (username,))
+    cursor.execute(query, (username, email, email))
 
     events = cursor.fetchall()
 

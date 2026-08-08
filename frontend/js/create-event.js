@@ -171,32 +171,36 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 const reader = new FileReader();
                 reader.onload = function(evt) {
+                    base64BannerImage = evt.target.result;
+                    const preview = document.getElementById("bannerPreview");
+                    if (preview) {
+                        preview.src = base64BannerImage;
+                        preview.style.display = "block";
+                        const prompt = document.getElementById("uploadPrompt");
+                        if (prompt) prompt.style.display = "none";
+                    }
+
                     const img = new Image();
                     img.onload = function() {
-                        const canvas = document.createElement("canvas");
-                        const MAX_WIDTH = 1000;
-                        let width = img.width;
-                        let height = img.height;
+                        try {
+                            const canvas = document.createElement("canvas");
+                            const MAX_WIDTH = 1000;
+                            let width = img.width;
+                            let height = img.height;
 
-                        if (width > MAX_WIDTH) {
-                            height = Math.round((height * MAX_WIDTH) / width);
-                            width = MAX_WIDTH;
-                        }
+                            if (width > MAX_WIDTH) {
+                                height = Math.round((height * MAX_WIDTH) / width);
+                                width = MAX_WIDTH;
+                            }
 
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext("2d");
-                        ctx.drawImage(img, 0, 0, width, height);
-
-                        // Compress to WebP/JPEG Base64 (~80KB - 150KB)
-                        base64BannerImage = canvas.toDataURL("image/jpeg", 0.75);
-
-                        const preview = document.getElementById("bannerPreview");
-                        if (preview) {
-                            preview.src = base64BannerImage;
-                            preview.style.display = "block";
-                            const prompt = document.getElementById("uploadPrompt");
-                            if (prompt) prompt.style.display = "none";
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext("2d");
+                            ctx.drawImage(img, 0, 0, width, height);
+                            base64BannerImage = canvas.toDataURL("image/jpeg", 0.75);
+                            if (preview) preview.src = base64BannerImage;
+                        } catch (err) {
+                            console.error("Canvas resize error:", err);
                         }
                     };
                     img.src = evt.target.result;
