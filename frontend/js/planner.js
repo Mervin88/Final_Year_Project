@@ -500,11 +500,14 @@ async function saveEvent() {
         };
 
         const latestEventDraft = JSON.parse(localStorage.getItem("eventDraft")) || eventData || {};
+        const bannerVal = latestEventDraft.banner_image || (eventData ? eventData.banner_image : null);
 
         const payload = {
 
             ...eventData,
             ...latestEventDraft,
+
+            banner_image: (bannerVal && bannerVal !== "null" && bannerVal !== "None") ? bannerVal : null,
 
             selected_venue: selectedVenue,
 

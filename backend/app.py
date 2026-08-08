@@ -724,8 +724,22 @@ def update_event(event_id):
         data.get('privacy', 'Public'),
 
         event_id
-
     )
+
+    # Preserve existing banner_image if incoming banner_image is null/empty/None
+    incoming_banner = data.get('banner_image')
+    if not incoming_banner or incoming_banner == 'null' or incoming_banner == 'None' or str(incoming_banner).strip() == '':
+        try:
+            cursor.execute("SELECT banner_image FROM events WHERE id = %s", (event_id,))
+            existing_row = cursor.fetchone()
+            if existing_row and existing_row[0]:
+                existing_banner = existing_row[0]
+                # Re-build values with preserved banner
+                val_list = list(values)
+                val_list[23] = existing_banner # banner_image index in tuple
+                values = tuple(val_list)
+        except Exception as banner_err:
+            print("Failed to preserve existing banner_image:", banner_err)
 
     # Fetch existing event details for notification context
     activity = "details"
