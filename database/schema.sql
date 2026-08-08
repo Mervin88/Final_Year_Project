@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS `events` (
     `backdrop_setup` TEXT NULL,
     `status` VARCHAR(50) DEFAULT 'Pending Review',
     `rejection_feedback` TEXT NULL,
-    `banner_image` VARCHAR(555) NULL,
+    `banner_image` LONGTEXT NULL,
     `privacy` VARCHAR(50) DEFAULT 'Public'
 );
 
