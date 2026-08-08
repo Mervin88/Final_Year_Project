@@ -204,9 +204,19 @@ document.addEventListener("DOMContentLoaded", () => {
                     return;
                 }
 
-                // Compress file to ~50KB JPEG using HTML5 canvas before setting base64BannerImage
+                // Read and set new image immediately, then compress via canvas
                 const reader = new FileReader();
                 reader.onload = function(evt) {
+                    base64BannerImage = evt.target.result;
+
+                    const preview = document.getElementById("bannerPreview");
+                    if (preview) {
+                        preview.src = base64BannerImage;
+                        preview.style.display = "block";
+                        const prompt = document.getElementById("uploadPrompt");
+                        if (prompt) prompt.style.display = "none";
+                    }
+
                     const img = new Image();
                     img.onload = function() {
                         try {
@@ -226,21 +236,10 @@ document.addEventListener("DOMContentLoaded", () => {
                             ctx.drawImage(img, 0, 0, width, height);
 
                             base64BannerImage = canvas.toDataURL("image/jpeg", 0.7);
-
-                            const preview = document.getElementById("bannerPreview");
-                            if (preview) {
-                                preview.src = base64BannerImage;
-                                preview.style.display = "block";
-                                const prompt = document.getElementById("uploadPrompt");
-                                if (prompt) prompt.style.display = "none";
-                            }
+                            if (preview) preview.src = base64BannerImage;
                         } catch (err) {
                             console.error("Canvas resize error:", err);
-                            base64BannerImage = evt.target.result;
                         }
-                    };
-                    img.onerror = function() {
-                        base64BannerImage = evt.target.result;
                     };
                     img.src = evt.target.result;
                 };
