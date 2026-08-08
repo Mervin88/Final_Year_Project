@@ -1650,9 +1650,12 @@ def get_approved_venues():
 
 def backfill_notifications(cursor, username):
     try:
-        # Retrieve all events for this user
-        cursor.execute("SELECT title, status, created_at, rejection_feedback FROM events WHERE created_by = %s", (username,))
+        email = resolve_user_email(username)
+        # Retrieve all events for this user matching fullname or email
+        cursor.execute("SELECT title, status, created_at, rejection_feedback FROM events WHERE created_by = %s OR (%s IS NOT NULL AND created_by = %s)", (username, email, email))
         events = cursor.fetchall()
+        
+        target_username = email if email else username
         
         modified = False
         for event in events:
@@ -1663,11 +1666,11 @@ def backfill_notifications(cursor, username):
             
             # 1. Check/Insert Creation Notification
             creation_msg = f"Event '{title}' successfully created!"
-            cursor.execute("SELECT id FROM notifications WHERE username = %s AND message = %s", (username, creation_msg))
+            cursor.execute("SELECT id FROM notifications WHERE (username = %s OR (%s IS NOT NULL AND username = %s)) AND message = %s", (username, email, email, creation_msg))
             if not cursor.fetchone():
                 cursor.execute(
                     "INSERT INTO notifications (message, username, type, created_at) VALUES (%s, %s, %s, %s)",
-                    (creation_msg, username, "success", created_at)
+                    (creation_msg, target_username, "success", created_at)
                 )
                 modified = True
                 
@@ -1687,11 +1690,11 @@ def backfill_notifications(cursor, username):
                 status_type = "warning"
                 
             if status_msg:
-                cursor.execute("SELECT id FROM notifications WHERE username = %s AND message = %s", (username, status_msg))
+                cursor.execute("SELECT id FROM notifications WHERE (username = %s OR (%s IS NOT NULL AND username = %s)) AND message = %s", (username, email, email, status_msg))
                 if not cursor.fetchone():
                     cursor.execute(
                         "INSERT INTO notifications (message, username, type, created_at) VALUES (%s, %s, %s, %s)",
-                        (status_msg, username, status_type, created_at)
+                        (status_msg, target_username, status_type, created_at)
                     )
                     modified = True
                     
@@ -1706,11 +1709,13 @@ def get_user_notifications(username):
     try:
         cursor = mysql.connection.cursor()
         
+        email = resolve_user_email(username)
+
         # Dynamically generate and save missing notifications for existing events
         if backfill_notifications(cursor, username):
             mysql.connection.commit()
             
-        cursor.execute("SELECT id, message, type, created_at FROM notifications WHERE username=%s ORDER BY id DESC", (username,))
+        cursor.execute("SELECT id, message, type, created_at FROM notifications WHERE username = %s OR (%s IS NOT NULL AND username = %s) ORDER BY id DESC", (username, email, email))
         rows = cursor.fetchall()
         cursor.close()
 
