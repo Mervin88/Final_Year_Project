@@ -26,15 +26,15 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- ========================================================
 
 INSERT INTO `users` (`id`, `fullname`, `email`, `password`, `role`) VALUES
-(1, 'Mervin', 'admin@eventsync.com', 'scrypt:32768:8:1$GIvgWSWB84xcXtFo$56a55dbc8dc0e51572374c0b09563ebe8ed9506b6fcf2a299d8bd87f1d45aac8c14feb4cc1b8af69cd0c6ada51c7b64a2df1fbe992d291a4ec3b0bd188f19b48', 'Admin'),
-(2, 'Ryan', 'organizer@eventsync.com', 'scrypt:32768:8:1$dqRTZCALyfWYYtMR$99e9f65dafe8b46015d93672e28005a64f09ec14087c44ddb908f9a2676a2de2a29958699098edd681c83054060a95e9afbd521338bc307fe5e2b9cfe9d0d619', 'Organizer'),
+(1, 'Mervin', 'admin@eventsync.com', 'scrypt:32768:8:1$1HYvZ1cejBtyjWWj$d4b362a43ddaa98b48c37e72b9033ba7691f3392ffd616eaff12faa8445fddb3c213cd1900f5bbabebbbdaa9c0d189dca2e356b6aa4b464ba2fe6162b91a057b', 'Admin'),
+(2, 'Ryan', 'organizer@eventsync.com', 'scrypt:32768:8:1$qxtUjUFAb1IICvFO$904ea75bdae786d44599f9d741ba499808d4cd809e9d6877199ea2c7c50b3cec973422dfc129e773fe3559abf58cde663b1dcf870e64a34d082d2ff428c9811f', 'Organizer'),
 (3, 'Global Venues & Co', 'vendor@eventsync.com', 'scrypt:32768:8:1$yQ0l3n2O4p6Q8r0S$2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c', 'Vendor'),
 (4, 'Jane Participant', 'participant@eventsync.com', 'scrypt:32768:8:1$zR1m4o3P5q7R9s1T$3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d', 'Participant'),
 (5, 'John Doe (TechCorp)', 'john.doe@techcorp.com', 'scrypt:32768:8:1$aS2n5p4Q6r8S0t2U$4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e', 'Organizer'),
 (6, 'Sarah Lee (Luxury Venues)', 'sarah.lee@events.com', 'scrypt:32768:8:1$bT3o6q5R7s9T1u3V$5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f', 'Vendor'),
 (7, 'Alex Wong', 'alex.wong@gmail.com', 'scrypt:32768:8:1$uH3G6L6E2o9pQ9R8$4dfedcf23a7e4b9c1d6e8f0a2b4c6d8e0f1a3b5c7d9e1f3a5b7c9d1e3f5a7b9c', 'Participant'),
 (8, 'Emma Watson', 'emma.watson@enterprise.com', 'scrypt:32768:8:1$vI4H7M7F3p0qR0S9$5efefdf34b8f5c0d2e7f9a1b3c5d7e9f0a2b4c6d8e0f2a4b6c8d0e2f4a6b8c0d', 'Participant'),
-(9, 'Top', 'top@eventsync.com', 'scrypt:32768:8:1$dqRTZCALyfWYYtMR$99e9f65dafe8b46015d93672e28005a64f09ec14087c44ddb908f9a2676a2de2a29958699098edd681c83054060a95e9afbd521338bc307fe5e2b9cfe9d0d619', 'Organizer');
+(9, 'Top', 'top@eventsync.com', 'scrypt:32768:8:1$wmb8qVDChCMpsiik$3cfb235936c190dfd445ee48fdd5cc58dab3e63b28b2be82950e526a4be91e1ec85d7f31a8d06cd5678bb232d24bbb0dabd03723c41766d20bf7b0d97d573fc3', 'Organizer');
 
 -- ========================================================
 -- 2. EVENTS DATASET

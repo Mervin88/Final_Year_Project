@@ -14,41 +14,6 @@ function newEvent() {
 
 let base64BannerImage = null;
 
-function compressBannerFile(file) {
-    return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-            const img = new Image();
-            img.onload = () => {
-                try {
-                    const canvas = document.createElement("canvas");
-                    const MAX_WIDTH = 800;
-                    let width = img.width;
-                    let height = img.height;
-
-                    if (width > MAX_WIDTH) {
-                        height = Math.round((height * MAX_WIDTH) / width);
-                        width = MAX_WIDTH;
-                    }
-
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext("2d");
-                    ctx.drawImage(img, 0, 0, width, height);
-
-                    const compressed = canvas.toDataURL("image/jpeg", 0.65);
-                    resolve(compressed);
-                } catch (e) {
-                    resolve(evt.target.result);
-                }
-            };
-            img.onerror = () => resolve(evt.target.result);
-            img.src = evt.target.result;
-        };
-        reader.readAsDataURL(file);
-    });
-}
-
 async function loadEventData(editEventId) {
     try {
         const response = await fetch(`${API_BASE}/event/${editEventId}`);
@@ -213,7 +178,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const bannerUpload = document.getElementById("bannerUpload");
     if (bannerUpload) {
-        bannerUpload.addEventListener("change", async (e) => {
+        bannerUpload.addEventListener("change", (e) => {
             const file = e.target.files[0];
             if (file) {
                 const fileName = file.name.toLowerCase();
@@ -239,19 +204,47 @@ document.addEventListener("DOMContentLoaded", () => {
                     return;
                 }
 
-                // Compress file to ~40KB JPEG using HTML5 canvas
-                try {
-                    base64BannerImage = await compressBannerFile(file);
-                    const preview = document.getElementById("bannerPreview");
-                    if (preview) {
-                        preview.src = base64BannerImage;
-                        preview.style.display = "block";
-                        const prompt = document.getElementById("uploadPrompt");
-                        if (prompt) prompt.style.display = "none";
-                    }
-                } catch (err) {
-                    console.error("Banner compression failed:", err);
-                }
+                // Compress file to ~50KB JPEG using HTML5 canvas before setting base64BannerImage
+                const reader = new FileReader();
+                reader.onload = function (evt) {
+                    const img = new Image();
+                    img.onload = function () {
+                        try {
+                            const canvas = document.createElement("canvas");
+                            const MAX_WIDTH = 800;
+                            let width = img.width;
+                            let height = img.height;
+
+                            if (width > MAX_WIDTH) {
+                                height = Math.round((height * MAX_WIDTH) / width);
+                                width = MAX_WIDTH;
+                            }
+
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext("2d");
+                            ctx.drawImage(img, 0, 0, width, height);
+
+                            base64BannerImage = canvas.toDataURL("image/jpeg", 0.7);
+
+                            const preview = document.getElementById("bannerPreview");
+                            if (preview) {
+                                preview.src = base64BannerImage;
+                                preview.style.display = "block";
+                                const prompt = document.getElementById("uploadPrompt");
+                                if (prompt) prompt.style.display = "none";
+                            }
+                        } catch (err) {
+                            console.error("Canvas resize error:", err);
+                            base64BannerImage = evt.target.result;
+                        }
+                    };
+                    img.onerror = function () {
+                        base64BannerImage = evt.target.result;
+                    };
+                    img.src = evt.target.result;
+                };
+                reader.readAsDataURL(file);
             }
         });
     }
@@ -271,16 +264,7 @@ function showErrorAlert(title, text) {
 }
 
 document.getElementById("continueBtn")
-    .addEventListener("click", async () => {
-
-        const bannerUploadInput = document.getElementById("bannerUpload");
-        if (bannerUploadInput && bannerUploadInput.files && bannerUploadInput.files[0]) {
-            try {
-                base64BannerImage = await compressBannerFile(bannerUploadInput.files[0]);
-            } catch (err) {
-                console.error("Error compressing banner on continue:", err);
-            }
-        }
+    .addEventListener("click", () => {
 
         const title = document.getElementById("title").value.trim();
         const category = document.getElementById("category").value;
