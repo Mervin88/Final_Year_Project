@@ -292,7 +292,7 @@ function renderMyEventsGrid() {
         container.innerHTML += `
             <div class="event-card" style="${cardStyle}">
                 <div class="event-banner-container" style="position: relative; width: 100%; height: 180px; overflow: hidden; border-bottom: 1px solid #f1f5f9;">
-                    <img class="event-banner-img" src="${event.banner_image || 'https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=1200'}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;" alt="Event Banner">
+                    <img class="event-banner-img" src="${(event.banner_image && event.banner_image !== 'None' && event.banner_image !== 'null' && event.banner_image.trim() !== '') ? event.banner_image : 'https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=1200'}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;" alt="Event Banner">
                     <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.4) 100%); pointer-events: none;"></div>
                     <span style="position: absolute; top: 12px; right: 12px; background: ${statusBadgeColor}; color: white; padding: 5px 12px; border-radius: 30px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 8px rgba(0,0,0,0.12);">
                         ${statusBadgeText}
