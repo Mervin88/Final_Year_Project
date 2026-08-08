@@ -196,24 +196,14 @@ function initCapacityTargetSelector() {
     if (!selector) return;
 
     selector.innerHTML = "";
-    const rawCap = eventData ? (eventData.required_capacity || 500) : 500;
-    const capNum = parseInt(rawCap) || 500;
+    const cap = eventData ? (parseInt(eventData.required_capacity) || 100) : 100;
 
-    let options = [];
+    // Full options range from 100 Pax to 1000 Pax in steps of 100
+    let options = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];
 
-    // Determine dropdown option range matching Create Event user selection
-    if (rawCap === "100-500" || (capNum < 500 && capNum >= 100)) {
-        options = [100, 200, 300, 400, 500];
-    } else if (rawCap === "500-1000" || (capNum >= 500 && capNum <= 1000)) {
-        options = [500, 600, 700, 800, 900, 1000];
-    } else if (rawCap === "1000+" || capNum >= 1000) {
-        options = [1000];
-    } else {
-        options = [100, 200, 300, 400, 500];
-    }
-
-    if (!options.includes(capNum)) {
-        options.push(capNum);
+    // Ensure current capacity value is in options list
+    if (!options.includes(cap)) {
+        options.push(cap);
         options.sort((a, b) => a - b);
     }
 
@@ -221,7 +211,7 @@ function initCapacityTargetSelector() {
         const opt = document.createElement("option");
         opt.value = val;
         opt.innerText = val + " Pax";
-        if (val === capNum) {
+        if (val === cap) {
             opt.selected = true;
         }
         selector.appendChild(opt);
@@ -1547,8 +1537,7 @@ window.applyLayoutPreset = function (presetType) {
         let tId = 1;
         layerConfigs.forEach(conf => {
             const startY = 160 + conf.L * 180;
-            const maxVertCount = Math.max(conf.leftCount, conf.rightCount);
-            const endY = startY + (maxVertCount + 1) * 135;
+            const endY = bottomRowY - conf.L * 180;
             
             // Top Row
             if (conf.topCount > 0) {
@@ -1565,7 +1554,23 @@ window.applyLayoutPreset = function (presetType) {
                     tId++;
                 }
             }
-
+            
+            // Bottom Row
+            if (conf.bottomCount > 0) {
+                const stepX = (conf.rightX - conf.leftX) / (conf.bottomCount + 1);
+                for (let i = 0; i < conf.bottomCount; i++) {
+                    const x = conf.rightX - (i + 1) * stepX;
+                    layoutElements.push({
+                        id: "table-" + tId,
+                        type: "table",
+                        label: "Table " + tId,
+                        x: Math.floor(x),
+                        y: Math.floor(endY)
+                    });
+                    tId++;
+                }
+            }
+            
             // Left Column
             if (conf.leftCount > 0) {
                 for (let i = 0; i < conf.leftCount; i++) {
@@ -1580,7 +1585,7 @@ window.applyLayoutPreset = function (presetType) {
                     tId++;
                 }
             }
-
+            
             // Right Column
             if (conf.rightCount > 0) {
                 for (let i = 0; i < conf.rightCount; i++) {
@@ -1591,22 +1596,6 @@ window.applyLayoutPreset = function (presetType) {
                         label: "Table " + tId,
                         x: conf.rightX,
                         y: Math.floor(y)
-                    });
-                    tId++;
-                }
-            }
-            
-            // Bottom Row (at the bottom below left & right columns)
-            if (conf.bottomCount > 0) {
-                const stepX = (conf.rightX - conf.leftX) / (conf.bottomCount + 1);
-                for (let i = 0; i < conf.bottomCount; i++) {
-                    const x = conf.rightX - (i + 1) * stepX;
-                    layoutElements.push({
-                        id: "table-" + tId,
-                        type: "table",
-                        label: "Table " + tId,
-                        x: Math.floor(x),
-                        y: Math.floor(endY)
                     });
                     tId++;
                 }
