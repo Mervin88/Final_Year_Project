@@ -371,126 +371,143 @@ def validate_event_data(data):
 
     return True, None
 
+def resolve_user_email(username_or_name):
+    if not username_or_name or username_or_name == 'Guest':
+        return None
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT email FROM users WHERE email = %s OR fullname = %s LIMIT 1", (username_or_name, username_or_name))
+        row = cur.fetchone()
+        cur.close()
+        if row:
+            return row[0]
+    except Exception:
+        pass
+    return None
+
 # Create Event
 @app.route('/create-event', methods=['POST'])
 def create_event():
+    try:
+        data = request.json
+        is_valid, err_msg = validate_event_data(data)
+        if not is_valid:
+            return jsonify({
+                "success": False,
+                "message": err_msg
+            })
 
-    data = request.json
-    is_valid, err_msg = validate_event_data(data)
-    if not is_valid:
+        title = data['title']
+        category = data['category']
+        description = data['description']
+
+        event_date = data['event_date']
+        event_date_end = data['event_date_end']
+        start_time = data['start_time']
+        end_time = data['end_time']
+
+        participants = data['participants']
+
+        preferred_location = data['preferred_location']
+        budget = data['budget']
+        required_capacity = data['required_capacity']
+        venue_type = data['venue_type']
+
+        parking_required = data['parking_required']
+        wifi_required = data['wifi_required']
+        projector_required = data['projector_required']
+        catering_required = data['catering_required']
+        sound_system_required = data['sound_system_required']
+        stage_setup_required = data['stage_setup_required']
+
+        other_requirements = data['other_requirements']
+        selected_venue = data['selected_venue']
+
+        created_by = data['created_by']
+
+        cursor = mysql.connection.cursor()
+
+        sql = """
+            INSERT INTO events(
+            title,
+            category,
+            description,
+            event_date,
+            event_date_end,
+            start_time,
+            end_time,
+            participants,
+            preferred_location,
+            budget,
+            required_capacity,
+            venue_type,
+            parking_required,
+            wifi_required,
+            projector_required,
+            catering_required,
+            sound_system_required,
+            stage_setup_required,
+            other_requirements,
+            selected_venue,
+            created_by,
+            timeline,
+            layout,
+            backdrop_setup,
+            banner_image,
+            privacy
+        )
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        """
+
+        values = (
+            title,
+            category,
+            description,
+            event_date,
+            event_date_end,
+            start_time,
+            end_time,
+            participants,
+            preferred_location,
+            budget,
+            required_capacity,
+            venue_type,
+            parking_required,
+            wifi_required,
+            projector_required,
+            catering_required,
+            sound_system_required,
+            stage_setup_required,
+            other_requirements,
+            selected_venue,
+            created_by,
+            data.get('timeline', '[]'),
+            data.get('layout', '[]'),
+            data.get('backdrop_setup', 'null'),
+            data.get('banner_image', None),
+            data.get('privacy', 'Public')
+        )
+        cursor.execute(sql, values)
+        
+        notify_user = resolve_user_email(created_by)
+        try:
+            cursor.execute("INSERT INTO notifications (message, username, type) VALUES (%s, %s, %s)", 
+                           (f"Event '{title}' successfully created!", notify_user, "success"))
+        except Exception as notify_err:
+            print("Failed to log notification:", notify_err)
+
+        mysql.connection.commit()
+        cursor.close()
+
+        return jsonify({
+            "success": True,
+            "message": "Event created successfully"
+        })
+    except Exception as e:
         return jsonify({
             "success": False,
-            "message": err_msg
+            "message": f"Error saving event: {str(e)}"
         })
-
-    title = data['title']
-    category = data['category']
-    description = data['description']
-
-    event_date = data['event_date']
-    event_date_end = data['event_date_end']
-    start_time = data['start_time']
-    end_time = data['end_time']
-
-    participants = data['participants']
-
-    preferred_location = data['preferred_location']
-    budget = data['budget']
-    required_capacity = data['required_capacity']
-    venue_type = data['venue_type']
-
-    parking_required = data['parking_required']
-    wifi_required = data['wifi_required']
-    projector_required = data['projector_required']
-    catering_required = data['catering_required']
-    sound_system_required = data['sound_system_required']
-    stage_setup_required = data['stage_setup_required']
-
-    other_requirements = data['other_requirements']
-    selected_venue = data['selected_venue']
-
-    created_by = data['created_by']
-
-    cursor = mysql.connection.cursor()
-
-    sql = """
-        INSERT INTO events(
-        title,
-        category,
-        description,
-        event_date,
-        event_date_end,
-        start_time,
-        end_time,
-        participants,
-        preferred_location,
-        budget,
-        required_capacity,
-        venue_type,
-        parking_required,
-        wifi_required,
-        projector_required,
-        catering_required,
-        sound_system_required,
-        stage_setup_required,
-        other_requirements,
-        selected_venue,
-        created_by,
-        timeline,
-        layout,
-        backdrop_setup,
-        banner_image,
-        privacy
-    )
-    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-    """
-
-    values = (
-
-        title,
-        category,
-        description,
-        event_date,
-        event_date_end,
-        start_time,
-        end_time,
-        participants,
-        preferred_location,
-        budget,
-        required_capacity,
-        venue_type,
-        parking_required,
-        wifi_required,
-        projector_required,
-        catering_required,
-        sound_system_required,
-        stage_setup_required,
-        other_requirements,
-        selected_venue,
-        created_by,
-        data.get('timeline', '[]'),
-        data.get('layout', '[]'),
-        data.get('backdrop_setup', 'null'),
-        data.get('banner_image', None),
-        data.get('privacy', 'Public')
-
-    )
-    cursor = mysql.connection.cursor()
-    cursor.execute(sql, values)
-    
-    try:
-        cursor.execute("INSERT INTO notifications (message, username, type) VALUES (%s, %s, %s)", 
-                       (f"Event '{title}' successfully created!", created_by, "success"))
-    except Exception as notify_err:
-        print("Failed to log notification:", notify_err)
-
-    mysql.connection.commit()
-    cursor.close()
-
-    return jsonify({
-        "success": True,
-        "message": "Event created successfully"
-    })
 
 @app.route('/my-events/<username>')
 def my_events(username):
@@ -546,9 +563,10 @@ def delete_event(event_id):
     if row:
         title = row[0]
         created_by = row[1]
+        notify_user = resolve_user_email(created_by)
         try:
             cursor.execute("INSERT INTO notifications (message, username, type) VALUES (%s, %s, %s)", 
-                           (f"Event '{title}' has been deleted.", created_by, "info"))
+                           (f"Event '{title}' has been deleted.", notify_user, "info"))
         except Exception as notify_err:
             print("Failed to log deletion notification:", notify_err)
 
@@ -738,9 +756,10 @@ def update_event(event_id):
 
     cursor.execute(sql, values)
 
+    notify_user = resolve_user_email(created_by)
     try:
         cursor.execute("INSERT INTO notifications (message, username, type) VALUES (%s, %s, %s)", 
-                       (f"Event '{title}' {activity} updated successfully.", created_by, "success"))
+                       (f"Event '{title}' {activity} updated successfully.", notify_user, "success"))
     except Exception as notify_err:
         print("Failed to log update notification:", notify_err)
 
