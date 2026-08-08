@@ -7,8 +7,19 @@ document.getElementById("registerForm").addEventListener("submit", async functio
     const fullname =
     document.getElementById("fullname").value.trim();
 
-    const email =
-    document.getElementById("email").value.trim();
+    const rawEmail = document.getElementById("email").value.trim();
+
+    if (/^[A-Z]/.test(rawEmail)) {
+        Swal.fire({
+            icon: "error",
+            title: "Invalid Email Format",
+            text: "Email address cannot start with a capital letter. Please use lowercase (e.g. john@gmail.com).",
+            confirmButtonColor: "#d9534f"
+        });
+        return;
+    }
+
+    const email = rawEmail.toLowerCase();
 
     const password =
     document.getElementById("password").value.trim();
@@ -33,14 +44,14 @@ document.getElementById("registerForm").addEventListener("submit", async functio
     }
 
     const emailPattern =
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
 
     if(!emailPattern.test(email)){
 
         Swal.fire({
             icon: "error",
             title: "Invalid Email",
-            text: "Please enter a valid email address.",
+            text: "Please enter a valid lowercase email address.",
             confirmButtonColor: "#d9534f"
         });
         return;

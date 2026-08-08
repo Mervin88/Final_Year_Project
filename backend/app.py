@@ -150,6 +150,13 @@ def register():
         password = data['password']
         role = data['role']
 
+        import re
+        if re.match(r'^[A-Z]', email):
+            return jsonify({
+                "success": False,
+                "message": "Email address cannot start with a capital letter. Please use lowercase."
+            })
+
         cursor = mysql.connection.cursor()
 
         cursor.execute(
