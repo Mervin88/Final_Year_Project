@@ -751,14 +751,12 @@ async function initializeLayout() {
         let startTop = 150;
 
         // Use 2 columns by default (as in image 2), and wrap to 3 or 4 columns for larger events to avoid bottom overflow
-        let cols = 2;
-        if (tablesNeeded > 12) {
+        let cols = 5;
+        spacingX = 180;
+        if (tablesNeeded <= 6) {
             cols = 3;
-            spacingX = 180;
-        }
-        if (tablesNeeded > 18) {
-            cols = 4;
-            spacingX = 160;
+        } else if (tablesNeeded > 24) {
+            cols = 6;
         }
 
         for (let i = 1; i <= tablesNeeded; i++) {
@@ -795,14 +793,9 @@ async function initializeLayout() {
 }
 
 function getWorkspaceWidth() {
-    const mainCanvas = document.querySelector(".planner-right > .planner-card > .layout-preview-container > .layout-preview") ||
-                       document.querySelector(".layout-preview") ||
-                       document.querySelector(".modal-canvas-container");
-    const containerWidth = mainCanvas ? mainCanvas.clientWidth : 1400;
     const attendeeCount = eventData ? (parseInt(eventData.required_capacity) || 50) : 50;
     const tablesNeeded = Math.ceil(attendeeCount / 10);
-    const calculatedWidth = 1200 + (tablesNeeded - 12) * 45;
-    return Math.max(containerWidth, calculatedWidth, 1200);
+    return Math.max(1400, Math.min(2200, 1400 + (tablesNeeded - 12) * 35));
 }
 
 function getWorkspaceHeight() {
@@ -813,7 +806,7 @@ function getWorkspaceHeight() {
             maxY = el.y + height;
         }
     });
-    return Math.max(950, maxY + 100); // 100px bottom padding, minimum 950px
+    return Math.max(950, maxY + 100);
 }
 
 function renderLayout(canvas, isMinimized = false) {
@@ -823,7 +816,6 @@ function renderLayout(canvas, isMinimized = false) {
     const workspaceHeight = getWorkspaceHeight();
     const containerWidth = canvas.clientWidth || 500;
 
-    // Add margin buffer to scale calculation when minimized to prevent component clipping at edges
     const scale = isMinimized ? (containerWidth / (workspaceWidth + 120)) : plannerZoom;
 
     canvas.innerHTML = "";
@@ -836,7 +828,6 @@ function renderLayout(canvas, isMinimized = false) {
     canvasDiv.style.height = workspaceHeight + "px";
     canvasDiv.style.position = "absolute";
 
-    // Center it visually when minimized
     const leftMargin = isMinimized ? (60 * scale) : 0;
     const topMargin = isMinimized ? (40 * scale) : 0;
     canvasDiv.style.left = leftMargin + "px";
@@ -857,7 +848,6 @@ function renderLayout(canvas, isMinimized = false) {
         canvas.style.background = "#ffffff";
         canvas.style.width = "100%";
 
-        // Add a spacer to force natural scrollbar ranges for the scaled canvas size
         const spacer = document.createElement("div");
         spacer.style.width = (actualWidth * scale) + "px";
         spacer.style.height = (workspaceHeight * scale) + "px";
@@ -1169,24 +1159,15 @@ window.applyLayoutPreset = function (presetType) {
     });
 
     if (presetType === 'banquet') {
-        const maxLeftToLeftSpan = canvasWidth - 180;
-
         let cols = 4;
-        if (tablesNeeded > 16) cols = 6;
-        else if (tablesNeeded > 8) cols = 5;
-        if (canvasWidth > 1500) cols = 8;
-        if (canvasWidth > 2000) cols = 10;
+        if (tablesNeeded <= 6) cols = 3;
+        else if (tablesNeeded <= 12) cols = 5;
+        else if (tablesNeeded <= 24) cols = 5;
+        else cols = 6;
 
-        // Clamp column count to prevent horizontal overlapping
-        const maxCols = Math.max(2, Math.floor(maxLeftToLeftSpan / 140) + 1);
-        cols = Math.min(maxCols, cols);
-
-        const rows = Math.ceil(tablesNeeded / cols);
-        const spacingX = cols > 1 ? Math.min(220, maxLeftToLeftSpan / (cols - 1)) : 220;
-
-        // Use a fixed spacingY of 135px to prevent vertical table overlapping
+        const spacingX = 180;
         const spacingY = 135;
-        const startTop = 140;
+        const startTop = 150;
 
         for (let i = 1; i <= tablesNeeded; i++) {
             const index = i - 1;
@@ -1195,7 +1176,7 @@ window.applyLayoutPreset = function (presetType) {
 
             const totalColsThisRow = Math.min(cols, tablesNeeded - row * cols);
             const rowWidth = (totalColsThisRow - 1) * spacingX;
-            const rowStartLeft = (canvasWidth - 120 - rowWidth) / 2; // centers the table wrappers exactly
+            const rowStartLeft = (canvasWidth - 120 - rowWidth) / 2;
 
             const x = Math.floor(rowStartLeft + col * spacingX);
             const y = Math.floor(startTop + row * spacingY);
