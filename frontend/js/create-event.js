@@ -271,7 +271,16 @@ function showErrorAlert(title, text) {
 }
 
 document.getElementById("continueBtn")
-    .addEventListener("click", () => {
+    .addEventListener("click", async () => {
+
+        const bannerUploadInput = document.getElementById("bannerUpload");
+        if (bannerUploadInput && bannerUploadInput.files && bannerUploadInput.files[0]) {
+            try {
+                base64BannerImage = await compressBannerFile(bannerUploadInput.files[0]);
+            } catch (err) {
+                console.error("Error compressing banner on continue:", err);
+            }
+        }
 
         const title = document.getElementById("title").value.trim();
         const category = document.getElementById("category").value;
