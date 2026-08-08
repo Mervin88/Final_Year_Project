@@ -1547,7 +1547,8 @@ window.applyLayoutPreset = function (presetType) {
         let tId = 1;
         layerConfigs.forEach(conf => {
             const startY = 160 + conf.L * 180;
-            const endY = bottomRowY - conf.L * 180;
+            const maxVertCount = Math.max(conf.leftCount, conf.rightCount);
+            const endY = startY + (maxVertCount + 1) * 135;
             
             // Top Row
             if (conf.topCount > 0) {
@@ -1564,23 +1565,7 @@ window.applyLayoutPreset = function (presetType) {
                     tId++;
                 }
             }
-            
-            // Bottom Row
-            if (conf.bottomCount > 0) {
-                const stepX = (conf.rightX - conf.leftX) / (conf.bottomCount + 1);
-                for (let i = 0; i < conf.bottomCount; i++) {
-                    const x = conf.rightX - (i + 1) * stepX;
-                    layoutElements.push({
-                        id: "table-" + tId,
-                        type: "table",
-                        label: "Table " + tId,
-                        x: Math.floor(x),
-                        y: Math.floor(endY)
-                    });
-                    tId++;
-                }
-            }
-            
+
             // Left Column
             if (conf.leftCount > 0) {
                 for (let i = 0; i < conf.leftCount; i++) {
@@ -1595,7 +1580,7 @@ window.applyLayoutPreset = function (presetType) {
                     tId++;
                 }
             }
-            
+
             // Right Column
             if (conf.rightCount > 0) {
                 for (let i = 0; i < conf.rightCount; i++) {
@@ -1606,6 +1591,22 @@ window.applyLayoutPreset = function (presetType) {
                         label: "Table " + tId,
                         x: conf.rightX,
                         y: Math.floor(y)
+                    });
+                    tId++;
+                }
+            }
+            
+            // Bottom Row (at the bottom below left & right columns)
+            if (conf.bottomCount > 0) {
+                const stepX = (conf.rightX - conf.leftX) / (conf.bottomCount + 1);
+                for (let i = 0; i < conf.bottomCount; i++) {
+                    const x = conf.rightX - (i + 1) * stepX;
+                    layoutElements.push({
+                        id: "table-" + tId,
+                        type: "table",
+                        label: "Table " + tId,
+                        x: Math.floor(x),
+                        y: Math.floor(endY)
                     });
                     tId++;
                 }
