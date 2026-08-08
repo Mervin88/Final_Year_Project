@@ -618,8 +618,8 @@ def get_event(event_id):
     "event_date": str(event[4]),
     "event_date_end": str(event[5]) if event[5] else None,
 
-    "start_time": str(event[6]),
-    "end_time": str(event[7]),
+    "start_time": (str(event[6]).split('.')[0].zfill(8)[:5]) if event[6] else "09:00",
+    "end_time": (str(event[7]).split('.')[0].zfill(8)[:5]) if event[7] else "17:00",
 
     "participants": event[8],
 

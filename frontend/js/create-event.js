@@ -42,11 +42,22 @@ async function loadEventData(editEventId) {
             }
         }
 
+        const formatTimeHHMM = (timeStr, defaultTime) => {
+            if (!timeStr || timeStr === 'None' || timeStr === 'null') return defaultTime;
+            const parts = String(timeStr).trim().split(":");
+            if (parts.length >= 2) {
+                const hh = parts[0].padStart(2, "0");
+                const mm = parts[1].padStart(2, "0");
+                return `${hh}:${mm}`;
+            }
+            return timeStr;
+        };
+
         const setStartTime = document.getElementById("startTime");
-        if (setStartTime) setStartTime.value = event.start_time || "09:00";
+        if (setStartTime) setStartTime.value = formatTimeHHMM(event.start_time, "09:00");
 
         const setEndTime = document.getElementById("endTime");
-        if (setEndTime) setEndTime.value = event.endTime || event.end_time || "17:00";
+        if (setEndTime) setEndTime.value = formatTimeHHMM(event.endTime || event.end_time, "17:00");
 
         const parseCapacityRange = (val) => {
             const num = parseInt(val);
