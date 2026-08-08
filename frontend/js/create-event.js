@@ -158,8 +158,25 @@ document.addEventListener("DOMContentLoaded", () => {
         bannerUpload.addEventListener("change", (e) => {
             const file = e.target.files[0];
             if (file) {
-                if (!file.type.startsWith("image/")) {
-                    showErrorAlert("Invalid File", "Please select an image file.");
+                const fileName = file.name.toLowerCase();
+                const validTypes = ["image/png", "image/jpeg", "image/jpg"];
+                const validExts = [".png", ".jpg", ".jpeg"];
+                const hasValidExt = validExts.some(ext => fileName.endsWith(ext));
+                const hasValidType = validTypes.includes(file.type);
+
+                if (!hasValidType || !hasValidExt) {
+                    if (typeof showErrorAlert === "function") {
+                        showErrorAlert("Invalid File Type", "Only PNG and JPG/JPEG image files are allowed for event banners.");
+                    } else if (typeof Swal !== "undefined") {
+                        Swal.fire({
+                            icon: "error",
+                            title: "Invalid File Type",
+                            text: "Only PNG and JPG/JPEG image files are allowed for event banners.",
+                            confirmButtonColor: "#c8a96b"
+                        });
+                    } else {
+                        alert("Only PNG and JPG/JPEG image files are allowed for event banners.");
+                    }
                     bannerUpload.value = "";
                     return;
                 }
