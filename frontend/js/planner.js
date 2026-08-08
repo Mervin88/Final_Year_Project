@@ -830,7 +830,9 @@ function renderLayout(canvas, isMinimized = false) {
 
     const canvasDiv = document.createElement("div");
     canvasDiv.className = "layout-canvas";
-    canvasDiv.style.width = workspaceWidth + "px";
+    const actualWidth = isMinimized ? workspaceWidth : Math.max(workspaceWidth, Math.ceil(containerWidth / scale));
+
+    canvasDiv.style.width = actualWidth + "px";
     canvasDiv.style.height = workspaceHeight + "px";
     canvasDiv.style.position = "absolute";
 
@@ -852,12 +854,12 @@ function renderLayout(canvas, isMinimized = false) {
         canvas.style.border = "";
         canvas.style.width = "100%";
     } else {
-        canvas.style.background = "#f9fafb";
+        canvas.style.background = "#ffffff";
         canvas.style.width = "100%";
 
         // Add a spacer to force natural scrollbar ranges for the scaled canvas size
         const spacer = document.createElement("div");
-        spacer.style.width = (workspaceWidth * scale) + "px";
+        spacer.style.width = (actualWidth * scale) + "px";
         spacer.style.height = (workspaceHeight * scale) + "px";
         spacer.style.pointerEvents = "none";
         canvas.appendChild(spacer);
