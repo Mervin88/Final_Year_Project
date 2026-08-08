@@ -383,7 +383,7 @@ def resolve_user_email(username_or_name):
             return row[0]
     except Exception:
         pass
-    return None
+    return username_or_name
 
 # Create Event
 @app.route('/create-event', methods=['POST'])

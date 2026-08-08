@@ -32,8 +32,9 @@ INSERT INTO `users` (`id`, `fullname`, `email`, `password`, `role`) VALUES
 (4, 'Jane Participant', 'participant@eventsync.com', 'scrypt:32768:8:1$zR1m4o3P5q7R9s1T$3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d', 'Participant'),
 (5, 'John Doe (TechCorp)', 'john.doe@techcorp.com', 'scrypt:32768:8:1$aS2n5p4Q6r8S0t2U$4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e', 'Organizer'),
 (6, 'Sarah Lee (Luxury Venues)', 'sarah.lee@events.com', 'scrypt:32768:8:1$bT3o6q5R7s9T1u3V$5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f', 'Vendor'),
-(7, 'Alex Wong', 'alex.wong@gmail.com', 'scrypt:32768:8:1$cU4p7r6S8t0U2v4W$6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a', 'Participant'),
-(8, 'Emma Watson', 'emma.watson@enterprise.com', 'scrypt:32768:8:1$dV5q8s7T9u1V3w5X$7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b', 'Participant');
+(7, 'Alex Wong', 'alex.wong@gmail.com', 'scrypt:32768:8:1$uH3G6L6E2o9pQ9R8$4dfedcf23a7e4b9c1d6e8f0a2b4c6d8e0f1a3b5c7d9e1f3a5b7c9d1e3f5a7b9c', 'Participant'),
+(8, 'Emma Watson', 'emma.watson@enterprise.com', 'scrypt:32768:8:1$vI4H7M7F3p0qR0S9$5efefdf34b8f5c0d2e7f9a1b3c5d7e9f0a2b4c6d8e0f2a4b6c8d0e2f4a6b8c0d', 'Participant'),
+(9, 'Top', 'top@eventsync.com', 'scrypt:32768:8:1$dqRTZCALyfWYYtMR$99e9f65dafe8b46015d93672e28005a64f09ec14087c44ddb908f9a2676a2de2a29958699098edd681c83054060a95e9afbd521338bc307fe5e2b9cfe9d0d619', 'Organizer');
 
 -- ========================================================
 -- 2. EVENTS DATASET
