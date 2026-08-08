@@ -14,41 +14,6 @@ function newEvent() {
 
 let base64BannerImage = null;
 
-function compressBannerFile(file) {
-    return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-            const img = new Image();
-            img.onload = () => {
-                try {
-                    const canvas = document.createElement("canvas");
-                    const MAX_WIDTH = 800;
-                    let width = img.width;
-                    let height = img.height;
-
-                    if (width > MAX_WIDTH) {
-                        height = Math.round((height * MAX_WIDTH) / width);
-                        width = MAX_WIDTH;
-                    }
-
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext("2d");
-                    ctx.drawImage(img, 0, 0, width, height);
-
-                    const compressed = canvas.toDataURL("image/jpeg", 0.7);
-                    resolve(compressed);
-                } catch (e) {
-                    resolve(evt.target.result);
-                }
-            };
-            img.onerror = () => resolve(evt.target.result);
-            img.src = evt.target.result;
-        };
-        reader.readAsDataURL(file);
-    });
-}
-
 async function loadEventData(editEventId) {
     try {
         const response = await fetch(`${API_BASE}/event/${editEventId}`);
@@ -152,32 +117,6 @@ async function loadEventData(editEventId) {
             }
         }
 
-        // Store loaded draft object into localStorage so draft state remains 100% synchronized
-        const loadedDraft = {
-            title: event.title || "",
-            category: event.category || "Corporate Event",
-            description: event.description || "",
-            event_date: event.event_date || "",
-            event_date_end: (event.event_date_end && event.event_date_end !== 'None' && event.event_date_end !== 'null') ? event.event_date_end : (event.event_date || ""),
-            start_time: formatTimeHHMM(event.start_time, "09:00"),
-            end_time: formatTimeHHMM(event.endTime || event.end_time, "17:00"),
-            participants: event.participants || 100,
-            preferred_location: event.preferred_location || "Kuala Lumpur",
-            budget: event.budget || 5000,
-            required_capacity: event.required_capacity || event.participants || 100,
-            venue_type: event.venue_type || "Indoor",
-            parking_required: Boolean(event.parking_required),
-            wifi_required: Boolean(event.wifi_required),
-            projector_required: Boolean(event.projector_required),
-            catering_required: Boolean(event.catering_required),
-            sound_system_required: Boolean(event.sound_system_required),
-            stage_setup_required: Boolean(event.stage_setup_required),
-            other_requirements: event.other_requirements || "",
-            banner_image: (event.banner_image && event.banner_image !== "None" && event.banner_image !== "null") ? event.banner_image : null,
-            privacy: event.privacy || "Public"
-        };
-        localStorage.setItem("eventDraft", JSON.stringify(loadedDraft));
-
         // Cache previous design components to LocalStorage so they are preserved during the Edit flow
         if (event.selected_venue) {
             localStorage.setItem("selectedVenue", event.selected_venue);
@@ -265,19 +204,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     return;
                 }
 
-                // Read and set image Base64 immediately, then compress via canvas in background
+                // Compress file to ~50KB JPEG using HTML5 canvas before setting base64BannerImage
                 const reader = new FileReader();
                 reader.onload = function (evt) {
-                    base64BannerImage = evt.target.result;
-
-                    const preview = document.getElementById("bannerPreview");
-                    if (preview) {
-                        preview.src = base64BannerImage;
-                        preview.style.display = "block";
-                        const prompt = document.getElementById("uploadPrompt");
-                        if (prompt) prompt.style.display = "none";
-                    }
-
                     const img = new Image();
                     img.onload = function () {
                         try {
@@ -297,10 +226,21 @@ document.addEventListener("DOMContentLoaded", () => {
                             ctx.drawImage(img, 0, 0, width, height);
 
                             base64BannerImage = canvas.toDataURL("image/jpeg", 0.7);
-                            if (preview) preview.src = base64BannerImage;
+
+                            const preview = document.getElementById("bannerPreview");
+                            if (preview) {
+                                preview.src = base64BannerImage;
+                                preview.style.display = "block";
+                                const prompt = document.getElementById("uploadPrompt");
+                                if (prompt) prompt.style.display = "none";
+                            }
                         } catch (err) {
                             console.error("Canvas resize error:", err);
+                            base64BannerImage = evt.target.result;
                         }
+                    };
+                    img.onerror = function () {
+                        base64BannerImage = evt.target.result;
                     };
                     img.src = evt.target.result;
                 };
@@ -324,16 +264,7 @@ function showErrorAlert(title, text) {
 }
 
 document.getElementById("continueBtn")
-    .addEventListener("click", async () => {
-
-        const bannerUploadInput = document.getElementById("bannerUpload");
-        if (bannerUploadInput && bannerUploadInput.files && bannerUploadInput.files[0]) {
-            try {
-                base64BannerImage = await compressBannerFile(bannerUploadInput.files[0]);
-            } catch (err) {
-                console.error("Error compressing banner on continue:", err);
-            }
-        }
+    .addEventListener("click", () => {
 
         const title = document.getElementById("title").value.trim();
         const category = document.getElementById("category").value;
