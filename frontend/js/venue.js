@@ -333,91 +333,88 @@ function filterAndRenderVenues(resetPage = false) {
     let displayedVenues = [];
     if (eventData) {
         displayedVenues = filteredList.map(venue => {
+            // 1. Capacity Score (30% Max Weight)
+            const reqCap = parseInt(eventData.required_capacity) || 500;
+            const capLabel = String(eventData.capacity_range_label || "").toLowerCase();
+            let capacityScore = 0;
+
+            if (capLabel.includes("100") || reqCap <= 500) {
+                if (venue.capacity >= 100 && venue.capacity <= 500) {
+                    capacityScore = 30; // Exact match within 100-500 range
+                } else if (venue.capacity > 500 && venue.capacity <= 1000) {
+                    capacityScore = 20; // 20% partial score for slightly larger venue (e.g. 600 pax)
+                } else {
+                    capacityScore = 10;
+                }
+            } else if (capLabel.includes("500") || (reqCap > 500 && reqCap <= 1000)) {
+                if (venue.capacity > 500 && venue.capacity <= 1000) {
+                    capacityScore = 30;
+                } else if (venue.capacity > 1000 && venue.capacity <= 1200) {
+                    capacityScore = 20;
+                } else if (venue.capacity >= 100 && venue.capacity <= 500) {
+                    capacityScore = 15;
+                } else {
+                    capacityScore = 10;
+                }
+            } else if (capLabel.includes("1000") || reqCap > 1000) {
+                if (venue.capacity > 1000) {
+                    capacityScore = 30;
+                } else if (venue.capacity >= 500 && venue.capacity <= 1000) {
+                    capacityScore = 20;
+                } else {
+                    capacityScore = 10;
+                }
+            } else {
+                capacityScore = 20;
+            }
+
+            // 2. Budget Score (30% Max Weight)
+            const reqBudget = parseFloat(eventData.budget);
+            let budgetScore = 30;
+            if (!isNaN(reqBudget) && reqBudget > 0) {
+                if (venue.price <= reqBudget) {
+                    budgetScore = 30;
+                } else {
+                    const budgetRatio = reqBudget / venue.price;
+                    budgetScore = Math.max(5, Math.round(30 * budgetRatio));
+                }
+            }
+
+            // 3. Location Score (20% Max Weight)
             const isLocationMatch = venue.location.toLowerCase() === eventData.preferred_location.toLowerCase();
-            const isCapacityMatch = venue.capacity >= parseInt(eventData.required_capacity);
-            const isBudgetMatch = venue.price <= parseFloat(eventData.budget);
+            const locationScore = isLocationMatch ? 20 : 8;
+
+            // 4. Amenities & Venue Type (20% Max Weight)
             const isTypeMatch = eventData.venue_type && venue.type.toLowerCase() === eventData.venue_type.toLowerCase();
-            
-            // Check special requirements
             let totalSpecialReqs = 0;
             let matchedSpecialReqs = 0;
 
-            if (eventData.parking_required) {
-                totalSpecialReqs++;
-                if (venue.parking_available) matchedSpecialReqs++;
-            }
-            if (eventData.wifi_required) {
-                totalSpecialReqs++;
-                if (venue.wifi_available) matchedSpecialReqs++;
-            }
-            if (eventData.projector_required) {
-                totalSpecialReqs++;
-                if (venue.projector_available) matchedSpecialReqs++;
-            }
-            if (eventData.catering_required) {
-                totalSpecialReqs++;
-                if (venue.catering_available) matchedSpecialReqs++;
-            }
-            if (eventData.sound_system_required) {
-                totalSpecialReqs++;
-                if (venue.sound_system_available) matchedSpecialReqs++;
-            }
-            if (eventData.stage_setup_required) {
-                totalSpecialReqs++;
-                if (venue.stage_setup_available) matchedSpecialReqs++;
-            }
+            if (eventData.parking_required) { totalSpecialReqs++; if (venue.parking_available) matchedSpecialReqs++; }
+            if (eventData.wifi_required) { totalSpecialReqs++; if (venue.wifi_available) matchedSpecialReqs++; }
+            if (eventData.projector_required) { totalSpecialReqs++; if (venue.projector_available) matchedSpecialReqs++; }
+            if (eventData.catering_required) { totalSpecialReqs++; if (venue.catering_available) matchedSpecialReqs++; }
+            if (eventData.sound_system_required) { totalSpecialReqs++; if (venue.sound_system_available) matchedSpecialReqs++; }
+            if (eventData.stage_setup_required) { totalSpecialReqs++; if (venue.stage_setup_available) matchedSpecialReqs++; }
 
-            // Score matching percentage with proper weights
-            let matchScore = 0;
-
+            let amenitiesScore = 0;
             if (totalSpecialReqs > 0) {
-                // Core criteria worth 20% each (total 80%)
-                if (isLocationMatch) matchScore += 20;
-                if (isCapacityMatch) matchScore += 20;
-                if (isBudgetMatch) matchScore += 20;
-                if (isTypeMatch) matchScore += 20;
-
-                // Special criteria worth 20% in total, divided equally among checked options
-                const specialMatchPercentage = (matchedSpecialReqs / totalSpecialReqs) * 20;
-                matchScore += specialMatchPercentage;
+                const specScore = (matchedSpecialReqs / totalSpecialReqs) * 12;
+                const typeScore = isTypeMatch ? 8 : 0;
+                amenitiesScore = specScore + typeScore;
             } else {
-                // No special requirements selected: core criteria worth 25% each (total 100%)
-                if (isLocationMatch) matchScore += 25;
-                if (isCapacityMatch) matchScore += 25;
-                if (isBudgetMatch) matchScore += 25;
-                if (isTypeMatch) matchScore += 25;
+                amenitiesScore = isTypeMatch ? 20 : 10;
             }
 
-            // 1. Apply strict capacity constraint penalty:
-            // Undersized venues (e.g. 120 pax for a 500 pax event) must be penalized.
-            const reqCap = parseInt(eventData.required_capacity);
-            if (!isNaN(reqCap) && reqCap > 0 && venue.capacity < reqCap) {
-                const capacityRatio = venue.capacity / reqCap;
-                if (capacityRatio < 0.5) {
-                    matchScore = Math.min(matchScore, 35); // Cap at max 35% if under 50% capacity
-                } else {
-                    matchScore = Math.round(matchScore * capacityRatio);
-                }
-            }
-
-            // 2. Apply strict budget constraint penalty:
-            // Over-budget venues (e.g. RM 16,000/day for a RM 10,000 budget) must be penalized.
-            const reqBudget = parseFloat(eventData.budget);
-            if (!isNaN(reqBudget) && reqBudget > 0 && venue.price > reqBudget) {
-                const budgetRatio = reqBudget / venue.price;
-                if (budgetRatio < 0.7) {
-                    matchScore = Math.min(matchScore, 40); // Cap at max 40% if >30% over budget
-                } else {
-                    matchScore = Math.round(matchScore * budgetRatio);
-                }
-            }
-
-            matchScore = Math.round(matchScore);
+            let matchScore = Math.round(capacityScore + budgetScore + locationScore + amenitiesScore);
+            matchScore = Math.min(100, Math.max(0, matchScore));
             
+            const isExactCapacityMatch = venue.capacity >= 100 && venue.capacity <= reqCap;
+            const isBudgetMatch = !isNaN(reqBudget) && venue.price <= reqBudget;
+
             return {
                 ...venue,
                 matchScore: matchScore,
-                isRecommended: isLocationMatch && isCapacityMatch && isTypeMatch && isBudgetMatch
+                isRecommended: isLocationMatch && isExactCapacityMatch && isTypeMatch && isBudgetMatch
             };
         });
 
