@@ -208,19 +208,55 @@ function triggerNotification(message, type = "info") {
 
 window.triggerNotification = triggerNotification;
 
-let testToastIndex = 0;
-window.triggerTestToast = function() {
-    const samples = [
+let isLiveToastEnabled = true;
+let liveToastInterval = null;
+
+function toggleLiveToast() {
+    isLiveToastEnabled = !isLiveToastEnabled;
+    const btn = document.getElementById("toggleToastBtn");
+    
+    if (isLiveToastEnabled) {
+        if (btn) {
+            btn.innerHTML = "🔔 Live Toast: ON";
+            btn.style.background = "#c8a96b";
+            btn.style.color = "#111827";
+            btn.style.borderColor = "#c8a96b";
+        }
+        triggerNotification("Live Toast notifications turned ON (15s auto-popout active).", "success");
+        startAutoToastTicker();
+    } else {
+        if (btn) {
+            btn.innerHTML = "🔕 Live Toast: OFF";
+            btn.style.background = "#9ca3af";
+            btn.style.color = "#ffffff";
+            btn.style.borderColor = "#9ca3af";
+        }
+        triggerNotification("Live Toast notifications turned OFF.", "warning");
+        if (liveToastInterval) {
+            clearInterval(liveToastInterval);
+            liveToastInterval = null;
+        }
+    }
+}
+window.toggleLiveToast = toggleLiveToast;
+
+function startAutoToastTicker() {
+    if (liveToastInterval) clearInterval(liveToastInterval);
+    let autoTickerIdx = 0;
+    const tickerMessages = [
         { msg: "New participant registered for event 'Design Week'!", type: "success" },
         { msg: "Event 'Digital Technology' has been approved & published by Admin!", type: "success" },
         { msg: "New venue 'Sunway Square' is now approved and available for booking!", type: "info" },
-        { msg: "Timeline agenda schedule updated for 'Design Week'.", type: "warning" },
-        { msg: "New registration! A participant signed up for 'Digital Technology'.", type: "success" }
+        { msg: "Timeline agenda schedule updated for 'Design Week'.", type: "warning" }
     ];
-    const sample = samples[testToastIndex % samples.length];
-    testToastIndex++;
-    triggerNotification(sample.msg, sample.type);
-};
+    liveToastInterval = setInterval(() => {
+        if (isLiveToastEnabled) {
+            const item = tickerMessages[autoTickerIdx % tickerMessages.length];
+            autoTickerIdx++;
+            triggerNotification(item.msg, item.type);
+        }
+    }, 15000);
+}
 
 // ========================================
 // DATABASE SYNCHRONIZATION & POLLING
@@ -662,18 +698,8 @@ if (currentUsername && currentUsername !== "Guest") {
         triggerNotification(`Welcome back ${currentUsername}! Real-time activity sync active.`, "info");
     }, 1000);
 
-    // Automatic 5-second activity pop out ticker (strictly matches 5-second polling engine)
-    let autoTickerIdx = 0;
-    const tickerMessages = [
-        { msg: "New participant registered for event 'Design Week'!", type: "success" },
-        { msg: "Event 'Digital Technology' has been approved & published by Admin!", type: "success" },
-        { msg: "New venue 'Sunway Square' is now approved and available for booking!", type: "info" }
-    ];
-    setInterval(() => {
-        const item = tickerMessages[autoTickerIdx % tickerMessages.length];
-        autoTickerIdx++;
-        triggerNotification(item.msg, item.type);
-    }, 5000);
+    // Start automatic 15-second activity pop out ticker
+    startAutoToastTicker();
 }
 
 // Bind enter key for task input
