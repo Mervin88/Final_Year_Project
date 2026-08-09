@@ -348,6 +348,9 @@ document.getElementById("continueBtn")
             return;
         }
 
+        const capSelectEl = document.getElementById("capacity");
+        const capTextLabel = capSelectEl && capSelectEl.selectedIndex >= 0 ? capSelectEl.options[capSelectEl.selectedIndex].text : "100 - 500 Pax";
+
         const eventData = {
             title,
             category,
@@ -359,6 +362,7 @@ document.getElementById("continueBtn")
             preferred_location,
             budget: parsedBudget,
             required_capacity: parsedCapacity,
+            capacity_range_label: capTextLabel,
             venue_type,
             parking_required: document.getElementById("parking").checked,
             wifi_required: document.getElementById("wifi").checked,
