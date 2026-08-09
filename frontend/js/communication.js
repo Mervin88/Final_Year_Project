@@ -656,6 +656,24 @@ if (currentUsername && currentUsername !== "Guest") {
     setInterval(() => fetchNotifications(false), 5000);
     // Poll every 10 seconds for announcements
     setInterval(fetchGlobalAnnouncements, 10000);
+
+    // Auto welcome pop out toast on page load
+    setTimeout(() => {
+        triggerNotification(`Welcome back ${currentUsername}! Real-time activity sync active.`, "info");
+    }, 1000);
+
+    // Automatic 15-second activity pop out ticker (no clicking needed)
+    let autoTickerIdx = 0;
+    const tickerMessages = [
+        { msg: "New participant registered for event 'Design Week'!", type: "success" },
+        { msg: "Event 'Digital Technology' has been approved & published by Admin!", type: "success" },
+        { msg: "New venue 'Sunway Square' is now approved and available for booking!", type: "info" }
+    ];
+    setInterval(() => {
+        const item = tickerMessages[autoTickerIdx % tickerMessages.length];
+        autoTickerIdx++;
+        triggerNotification(item.msg, item.type);
+    }, 15000);
 }
 
 // Bind enter key for task input
