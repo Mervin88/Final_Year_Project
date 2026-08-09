@@ -1990,18 +1990,31 @@ def register_event():
         # Insert registration record
         try:
             cursor.execute("INSERT INTO registrations (event_id, username) VALUES (%s, %s)", (event_id, username))
-            # Create a success notification for participant
-            cursor.execute("INSERT INTO notifications (message, username, type) VALUES (%s, %s, %s)",
-                           (f"You have successfully registered for '{title}'!", username, "success"))
-            
-            mysql.connection.commit()
-        except MySQLdb.IntegrityError:
+        except Exception as insert_err:
             cursor.close()
+            err_str = str(insert_err).lower()
+            if "duplicate" in err_str or "1062" in err_str or "integrity" in err_str:
+                return jsonify({
+                    "success": False,
+                    "message": "You are already registered for this event."
+                })
             return jsonify({
                 "success": False,
-                "message": "You are already registered for this event."
+                "message": f"Registration failed: {str(insert_err)}"
             })
 
+        # Create a success notification for participant safely
+        try:
+            target_email = resolve_user_email(username)
+            if target_email:
+                cursor.execute(
+                    "INSERT INTO notifications (message, username, type) VALUES (%s, %s, %s)",
+                    (f"You have successfully registered for '{title}'!", target_email, "success")
+                )
+        except Exception as notif_err:
+            print("Registration notification warning:", notif_err)
+
+        mysql.connection.commit()
         cursor.close()
         return jsonify({
             "success": True,
