@@ -90,42 +90,54 @@ window.loadDemoEvent = function () {
 };
 
 async function initializeWorkspace() {
-    // If editEventId is set, fetch the event details from the server to ensure eventData is fully in sync
-    const editEventId = localStorage.getItem("editEventId");
-    if (editEventId) {
+    // Prioritize existing eventDraft in LocalStorage if present
+    let draftStr = localStorage.getItem("eventDraft");
+    if (draftStr) {
         try {
-            const response = await fetch(`${API_BASE}/event/${editEventId}`);
-            const dbEvent = await response.json();
-            if (dbEvent && dbEvent.id) {
-                eventData = {
-                    title: dbEvent.title,
-                    category: dbEvent.category,
-                    description: dbEvent.description,
-                    event_date: dbEvent.event_date,
-                    event_date_end: dbEvent.event_date_end,
-                    start_time: dbEvent.start_time,
-                    end_time: dbEvent.end_time,
-                    participants: dbEvent.participants,
-                    preferred_location: dbEvent.preferred_location,
-                    budget: dbEvent.budget,
-                    required_capacity: dbEvent.required_capacity,
-                    venue_type: dbEvent.venue_type,
-                    parking_required: dbEvent.parking_required,
-                    wifi_required: dbEvent.wifi_required,
-                    projector_required: dbEvent.projector_required,
-                    catering_required: dbEvent.catering_required,
-                    sound_system_required: dbEvent.sound_system_required,
-                    stage_setup_required: dbEvent.stage_setup_required,
-                    other_requirements: dbEvent.other_requirements,
-                    selected_venue: dbEvent.selected_venue,
-                    privacy: dbEvent.privacy
-                };
-                localStorage.setItem("eventDraft", JSON.stringify(eventData));
-                localStorage.setItem("selectedVenue", dbEvent.selected_venue);
-                selectedVenue = dbEvent.selected_venue;
-            }
+            eventData = JSON.parse(draftStr);
         } catch (e) {
-            console.error("Error syncing event details:", e);
+            eventData = null;
+        }
+    }
+
+    // Only fetch from server if eventDraft is missing
+    if (!eventData) {
+        const editEventId = localStorage.getItem("editEventId");
+        if (editEventId) {
+            try {
+                const response = await fetch(`${API_BASE}/event/${editEventId}`);
+                const dbEvent = await response.json();
+                if (dbEvent && dbEvent.id) {
+                    eventData = {
+                        title: dbEvent.title,
+                        category: dbEvent.category,
+                        description: dbEvent.description,
+                        event_date: dbEvent.event_date,
+                        event_date_end: dbEvent.event_date_end,
+                        start_time: dbEvent.start_time,
+                        end_time: dbEvent.end_time,
+                        participants: dbEvent.participants,
+                        preferred_location: dbEvent.preferred_location,
+                        budget: dbEvent.budget,
+                        required_capacity: dbEvent.required_capacity,
+                        venue_type: dbEvent.venue_type,
+                        parking_required: dbEvent.parking_required,
+                        wifi_required: dbEvent.wifi_required,
+                        projector_required: dbEvent.projector_required,
+                        catering_required: dbEvent.catering_required,
+                        sound_system_required: dbEvent.sound_system_required,
+                        stage_setup_required: dbEvent.stage_setup_required,
+                        other_requirements: dbEvent.other_requirements,
+                        selected_venue: dbEvent.selected_venue,
+                        privacy: dbEvent.privacy
+                    };
+                    localStorage.setItem("eventDraft", JSON.stringify(eventData));
+                    localStorage.setItem("selectedVenue", dbEvent.selected_venue || "Selected Venue");
+                    selectedVenue = dbEvent.selected_venue || "Selected Venue";
+                }
+            } catch (e) {
+                console.error("Error syncing event details:", e);
+            }
         }
     }
 
