@@ -132,9 +132,8 @@ async function initializeWorkspace() {
     // ==========================
     // EVENT SUMMARY
     // ==========================
-    document.getElementById("eventType").innerText = eventData.category;
-    document.getElementById("venueName").innerText = selectedVenue;
-    document.getElementById("capacity").innerText = eventData.required_capacity + " Attendees";
+    initCapacityTargetSelector();
+    document.getElementById("capacity").innerText = (eventData.target_capacity_pax || eventData.required_capacity || 500) + " Attendees";
     document.getElementById("venueType").innerText = eventData.venue_type;
 
     // Show Demo badge if in Demo Mode
@@ -215,10 +214,10 @@ function initCapacityTargetSelector() {
         options = [100, 200, 300, 400, 500];
     }
 
-    // Determine current selected capacity integer
-    let currentVal = eventData ? (parseInt(eventData.target_capacity_pax) || parseInt(rawCap)) : options[0];
+    // Determine current selected capacity integer (defaulting to upper bound 500 Pax for 100-500 range)
+    let currentVal = eventData ? (parseInt(eventData.target_capacity_pax) || parseInt(rawCap)) : options[options.length - 1];
     if (isNaN(currentVal) || !options.includes(currentVal)) {
-        currentVal = options[0]; // Pick lowest option in range as default
+        currentVal = options[options.length - 1]; // Default to upper bound (e.g. 500 Pax)
     }
     
     if (eventData) {
