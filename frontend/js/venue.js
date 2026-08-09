@@ -200,9 +200,9 @@ function prepopulateSearchFilters() {
     if (searchCapacity && eventData.required_capacity) {
         const capacityVal = parseInt(eventData.required_capacity);
         if (!isNaN(capacityVal)) {
-            if (capacityVal >= 1000) {
+            if (capacityVal > 1000) {
                 searchCapacity.value = "1000+";
-            } else if (capacityVal >= 500) {
+            } else if (capacityVal > 500) {
                 searchCapacity.value = "500-1000";
             } else {
                 searchCapacity.value = "100-500";
