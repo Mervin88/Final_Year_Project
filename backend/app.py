@@ -1740,7 +1740,27 @@ def backfill_notifications(cursor, username):
                         (status_msg, target_username, status_type, created_at)
                     )
                     modified = True
-                    
+
+        # 3. Backfill participant event registration notifications
+        cursor.execute("""
+            SELECT r.event_id, e.title, r.registration_date
+            FROM registrations r
+            JOIN events e ON r.event_id = e.id
+            WHERE r.username = %s OR (%s IS NOT NULL AND r.username = %s)
+        """, (username, email, email))
+        regs = cursor.fetchall()
+        for reg in regs:
+            reg_title = reg[1]
+            reg_date = reg[2]
+            reg_msg = f"You have successfully registered for '{reg_title}'!"
+            cursor.execute("SELECT id FROM notifications WHERE (username = %s OR (%s IS NOT NULL AND username = %s)) AND message = %s", (username, email, email, reg_msg))
+            if not cursor.fetchone():
+                cursor.execute(
+                    "INSERT INTO notifications (message, username, type, created_at) VALUES (%s, %s, %s, %s)",
+                    (reg_msg, target_username, "success", reg_date)
+                )
+                modified = True
+
         return modified
     except Exception as err:
         print("Error backfilling notifications:", err)
