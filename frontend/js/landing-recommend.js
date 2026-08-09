@@ -56,68 +56,87 @@ document.addEventListener("DOMContentLoaded", () => {
         const selectedLocation = previewLocation.value;
         const venueType = previewVenueType.value;
 
-        // Process venue list with matching score calculation
+        // Process venue list with 100-Point Weighted Scoring Algorithm:
+        // 30% Capacity + 30% Budget + 20% Location + 20% Amenities & Facilities
         const scoredVenues = allApprovedVenues.map(venue => {
             let score = 0;
 
-            // 1. Location Match (25%)
-            if (venue.location.toLowerCase() === selectedLocation.toLowerCase()) {
-                score += 25;
-            }
-
-            // 2. Venue Type Match (25%)
-            if (venue.type && venue.type.toLowerCase() === venueType.toLowerCase()) {
-                score += 25;
-            }
-
-            // 3. Capacity Range Match (25%)
+            // 1. CAPACITY MATCH (30%)
             let capacityScore = 0;
             if (selectedCapacityRange === "100-500") {
                 if (venue.capacity >= 100 && venue.capacity <= 500) {
-                    capacityScore = 25;
+                    capacityScore = 30;
                 } else if (venue.capacity > 500 && venue.capacity <= 1000) {
-                    capacityScore = 15;
-                } else if (venue.capacity < 100) {
-                    capacityScore = 5;
+                    capacityScore = 20;
+                } else {
+                    capacityScore = 10;
                 }
             } else if (selectedCapacityRange === "500-1000") {
                 if (venue.capacity > 500 && venue.capacity <= 1000) {
-                    capacityScore = 25;
+                    capacityScore = 30;
                 } else if (venue.capacity > 1000) {
-                    capacityScore = 15;
+                    capacityScore = 20;
                 } else if (venue.capacity >= 300 && venue.capacity <= 500) {
+                    capacityScore = 15;
+                } else {
                     capacityScore = 10;
                 }
             } else if (selectedCapacityRange === "1000+") {
                 if (venue.capacity > 1000) {
-                    capacityScore = 25;
+                    capacityScore = 30;
                 } else if (venue.capacity >= 500 && venue.capacity <= 1000) {
-                    capacityScore = 15;
+                    capacityScore = 20;
                 } else {
-                    capacityScore = 5;
+                    capacityScore = 10;
                 }
+            } else {
+                capacityScore = 20; // default baseline
             }
             score += capacityScore;
 
-            // 4. Event Type Match (25%)
+            // 2. BUDGET MATCH (30%)
+            // Assuming average target budgets per tier or checking venue daily rate suitability
+            const venueRate = parseFloat(venue.price_per_day || venue.price || 2500);
+            let budgetScore = 30;
+            if (selectedCapacityRange === "100-500" && venueRate > 3500) {
+                budgetScore = 15;
+            } else if (selectedCapacityRange === "500-1000" && venueRate > 6000) {
+                budgetScore = 15;
+            } else if (venueRate > 10000) {
+                budgetScore = 10;
+            }
+            score += budgetScore;
+
+            // 3. LOCATION MATCH (20%)
+            let locationScore = 0;
+            if (selectedLocation === "All" || !selectedLocation) {
+                locationScore = 20;
+            } else if (venue.location && venue.location.toLowerCase().includes(selectedLocation.toLowerCase())) {
+                locationScore = 20;
+            } else {
+                locationScore = 8; // baseline regional compatibility
+            }
+            score += locationScore;
+
+            // 4. AMENITIES & FACILITIES MATCH (20%)
             let keywordMatch = false;
-            const textToSearch = (venue.name + " " + venue.description).toLowerCase();
+            const textToSearch = (venue.name + " " + (venue.description || "") + " " + (venue.type || "")).toLowerCase();
             
             let keywords = [];
             if (eventType === "Conference") {
-                keywords = ["conference", "summit", "forum", "meeting", "business"];
+                keywords = ["conference", "summit", "forum", "meeting", "business", "stage", "wifi"];
             } else if (eventType === "Seminar") {
-                keywords = ["seminar", "talk", "presentation", "classroom"];
+                keywords = ["seminar", "talk", "presentation", "classroom", "projector"];
             } else if (eventType === "Workshop") {
                 keywords = ["workshop", "hands-on", "training", "studio", "lab"];
             } else if (eventType === "Networking") {
-                keywords = ["networking", "mixer", "social", "lounge", "meetup"];
+                keywords = ["networking", "mixer", "social", "lounge", "meetup", "catering"];
             } else if (eventType === "Corporate Dinner") {
-                keywords = ["dinner", "gala", "ballroom", "banquet", "annual"];
+                keywords = ["dinner", "gala", "ballroom", "banquet", "annual", "stage", "catering"];
             } else if (eventType === "Training") {
                 keywords = ["training", "classroom", "education", "course", "seminar"];
             } else if (eventType === "Product Launch") {
-                keywords = ["launch", "expo", "exhibition", "showcase", "press"];
+                keywords = ["launch", "expo", "exhibition", "showcase", "press", "sound"];
             }
 
             for (let kw of keywords) {
@@ -127,16 +146,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
 
-            if (keywordMatch) {
-                score += 25;
-            } else {
-                // baseline compatibility score
-                score += 10;
-            }
+            let amenityScore = keywordMatch ? 20 : 10;
+            score += amenityScore;
 
             return {
                 ...venue,
-                matchScore: score
+                matchScore: Math.min(score, 100)
             };
         });
 
