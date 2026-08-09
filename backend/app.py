@@ -521,6 +521,8 @@ def create_event():
         try:
             cursor.execute("INSERT INTO notifications (message, username, type) VALUES (%s, %s, %s)", 
                            (f"Event '{title}' successfully created!", notify_user, "success"))
+            cursor.execute("INSERT INTO notifications (message, username, type) VALUES (%s, NULL, %s)", 
+                           (f"New event '{title}' created!", "info"))
         except Exception as notify_err:
             print("Failed to log notification:", notify_err)
 
@@ -1403,9 +1405,11 @@ def upload_venue():
         ))
         
         try:
-            notify_msg = f"New venue '{name}' has been uploaded and auto-approved." if status == "Approved" else f"New venue '{name}' has been submitted for review by {uploaded_by}."
+            notify_msg = f"New venue '{name}' has been uploaded and auto-approved." if status == "Approved" else f"New venue '{name}' has been submitted for review."
             cursor.execute("INSERT INTO notifications (message, username, type) VALUES (%s, %s, %s)", 
                            (notify_msg, uploaded_by, "info"))
+            cursor.execute("INSERT INTO notifications (message, username, type) VALUES (%s, NULL, %s)", 
+                           (f"New venue '{name}' created!", "info"))
         except Exception as notify_err:
             print("Failed to log notification:", notify_err)
 
@@ -1795,12 +1799,20 @@ def get_user_notifications(username):
         print("Failed to fetch user notifications:", e)
         return jsonify([])
 
-# ADMIN FETCH ALL SYSTEM NOTIFICATIONS
+# ADMIN / GLOBAL FETCH ALL SYSTEM ANNOUNCEMENTS
 @app.route('/admin/notifications')
 def admin_get_notifications():
     try:
         cursor = mysql.connection.cursor()
-        cursor.execute("SELECT id, message, created_at FROM notifications ORDER BY id DESC")
+        cursor.execute("""
+            SELECT id, message, created_at 
+            FROM notifications 
+            WHERE (username IS NULL OR username = '')
+              AND message NOT LIKE 'New user%'
+              AND message NOT LIKE 'You have%'
+              AND message NOT LIKE 'Your %'
+            ORDER BY id DESC
+        """)
         rows = cursor.fetchall()
         cursor.close()
 
