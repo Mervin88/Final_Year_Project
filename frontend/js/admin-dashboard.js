@@ -32,6 +32,12 @@ document.addEventListener("DOMContentLoaded", () => {
     loadReports();
     loadVenues();
     loadNotifications();
+
+    // Auto-refresh admin stats and notifications every 10 seconds for live real-time updates
+    setInterval(() => {
+        loadStatistics();
+        loadNotifications();
+    }, 10000);
 });
 
 // ========================================
