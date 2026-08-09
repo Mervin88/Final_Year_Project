@@ -213,28 +213,28 @@ function initCapacityTargetSelector() {
 
     selector.innerHTML = "";
     
-    // Extract raw required_capacity string or number from eventData
-    const rawCap = eventData ? (eventData.required_capacity || "100 - 500") : "100 - 500";
-    const capStr = String(rawCap).toLowerCase();
+    // Extract required capacity & label
+    const reqCap = eventData ? (parseInt(eventData.required_capacity) || 500) : 500;
+    const label = eventData ? String(eventData.capacity_range_label || "").toLowerCase() : "";
 
     let options = [];
     
-    // Determine the options range based on the user's selected Required Capacity Range
-    if (capStr.includes("500") && capStr.includes("1000")) {
-        // Range: 500 - 1000 Pax
-        options = [500, 600, 700, 800, 900, 1000];
-    } else if (capStr.includes("1000+") || capStr.includes("1000 plus") || capStr.includes("1000-") || (parseInt(rawCap) > 1000)) {
+    // Determine options range based on Required Capacity Range
+    if (label.includes("1000+") || reqCap > 1000) {
         // Range: 1000+ Pax
         options = [1000, 1200, 1500, 1800, 2000];
+    } else if (label.includes("500 - 1000") || label.includes("500-1000") || reqCap === 1000 || (reqCap > 500 && reqCap <= 1000)) {
+        // Range: 500 - 1000 Pax
+        options = [500, 600, 700, 800, 900, 1000];
     } else {
-        // Range: 100 - 500 Pax (Default)
+        // Range: 100 - 500 Pax
         options = [100, 200, 300, 400, 500];
     }
 
-    // Determine current selected capacity integer (defaulting to upper bound 500 Pax for 100-500 range)
-    let currentVal = eventData ? (parseInt(eventData.target_capacity_pax) || (parseInt(rawCap) === 100 ? 500 : parseInt(rawCap))) : options[options.length - 1];
+    // Determine current selected capacity integer
+    let currentVal = (eventData && eventData.target_capacity_pax) ? parseInt(eventData.target_capacity_pax) : reqCap;
     if (isNaN(currentVal) || !options.includes(currentVal)) {
-        currentVal = options[options.length - 1]; // Default to upper bound (e.g. 500 Pax)
+        currentVal = options[options.length - 1]; // Pick upper bound option in range as default
     }
     
     if (eventData) {
