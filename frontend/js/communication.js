@@ -257,9 +257,7 @@ function renderNotificationFeed() {
             <span class="notif-text">${notif.message}</span>
         `;
         notifList.appendChild(item);
-    });
-
-    if (containerCard) {
+    });    if (containerCard) {
         let toggleBtn = containerCard.querySelector(".toggle-notif-btn");
         if (allNotificationsList.length > LIMIT) {
             if (!toggleBtn) {
@@ -288,7 +286,10 @@ function renderNotificationFeed() {
         } else if (toggleBtn) {
             toggleBtn.remove();
         }
- function sortItemsNewestFirst(list) {
+    }
+}
+
+function sortItemsNewestFirst(list) {
     return list.sort((a, b) => {
         const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
         const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
