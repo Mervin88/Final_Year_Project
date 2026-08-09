@@ -435,49 +435,72 @@ async function initCoordTasks() {
                     userEvents.forEach(latestEvent => {
                         const title = latestEvent.title || "your event";
                         const eventId = latestEvent.id;
+                        const venue = latestEvent.selected_venue || 'Selected Venue';
+                        const attendees = latestEvent.attendees_registered || 0;
+                        const capacity = latestEvent.required_capacity || 100;
+                        const pct = Math.round((attendees / capacity) * 100);
 
                         if (selectElem) {
                             selectElem.innerHTML += `<option value="${eventId}">${title}</option>`;
                         }
 
-                        const vTask = `Finalize venue checklist for "${title}" (${latestEvent.selected_venue || 'Selected Venue'})`;
+                        // 1. Venue confirmation milestone
+                        const vTask = `🏢 Venue Confirmation: ${venue} (${latestEvent.status || 'Pending'})`;
                         generatedTasks.push({
                             eventId: eventId,
                             text: vTask,
-                            completed: completionMap[vTask] || false
+                            completed: completionMap[vTask] || (latestEvent.status === 'Approved' || latestEvent.status === 'Accepted')
                         });
 
+                        // 2. Attendee Registration Tracker
+                        const regTask = `👥 Attendee Progress: ${attendees} / ${capacity} registered (${pct}% capacity)`;
+                        generatedTasks.push({
+                            eventId: eventId,
+                            text: regTask,
+                            completed: completionMap[regTask] || (attendees >= capacity)
+                        });
+
+                        // 3. Layout & 3D Stage Setup
+                        const hasLayout = latestEvent.layout && latestEvent.layout !== "[]" && latestEvent.layout !== "null";
+                        const layoutTask = hasLayout ? `📐 Interactive Floor Plan & 3D Setup: Configured for "${title}"` : `📐 Floor Plan Layout: Pending 3D setup in Planner`;
+                        generatedTasks.push({
+                            eventId: eventId,
+                            text: layoutTask,
+                            completed: completionMap[layoutTask] || hasLayout
+                        });
+
+                        // 4. Timeline Schedule
+                        const hasTimeline = latestEvent.timeline && latestEvent.timeline !== "[]" && latestEvent.timeline !== "null";
+                        const timeTask = hasTimeline ? `⏱️ Event Timeline Schedule: Agenda sessions configured` : `⏱️ Event Timeline: Pending session schedule setup`;
+                        generatedTasks.push({
+                            eventId: eventId,
+                            text: timeTask,
+                            completed: completionMap[timeTask] || hasTimeline
+                        });
+
+                        // 5. Selected Equipment & Vendor Checklist
                         if (parseInt(latestEvent.catering_required) === 1) {
-                            const txt = `Confirm catering menu & dietary preferences for "${title}"`;
+                            const txt = `🍽️ Catering Service: Requested for ${capacity} pax ("${title}")`;
                             generatedTasks.push({ eventId: eventId, text: txt, completed: completionMap[txt] || false });
                         }
                         if (parseInt(latestEvent.sound_system_required) === 1) {
-                            const txt = `Test sound system & microphones for "${title}"`;
+                            const txt = `🔊 Audio Visual: Sound system & microphones requested`;
                             generatedTasks.push({ eventId: eventId, text: txt, completed: completionMap[txt] || false });
                         }
                         if (parseInt(latestEvent.parking_required) === 1) {
-                            const txt = `Reserve parking passes & VIP parking slots for "${title}"`;
+                            const txt = `🅿️ Parking Logistics: Reserved parking passes requested`;
                             generatedTasks.push({ eventId: eventId, text: txt, completed: completionMap[txt] || false });
                         }
                         if (parseInt(latestEvent.wifi_required) === 1) {
-                            const txt = `Verify high-speed Wi-Fi access & bandwidth for "${title}"`;
+                            const txt = `📶 Network Access: High-speed Wi-Fi requested`;
                             generatedTasks.push({ eventId: eventId, text: txt, completed: completionMap[txt] || false });
                         }
                         if (parseInt(latestEvent.projector_required) === 1) {
-                            const txt = `Check projector setup & HDMI/AV connectivity for "${title}"`;
+                            const txt = `📽️ Presentation Setup: Projector & AV screens requested`;
                             generatedTasks.push({ eventId: eventId, text: txt, completed: completionMap[txt] || false });
                         }
                         if (parseInt(latestEvent.stage_setup_required) === 1) {
-                            const txt = `Approve stage backdrop & lighting placements for "${title}"`;
-                            generatedTasks.push({ eventId: eventId, text: txt, completed: completionMap[txt] || false });
-                        }
-
-                        if (latestEvent.timeline && latestEvent.timeline !== "[]" && latestEvent.timeline !== "null") {
-                            const txt = `Review & confirm timeline schedule for "${title}"`;
-                            generatedTasks.push({ eventId: eventId, text: txt, completed: completionMap[txt] || false });
-                        }
-                        if (latestEvent.layout && latestEvent.layout !== "[]" && latestEvent.layout !== "null") {
-                            const txt = `Verify interactive floor plan seating layout for "${title}"`;
+                            const txt = `🎭 Stage Setup: Stage backdrop & podium requested`;
                             generatedTasks.push({ eventId: eventId, text: txt, completed: completionMap[txt] || false });
                         }
                     });
@@ -530,6 +553,24 @@ function renderCoordTasks() {
             </div>
         `;
     } else {
+        // Calculate progress percentage
+        const completedCount = filteredTasks.filter(t => t.completed).length;
+        const totalCount = filteredTasks.length;
+        const progressPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+        // Render progress bar header
+        taskList.innerHTML += `
+            <div style="margin-bottom: 12px; padding: 10px 12px; background: rgba(200, 169, 107, 0.08); border: 1px solid rgba(200, 169, 107, 0.2); border-radius: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 12px; font-weight: 700; color: #1f2937;">
+                    <span>Checklist Progress</span>
+                    <span style="color: #c8a96b;">${completedCount} / ${totalCount} Done (${progressPct}%)</span>
+                </div>
+                <div style="width: 100%; height: 6px; background: #e5e7eb; border-radius: 4px; overflow: hidden;">
+                    <div style="width: ${progressPct}%; height: 100%; background: linear-gradient(90deg, #c8a96b, #10b981); transition: width 0.4s ease;"></div>
+                </div>
+            </div>
+        `;
+
         filteredTasks.forEach((task) => {
             const index = coordTasks.indexOf(task);
             taskList.innerHTML += `
