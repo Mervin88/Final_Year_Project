@@ -393,9 +393,10 @@ async function fetchGlobalAnnouncements() {
 }
 
 // ========================================
-// TASK COORDINATION ENGINE (DYNAMIC & INTERACTIVE)
+// TASK COORDINATION ENGINE (MULTI-EVENT & DYNAMIC)
 // ========================================
 let coordTasks = [];
+let activeEventFilter = "ALL";
 
 async function initCoordTasks() {
     const taskList = document.getElementById("coordTaskList");
@@ -412,13 +413,13 @@ async function initCoordTasks() {
         }
     }
 
-    // Map saved task completion status by text
     const completionMap = {};
     savedTasks.forEach(t => {
         if (t && t.text) completionMap[t.text] = t.completed || false;
     });
 
     let generatedTasks = [];
+    const selectElem = document.getElementById("coordEventSelect");
 
     // Fetch user's actual created events from backend
     if (currentUsername && currentUsername !== "Guest") {
@@ -427,48 +428,59 @@ async function initCoordTasks() {
             if (res.ok) {
                 const userEvents = await res.json();
                 if (Array.isArray(userEvents) && userEvents.length > 0) {
-                    // Get the latest active event created by user
-                    const latestEvent = userEvents[0];
-                    const title = latestEvent.title || "your active event";
+                    if (selectElem) {
+                        selectElem.innerHTML = `<option value="ALL">All Events (${userEvents.length})</option>`;
+                    }
 
-                    generatedTasks.push({
-                        text: `Finalize venue checklist for "${title}" (${latestEvent.selected_venue || 'Selected Venue'})`,
-                        completed: completionMap[`Finalize venue checklist for "${title}" (${latestEvent.selected_venue || 'Selected Venue'})`] || false
+                    userEvents.forEach(latestEvent => {
+                        const title = latestEvent.title || "your event";
+                        const eventId = latestEvent.id;
+
+                        if (selectElem) {
+                            selectElem.innerHTML += `<option value="${eventId}">${title}</option>`;
+                        }
+
+                        const vTask = `Finalize venue checklist for "${title}" (${latestEvent.selected_venue || 'Selected Venue'})`;
+                        generatedTasks.push({
+                            eventId: eventId,
+                            text: vTask,
+                            completed: completionMap[vTask] || false
+                        });
+
+                        if (parseInt(latestEvent.catering_required) === 1) {
+                            const txt = `Confirm catering menu & dietary preferences for "${title}"`;
+                            generatedTasks.push({ eventId: eventId, text: txt, completed: completionMap[txt] || false });
+                        }
+                        if (parseInt(latestEvent.sound_system_required) === 1) {
+                            const txt = `Test sound system & microphones for "${title}"`;
+                            generatedTasks.push({ eventId: eventId, text: txt, completed: completionMap[txt] || false });
+                        }
+                        if (parseInt(latestEvent.parking_required) === 1) {
+                            const txt = `Reserve parking passes & VIP parking slots for "${title}"`;
+                            generatedTasks.push({ eventId: eventId, text: txt, completed: completionMap[txt] || false });
+                        }
+                        if (parseInt(latestEvent.wifi_required) === 1) {
+                            const txt = `Verify high-speed Wi-Fi access & bandwidth for "${title}"`;
+                            generatedTasks.push({ eventId: eventId, text: txt, completed: completionMap[txt] || false });
+                        }
+                        if (parseInt(latestEvent.projector_required) === 1) {
+                            const txt = `Check projector setup & HDMI/AV connectivity for "${title}"`;
+                            generatedTasks.push({ eventId: eventId, text: txt, completed: completionMap[txt] || false });
+                        }
+                        if (parseInt(latestEvent.stage_setup_required) === 1) {
+                            const txt = `Approve stage backdrop & lighting placements for "${title}"`;
+                            generatedTasks.push({ eventId: eventId, text: txt, completed: completionMap[txt] || false });
+                        }
+
+                        if (latestEvent.timeline && latestEvent.timeline !== "[]" && latestEvent.timeline !== "null") {
+                            const txt = `Review & confirm timeline schedule for "${title}"`;
+                            generatedTasks.push({ eventId: eventId, text: txt, completed: completionMap[txt] || false });
+                        }
+                        if (latestEvent.layout && latestEvent.layout !== "[]" && latestEvent.layout !== "null") {
+                            const txt = `Verify interactive floor plan seating layout for "${title}"`;
+                            generatedTasks.push({ eventId: eventId, text: txt, completed: completionMap[txt] || false });
+                        }
                     });
-
-                    if (parseInt(latestEvent.catering_required) === 1) {
-                        const txt = `Confirm catering menu & dietary preferences for "${title}"`;
-                        generatedTasks.push({ text: txt, completed: completionMap[txt] || false });
-                    }
-                    if (parseInt(latestEvent.sound_system_required) === 1) {
-                        const txt = `Test sound system & microphones at ${latestEvent.selected_venue || 'venue'}`;
-                        generatedTasks.push({ text: txt, completed: completionMap[txt] || false });
-                    }
-                    if (parseInt(latestEvent.parking_required) === 1) {
-                        const txt = `Reserve parking passes & VIP parking slots`;
-                        generatedTasks.push({ text: txt, completed: completionMap[txt] || false });
-                    }
-                    if (parseInt(latestEvent.wifi_required) === 1) {
-                        const txt = `Verify high-speed Wi-Fi access & bandwidth allocation`;
-                        generatedTasks.push({ text: txt, completed: completionMap[txt] || false });
-                    }
-                    if (parseInt(latestEvent.projector_required) === 1) {
-                        const txt = `Check projector setup & HDMI/AV connectivity`;
-                        generatedTasks.push({ text: txt, completed: completionMap[txt] || false });
-                    }
-                    if (parseInt(latestEvent.stage_setup_required) === 1) {
-                        const txt = `Approve stage backdrop & lighting placements`;
-                        generatedTasks.push({ text: txt, completed: completionMap[txt] || false });
-                    }
-
-                    if (latestEvent.timeline && latestEvent.timeline !== "[]" && latestEvent.timeline !== "null") {
-                        const txt = `Review & confirm timeline schedule for "${title}"`;
-                        generatedTasks.push({ text: txt, completed: completionMap[txt] || false });
-                    }
-                    if (latestEvent.layout && latestEvent.layout !== "[]" && latestEvent.layout !== "null") {
-                        const txt = `Verify interactive floor plan seating layout for "${title}"`;
-                        generatedTasks.push({ text: txt, completed: completionMap[txt] || false });
-                    }
                 }
             }
         } catch (err) {
@@ -494,20 +506,32 @@ async function initCoordTasks() {
     renderCoordTasks();
 }
 
+window.filterCoordTasksByEvent = function(selectedVal) {
+    activeEventFilter = selectedVal;
+    renderCoordTasks();
+};
+
 function renderCoordTasks() {
     const taskList = document.getElementById("coordTaskList");
     if (!taskList) return;
 
     taskList.innerHTML = "";
 
-    if (coordTasks.length === 0) {
+    const filteredTasks = coordTasks.filter(task => {
+        if (activeEventFilter === "ALL" || !activeEventFilter) return true;
+        if (task.isCustom) return true;
+        return String(task.eventId) === String(activeEventFilter);
+    });
+
+    if (filteredTasks.length === 0) {
         taskList.innerHTML = `
             <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 13px; font-weight: 500;">
-                No coordination tasks. Add one below!
+                No coordination tasks for this filter. Add one below!
             </div>
         `;
     } else {
-        coordTasks.forEach((task, index) => {
+        filteredTasks.forEach((task) => {
+            const index = coordTasks.indexOf(task);
             taskList.innerHTML += `
             <div class="task-item-row" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; background: rgba(255,255,255,0.4); margin-bottom: 8px; border: 1px solid rgba(17,24,39,0.05); transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.01);">
                 <label class="task-label-wrapper" style="display: flex; align-items: center; gap: 10px; cursor: pointer; flex-grow: 1; margin: 0; color: #374151; font-size: 13px; font-family: 'Inter', sans-serif; user-select: none;">

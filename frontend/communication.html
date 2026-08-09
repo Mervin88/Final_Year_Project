@@ -200,10 +200,11 @@
 
             <div class="card">
 
-                <div class="card-title">
-
-                    Task Coordination
-
+                <div class="card-title" style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                    <span>Task Coordination</span>
+                    <select id="coordEventSelect" onchange="filterCoordTasksByEvent(this.value)" style="padding: 5px 10px; border-radius: 8px; border: 1px solid rgba(17,24,39,0.15); background: #ffffff; font-size: 12px; font-weight: 600; color: #374151; outline: none; cursor: pointer; max-width: 180px;">
+                        <option value="ALL">All Events</option>
+                    </select>
                 </div>
 
                 <div class="task-list" id="coordTaskList">
