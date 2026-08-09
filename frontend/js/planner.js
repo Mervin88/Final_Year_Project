@@ -129,12 +129,29 @@ async function initializeWorkspace() {
         }
     }
 
+    if (!eventData) {
+        eventData = JSON.parse(localStorage.getItem("eventDraft")) || {};
+    }
+    if (!selectedVenue) {
+        selectedVenue = localStorage.getItem("selectedVenue") || "Selected Venue";
+    }
+
     // ==========================
     // EVENT SUMMARY
     // ==========================
+    const elEventType = document.getElementById("eventType");
+    if (elEventType) elEventType.innerText = eventData.category || "Event";
+
+    const elVenueName = document.getElementById("venueName");
+    if (elVenueName) elVenueName.innerText = selectedVenue || "Selected Venue";
+
+    const elVenueType = document.getElementById("venueType");
+    if (elVenueType) elVenueType.innerText = eventData.venue_type || "Indoor";
+
     initCapacityTargetSelector();
-    document.getElementById("capacity").innerText = (eventData.target_capacity_pax || eventData.required_capacity || 500) + " Attendees";
-    document.getElementById("venueType").innerText = eventData.venue_type;
+
+    const elCapacity = document.getElementById("capacity");
+    if (elCapacity) elCapacity.innerText = (eventData.target_capacity_pax || 500) + " Attendees";
 
     // Show Demo badge if in Demo Mode
     if (localStorage.getItem("isDemoMode") === "true") {
@@ -215,7 +232,7 @@ function initCapacityTargetSelector() {
     }
 
     // Determine current selected capacity integer (defaulting to upper bound 500 Pax for 100-500 range)
-    let currentVal = eventData ? (parseInt(eventData.target_capacity_pax) || parseInt(rawCap)) : options[options.length - 1];
+    let currentVal = eventData ? (parseInt(eventData.target_capacity_pax) || (parseInt(rawCap) === 100 ? 500 : parseInt(rawCap))) : options[options.length - 1];
     if (isNaN(currentVal) || !options.includes(currentVal)) {
         currentVal = options[options.length - 1]; // Default to upper bound (e.g. 500 Pax)
     }
