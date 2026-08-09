@@ -2023,14 +2023,29 @@ def register_event():
                 "message": f"Registration failed: {str(insert_err)}"
             })
 
-        # Create a success notification for participant safely
+        # Create notifications for participant, organizer, and global announcements safely
         try:
-            target_email = resolve_user_email(username)
-            if target_email:
+            participant_email = resolve_user_email(username)
+            if participant_email:
                 cursor.execute(
                     "INSERT INTO notifications (message, username, type) VALUES (%s, %s, %s)",
-                    (f"You have successfully registered for '{title}'!", target_email, "success")
+                    (f"You have successfully registered for '{title}'!", participant_email, "success")
                 )
+            
+            # Notify event organizer
+            if creator:
+                creator_email = resolve_user_email(creator)
+                if creator_email:
+                    cursor.execute(
+                        "INSERT INTO notifications (message, username, type) VALUES (%s, %s, %s)",
+                        (f"New registration! A participant has registered for your event '{title}'.", creator_email, "info")
+                    )
+            
+            # System-wide announcement (username IS NULL)
+            cursor.execute(
+                "INSERT INTO notifications (message, username, type) VALUES (%s, NULL, %s)",
+                (f"New participant registered for event '{title}'.", "info")
+            )
         except Exception as notif_err:
             print("Registration notification warning:", notif_err)
 
