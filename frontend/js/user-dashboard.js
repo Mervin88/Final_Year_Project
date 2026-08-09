@@ -203,38 +203,57 @@ function renderRecommendedVenues() {
         let reason = "";
 
         if (hasEvents && latestEvent) {
-            // Personalized Scoring Formula
-            // 1. Location (25 pts)
-            if (latestEvent.preferred_location && v.location.toLowerCase().includes(latestEvent.preferred_location.toLowerCase())) {
-                score += 25;
-            } else {
-                score += 10;
-            }
-
-            // 2. Capacity (25 pts)
+            // Personalized Scoring Formula: 30% Capacity + 30% Budget + 20% Location + 20% Amenities
+            // 1. Capacity Match (30 pts)
             const reqCap = latestEvent.required_capacity || latestEvent.participants || 0;
+            let capacityScore = 20;
             if (reqCap > 0) {
-                if (v.capacity >= reqCap && v.capacity <= reqCap * 1.6) score += 25;
-                else if (v.capacity >= reqCap) score += 15;
-                else score += 5;
-            } else {
-                score += 15;
+                if (v.capacity >= reqCap && v.capacity <= reqCap * 1.6) capacityScore = 30;
+                else if (v.capacity > reqCap * 1.6) capacityScore = 20;
+                else capacityScore = 10;
             }
 
-            // 3. Category & Type (25 pts)
-            if (latestEvent.venue_type && v.type === latestEvent.venue_type) score += 15;
-            const desc = (v.name + " " + (v.description || "")).toLowerCase();
-            if (latestEvent.category && desc.includes(latestEvent.category.toLowerCase())) score += 10;
-            else score += 5;
+            // 2. Budget Match (30 pts)
+            const reqBudget = parseFloat(latestEvent.budget);
+            let budgetScore = 30;
+            if (!isNaN(reqBudget) && reqBudget > 0) {
+                if (v.price <= reqBudget) {
+                    budgetScore = 30;
+                } else {
+                    const budgetRatio = reqBudget / v.price;
+                    budgetScore = Math.max(5, Math.round(30 * budgetRatio));
+                }
+            }
 
-            // 4. Amenities (25 pts)
-            let amenityScore = 0;
-            if (latestEvent.wifi_required && v.wifi_available) amenityScore += 5;
-            if (latestEvent.parking_required && v.parking_available) amenityScore += 5;
-            if (latestEvent.projector_required && v.projector_available) amenityScore += 5;
-            if (latestEvent.catering_required && v.catering_available) amenityScore += 5;
-            if (latestEvent.stage_setup_required && v.stage_setup_available) amenityScore += 5;
-            score += amenityScore > 0 ? amenityScore : 15;
+            // 3. Location Match (20 pts)
+            let locationScore = 8;
+            if (latestEvent.preferred_location && v.location.toLowerCase().includes(latestEvent.preferred_location.toLowerCase())) {
+                locationScore = 20;
+            }
+
+            // 4. Amenities & Venue Type (20 pts)
+            const isTypeMatch = latestEvent.venue_type && v.type === latestEvent.venue_type;
+            let totalSpecialReqs = 0;
+            let matchedSpecialReqs = 0;
+
+            if (latestEvent.wifi_required) { totalSpecialReqs++; if (v.wifi_available) matchedSpecialReqs++; }
+            if (latestEvent.parking_required) { totalSpecialReqs++; if (v.parking_available) matchedSpecialReqs++; }
+            if (latestEvent.projector_required) { totalSpecialReqs++; if (v.projector_available) matchedSpecialReqs++; }
+            if (latestEvent.catering_required) { totalSpecialReqs++; if (v.catering_available) matchedSpecialReqs++; }
+            if (latestEvent.sound_system_required) { totalSpecialReqs++; if (v.sound_system_available) matchedSpecialReqs++; }
+            if (latestEvent.stage_setup_required) { totalSpecialReqs++; if (v.stage_setup_available) matchedSpecialReqs++; }
+
+            let amenitiesScore = 0;
+            if (totalSpecialReqs > 0) {
+                const specScore = (matchedSpecialReqs / totalSpecialReqs) * 12;
+                const typeScore = isTypeMatch ? 8 : 0;
+                amenitiesScore = specScore + typeScore;
+            } else {
+                amenitiesScore = isTypeMatch ? 20 : 10;
+            }
+
+            score = Math.round(capacityScore + budgetScore + locationScore + amenitiesScore);
+            score = Math.min(100, Math.max(0, score));
 
             badge = `🎯 ${score}% Match`;
             reason = `Matched for your event "${latestEvent.title}" (${latestEvent.category})`;
