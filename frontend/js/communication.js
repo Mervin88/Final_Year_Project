@@ -208,6 +208,20 @@ function triggerNotification(message, type = "info") {
 
 window.triggerNotification = triggerNotification;
 
+let testToastIndex = 0;
+window.triggerTestToast = function() {
+    const samples = [
+        { msg: "New participant registered for event 'Design Week'!", type: "success" },
+        { msg: "Event 'Digital Technology' has been approved & published by Admin!", type: "success" },
+        { msg: "New venue 'Sunway Square' is now approved and available for booking!", type: "info" },
+        { msg: "Timeline agenda schedule updated for 'Design Week'.", type: "warning" },
+        { msg: "New registration! A participant signed up for 'Digital Technology'.", type: "success" }
+    ];
+    const sample = samples[testToastIndex % samples.length];
+    testToastIndex++;
+    triggerNotification(sample.msg, sample.type);
+};
+
 // ========================================
 // DATABASE SYNCHRONIZATION & POLLING
 // ========================================
