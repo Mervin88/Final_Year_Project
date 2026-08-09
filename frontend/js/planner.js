@@ -488,8 +488,8 @@ async function saveEvent() {
         let parsedLayoutElements = [];
         try {
             const parsed = JSON.parse(storedLayout);
-            parsedLayoutElements = parsed && Array.isArray(parsed.elements) ? 
-            parsed.elements : (Array.isArray(parsed) ? parsed : []);
+            parsedLayoutElements = parsed && Array.isArray(parsed.elements) ?
+                parsed.elements : (Array.isArray(parsed) ? parsed : []);
         } catch (e) {
             parsedLayoutElements = [];
         }
@@ -751,12 +751,14 @@ async function initializeLayout() {
         let startTop = 150;
 
         // Use 2 columns by default (as in image 2), and wrap to 3 or 4 columns for larger events to avoid bottom overflow
-        let cols = 5;
-        spacingX = 180;
-        if (tablesNeeded <= 6) {
+        let cols = 2;
+        if (tablesNeeded > 12) {
             cols = 3;
-        } else if (tablesNeeded > 24) {
-            cols = 6;
+            spacingX = 180;
+        }
+        if (tablesNeeded > 18) {
+            cols = 4;
+            spacingX = 160;
         }
 
         for (let i = 1; i <= tablesNeeded; i++) {
@@ -795,7 +797,7 @@ async function initializeLayout() {
 function getWorkspaceWidth() {
     const attendeeCount = eventData ? (parseInt(eventData.required_capacity) || 50) : 50;
     const tablesNeeded = Math.ceil(attendeeCount / 10);
-    return Math.max(1400, Math.min(2200, 1400 + (tablesNeeded - 12) * 35));
+    return Math.max(1800, Math.min(2800, 1800 + (tablesNeeded - 12) * 45));
 }
 
 function getWorkspaceHeight() {
@@ -806,7 +808,7 @@ function getWorkspaceHeight() {
             maxY = el.y + height;
         }
     });
-    return Math.max(950, maxY + 100);
+    return Math.max(950, maxY + 100); // 100px bottom padding, minimum 950px
 }
 
 function renderLayout(canvas, isMinimized = false) {
@@ -816,18 +818,19 @@ function renderLayout(canvas, isMinimized = false) {
     const workspaceHeight = getWorkspaceHeight();
     const containerWidth = canvas.clientWidth || 500;
 
+    // Add margin buffer to scale calculation when minimized to prevent component clipping at edges
     const scale = isMinimized ? (containerWidth / (workspaceWidth + 120)) : plannerZoom;
 
     canvas.innerHTML = "";
 
     const canvasDiv = document.createElement("div");
     canvasDiv.className = "layout-canvas";
-    const actualWidth = isMinimized ? workspaceWidth : Math.max(workspaceWidth, Math.ceil(containerWidth / scale));
-
+    const actualWidth = isMinimized ? workspaceWidth : Math.max(workspaceWidth, containerWidth);
     canvasDiv.style.width = actualWidth + "px";
     canvasDiv.style.height = workspaceHeight + "px";
     canvasDiv.style.position = "absolute";
 
+    // Center it visually when minimized
     const leftMargin = isMinimized ? (60 * scale) : 0;
     const topMargin = isMinimized ? (40 * scale) : 0;
     canvasDiv.style.left = leftMargin + "px";
@@ -848,6 +851,7 @@ function renderLayout(canvas, isMinimized = false) {
         canvas.style.background = "#ffffff";
         canvas.style.width = "100%";
 
+        // Add a spacer to force natural scrollbar ranges for the scaled canvas size
         const spacer = document.createElement("div");
         spacer.style.width = (actualWidth * scale) + "px";
         spacer.style.height = (workspaceHeight * scale) + "px";
@@ -1159,15 +1163,24 @@ window.applyLayoutPreset = function (presetType) {
     });
 
     if (presetType === 'banquet') {
-        let cols = 4;
-        if (tablesNeeded <= 6) cols = 3;
-        else if (tablesNeeded <= 12) cols = 5;
-        else if (tablesNeeded <= 24) cols = 5;
-        else cols = 6;
+        const maxLeftToLeftSpan = canvasWidth - 180;
 
-        const spacingX = 180;
+        let cols = 4;
+        if (tablesNeeded > 16) cols = 6;
+        else if (tablesNeeded > 8) cols = 5;
+        if (canvasWidth > 1500) cols = 8;
+        if (canvasWidth > 2000) cols = 10;
+
+        // Clamp column count to prevent horizontal overlapping
+        const maxCols = Math.max(2, Math.floor(maxLeftToLeftSpan / 140) + 1);
+        cols = Math.min(maxCols, cols);
+
+        const rows = Math.ceil(tablesNeeded / cols);
+        const spacingX = cols > 1 ? Math.min(220, maxLeftToLeftSpan / (cols - 1)) : 220;
+
+        // Use a fixed spacingY of 135px to prevent vertical table overlapping
         const spacingY = 135;
-        const startTop = 150;
+        const startTop = 140;
 
         for (let i = 1; i <= tablesNeeded; i++) {
             const index = i - 1;
@@ -1176,7 +1189,7 @@ window.applyLayoutPreset = function (presetType) {
 
             const totalColsThisRow = Math.min(cols, tablesNeeded - row * cols);
             const rowWidth = (totalColsThisRow - 1) * spacingX;
-            const rowStartLeft = (canvasWidth - 120 - rowWidth) / 2;
+            const rowStartLeft = (canvasWidth - 120 - rowWidth) / 2; // centers the table wrappers exactly
 
             const x = Math.floor(rowStartLeft + col * spacingX);
             const y = Math.floor(startTop + row * spacingY);
@@ -1241,25 +1254,25 @@ window.applyLayoutPreset = function (presetType) {
             let tempCapacity = 0;
             let innerL = 0;
             const bottomRowY_temp = 160 + (maxVerticalCount - 1) * 135;
-            
+
             while (true) {
                 const leftX = leftColX + innerL * 200;
                 const rightX = rightColX - innerL * 200;
                 const widthSpan = rightX - leftX;
                 const maxBottom = Math.max(0, Math.floor(widthSpan / 165) - 1);
-                
+
                 const startY = 160;
                 const endY = bottomRowY_temp - innerL * 180;
                 const layerMaxRows = Math.floor((endY - startY) / 135);
-                
+
                 if (maxBottom <= 0 || layerMaxRows <= 0) {
                     break;
                 }
-                
+
                 tempCapacity += 2 * layerMaxRows + maxBottom;
                 innerL++;
             }
-            
+
             if (tempCapacity >= tablesNeeded || maxVerticalCount >= 25) {
                 break;
             }
@@ -1275,7 +1288,7 @@ window.applyLayoutPreset = function (presetType) {
             const rightX = rightColX - L * 200;
             const widthSpan = rightX - leftX;
             const maxBottom = Math.max(0, Math.floor(widthSpan / 165) - 1);
-            
+
             const startY = 160;
             const endY = bottomRowY - L * 180;
             const layerMaxRows = Math.max(2, Math.floor((endY - startY) / 135));
@@ -1283,19 +1296,19 @@ window.applyLayoutPreset = function (presetType) {
             if (maxBottom <= 0 && L > 0) {
                 break;
             }
-            
+
             // Prevent standalone floating inner U-shape tables
             if (L > 0 && tempTables < 8) {
                 break;
             }
-            
+
             const layerCapacity = 2 * layerMaxRows + maxBottom;
             const numOnLayer = Math.min(tempTables, layerCapacity);
-            
+
             let bCount = 0;
             let leftCount = 0;
             let rightCount = 0;
-            
+
             if (numOnLayer <= 3) {
                 if (numOnLayer === 3) {
                     leftCount = 1;
@@ -1320,7 +1333,7 @@ window.applyLayoutPreset = function (presetType) {
                     bCount = Math.min(maxBottom, bCount + diff);
                 }
             }
-            
+
             layerConfigs.push({
                 L: L,
                 leftX: leftX,
@@ -1329,12 +1342,12 @@ window.applyLayoutPreset = function (presetType) {
                 leftCount: leftCount,
                 rightCount: rightCount
             });
-            
+
             tempTables -= numOnLayer;
             L++;
             if (tempTables <= 0) break;
         }
-        
+
         // Handle leftovers safely if any remain
         if (tempTables > 0 && layerConfigs.length > 0) {
             const extraLeft = Math.ceil(tempTables / 2);
@@ -1342,12 +1355,12 @@ window.applyLayoutPreset = function (presetType) {
             layerConfigs[0].leftCount += extraLeft;
             layerConfigs[0].rightCount += extraRight;
         }
-        
+
         let tId = 1;
         layerConfigs.forEach(conf => {
             const startY = 160;
             const endY = bottomRowY - conf.L * 180;
-            
+
             // Left Column
             if (conf.leftCount > 0) {
                 for (let i = 0; i < conf.leftCount; i++) {
@@ -1362,7 +1375,7 @@ window.applyLayoutPreset = function (presetType) {
                     tId++;
                 }
             }
-            
+
             // Right Column
             if (conf.rightCount > 0) {
                 for (let i = 0; i < conf.rightCount; i++) {
@@ -1377,7 +1390,7 @@ window.applyLayoutPreset = function (presetType) {
                     tId++;
                 }
             }
-            
+
             // Bottom Row
             if (conf.bCount > 0) {
                 const startX = conf.leftX;
@@ -1401,32 +1414,32 @@ window.applyLayoutPreset = function (presetType) {
         let tempTables = tablesNeeded;
         let layerConfigs = [];
         let L = 0;
-        
+
         // Solve for maxVerticalCount dynamically to prevent overlapping concentric rows
         let maxVerticalCount = 8;
         while (true) {
             let tempCapacity = 0;
             let innerL = 0;
             const bottomRowY_temp = 160 + (maxVerticalCount + 1) * 135;
-            
+
             while (true) {
                 const leftX = 80 + innerL * 200;
                 const rightX = canvasWidth - 200 - innerL * 200;
                 const widthSpan = rightX - leftX;
                 const maxTop = Math.max(0, Math.floor(widthSpan / 165) - 1);
-                
+
                 const startY = 160 + innerL * 180;
                 const endY = bottomRowY_temp - innerL * 180;
                 const layerMaxRows = Math.floor((endY - startY) / 135) - 1;
-                
+
                 if (maxTop <= 0 || layerMaxRows <= 0) {
                     break;
                 }
-                
+
                 tempCapacity += 2 * layerMaxRows + 2 * maxTop;
                 innerL++;
             }
-            
+
             if (tempCapacity >= tablesNeeded || maxVerticalCount >= 25) {
                 break;
             }
@@ -1435,14 +1448,14 @@ window.applyLayoutPreset = function (presetType) {
 
         const spacingY = 135;
         const bottomRowY = 160 + (maxVerticalCount + 1) * spacingY;
-        
+
         // Distribute tables into nested Boardroom loops
         while (tempTables > 0) {
             const leftX = 80 + L * 200;
             const rightX = canvasWidth - 200 - L * 200;
             const widthSpan = rightX - leftX;
             const maxTop = Math.max(0, Math.floor(widthSpan / 165) - 1);
-            
+
             const startY = 160 + L * 180;
             const endY = bottomRowY - L * 180;
             const layerMaxRows = Math.max(2, Math.floor((endY - startY) / 135) - 1);
@@ -1450,20 +1463,20 @@ window.applyLayoutPreset = function (presetType) {
             if (maxTop <= 0 && L > 0) {
                 break;
             }
-            
+
             // Prevent standalone floating inner boardroom tables
             if (L > 0 && tempTables < 12) {
                 break;
             }
-            
+
             const layerCapacity = 2 * layerMaxRows + 2 * maxTop;
             const numOnLayer = Math.min(tempTables, layerCapacity);
-            
+
             let topCount = 0;
             let bottomCount = 0;
             let leftCount = 0;
             let rightCount = 0;
-            
+
             if (numOnLayer <= 4) {
                 if (numOnLayer === 4) {
                     topCount = 1;
@@ -1498,7 +1511,7 @@ window.applyLayoutPreset = function (presetType) {
                     bottomCount = topCount;
                 }
             }
-            
+
             layerConfigs.push({
                 L: L,
                 leftX: leftX,
@@ -1508,12 +1521,12 @@ window.applyLayoutPreset = function (presetType) {
                 leftCount: leftCount,
                 rightCount: rightCount
             });
-            
+
             tempTables -= numOnLayer;
             L++;
             if (tempTables <= 0) break;
         }
-        
+
         // Handle leftovers safely if any remain
         if (tempTables > 0 && layerConfigs.length > 0) {
             const extraLeft = Math.ceil(tempTables / 2);
@@ -1521,12 +1534,12 @@ window.applyLayoutPreset = function (presetType) {
             layerConfigs[0].leftCount += extraLeft;
             layerConfigs[0].rightCount += extraRight;
         }
-        
+
         let tId = 1;
         layerConfigs.forEach(conf => {
             const startY = 160 + conf.L * 180;
             const endY = bottomRowY - conf.L * 180;
-            
+
             // Top Row
             if (conf.topCount > 0) {
                 const stepX = (conf.rightX - conf.leftX) / (conf.topCount + 1);
@@ -1542,7 +1555,7 @@ window.applyLayoutPreset = function (presetType) {
                     tId++;
                 }
             }
-            
+
             // Bottom Row
             if (conf.bottomCount > 0) {
                 const stepX = (conf.rightX - conf.leftX) / (conf.bottomCount + 1);
@@ -1558,7 +1571,7 @@ window.applyLayoutPreset = function (presetType) {
                     tId++;
                 }
             }
-            
+
             // Left Column
             if (conf.leftCount > 0) {
                 for (let i = 0; i < conf.leftCount; i++) {
@@ -1573,7 +1586,7 @@ window.applyLayoutPreset = function (presetType) {
                     tId++;
                 }
             }
-            
+
             // Right Column
             if (conf.rightCount > 0) {
                 for (let i = 0; i < conf.rightCount; i++) {
