@@ -206,36 +206,6 @@ function triggerNotification(message, type = "info") {
             toast.remove();
         }, 450);
     }, 5000);
-
-    // Append to live notification list container
-    const notifList = document.getElementById("notificationList");
-    if (notifList) {
-        // Remove empty state placeholder if present
-        const emptyState = notifList.querySelector(".notification-empty");
-        if (emptyState) {
-            emptyState.remove();
-        }
-
-        // Prevent duplicate entries by checking if the message already exists in the feed
-        const existingItems = notifList.querySelectorAll(".notification-item");
-        for (const item of existingItems) {
-            const itemText = item.querySelector(".notif-text")?.textContent?.trim();
-            if (itemText === message.trim()) {
-                item.remove(); // Remove the old instance
-            }
-        }
-
-        const newItem = document.createElement("div");
-        newItem.className = `notification-item new-notification ${type}`;
-
-        const notifSvg = notifSvgs[type] || notifSvgs.info;
-
-        newItem.innerHTML = `
-            <span class="notif-badge ${type}">${notifSvg}</span>
-            <span class="notif-text">${message}</span>
-        `;
-        notifList.insertBefore(newItem, notifList.firstChild);
-    }
 }
 
 // ========================================
@@ -335,19 +305,21 @@ async function fetchNotifications(isInitialLoad = false) {
         if (isInitialLoad) {
             // Sort notifications descending by ID to guarantee newest first
             notifications.sort((a, b) => b.id - a.id);
+            // Mark ALL fetched notification IDs as seen on initial load
+            notifications.forEach(n => seenNotificationIds.add(n.id));
             allNotificationsList = notifications;
             renderNotificationFeed();
         } else {
-            // For updates, sort new notifications ascending so unshift places newest at index 0
+            // For live updates during polling, check for genuinely NEW notifications
             const newNotifs = notifications.filter(n => !seenNotificationIds.has(n.id)).sort((a, b) => a.id - b.id);
-            let hasNew = false;
-            newNotifs.forEach(notif => {
-                seenNotificationIds.add(notif.id);
-                allNotificationsList.unshift(notif);
-                triggerNotification(notif.message, notif.type);
-                hasNew = true;
-            });
-            if (hasNew) {
+            if (newNotifs.length > 0) {
+                newNotifs.forEach(notif => {
+                    seenNotificationIds.add(notif.id);
+                    allNotificationsList.unshift(notif);
+                    triggerNotification(notif.message, notif.type);
+                });
+                // Keep allNotificationsList strictly sorted descending by ID
+                allNotificationsList.sort((a, b) => b.id - a.id);
                 renderNotificationFeed();
             }
         }
