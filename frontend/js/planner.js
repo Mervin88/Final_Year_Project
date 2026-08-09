@@ -1167,7 +1167,7 @@ function bindCanvasEvents(canvas) {
 let lastAppliedPreset = null;
 window.applyLayoutPreset = function (presetType) {
     lastAppliedPreset = presetType;
-    const attendeeCount = eventData ? (parseInt(eventData.required_capacity) || 50) : 50;
+    const attendeeCount = (eventData && eventData.target_capacity_pax) ? parseInt(eventData.target_capacity_pax) : (eventData ? (parseInt(eventData.required_capacity) || 100) : 100);
     const tablesNeeded = Math.ceil(attendeeCount / 10);
     const canvasWidth = getWorkspaceWidth();
 
