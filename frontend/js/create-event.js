@@ -125,7 +125,13 @@ async function loadEventData(editEventId) {
             localStorage.setItem("eventTimeline", event.timeline);
         }
         if (event.layout && event.layout !== "None" && event.layout !== "null") {
-            localStorage.setItem("eventLayout", event.layout);
+            try {
+                const parsed = JSON.parse(event.layout);
+                const elems = parsed && Array.isArray(parsed.elements) ? parsed.elements : (Array.isArray(parsed) ? parsed : []);
+                localStorage.setItem("eventLayout", JSON.stringify(elems));
+            } catch (parseErr) {
+                localStorage.setItem("eventLayout", event.layout);
+            }
         }
         if (event.backdrop_setup && event.backdrop_setup !== "None" && event.backdrop_setup !== "null") {
             localStorage.setItem("eventBackdropSetup", event.backdrop_setup);

@@ -730,18 +730,6 @@ async function initializeLayout() {
             } else {
                 layoutElements = [];
             }
-
-            // Verify if cached layout table count matches expected capacity table count
-            const attendeeCount = eventData ? (parseInt(eventData.required_capacity) || 50) : 50;
-            const tablesNeeded = Math.ceil(attendeeCount / 10);
-            const cachedTablesCount = Array.isArray(layoutElements)
-                ? layoutElements.filter(el => el.type === "table").length
-                : 0;
-
-            if (cachedTablesCount !== tablesNeeded) {
-                console.log(`Table quantity mismatch (cached: ${cachedTablesCount}, needed: ${tablesNeeded}). Regenerating layout.`);
-                layoutElements = [];
-            }
         } catch (e) {
             console.error("Error parsing cached layout:", e);
             layoutElements = [];
