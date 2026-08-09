@@ -662,7 +662,7 @@ if (currentUsername && currentUsername !== "Guest") {
         triggerNotification(`Welcome back ${currentUsername}! Real-time activity sync active.`, "info");
     }, 1000);
 
-    // Automatic 15-second activity pop out ticker (no clicking needed)
+    // Automatic 5-second activity pop out ticker (strictly matches 5-second polling engine)
     let autoTickerIdx = 0;
     const tickerMessages = [
         { msg: "New participant registered for event 'Design Week'!", type: "success" },
@@ -673,7 +673,7 @@ if (currentUsername && currentUsername !== "Guest") {
         const item = tickerMessages[autoTickerIdx % tickerMessages.length];
         autoTickerIdx++;
         triggerNotification(item.msg, item.type);
-    }, 15000);
+    }, 5000);
 }
 
 // Bind enter key for task input
