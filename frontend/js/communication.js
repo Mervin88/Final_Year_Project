@@ -393,58 +393,99 @@ async function fetchGlobalAnnouncements() {
 }
 
 // ========================================
-// TASK COORDINATION ENGINE (INTERACTIVE)
+// TASK COORDINATION ENGINE (DYNAMIC & INTERACTIVE)
 // ========================================
 let coordTasks = [];
 
-function initCoordTasks() {
+async function initCoordTasks() {
     const taskList = document.getElementById("coordTaskList");
     if (!taskList) return;
 
     const storageKey = `coord_tasks_${currentUsername}`;
+    let savedTasks = [];
     const saved = localStorage.getItem(storageKey);
     if (saved) {
         try {
-            coordTasks = JSON.parse(saved);
+            savedTasks = JSON.parse(saved);
         } catch (e) {
-            console.error("Failed to parse coord tasks:", e);
-            coordTasks = [];
+            console.error("Failed to parse saved coord tasks:", e);
         }
     }
 
-    // Generate defaults if empty
-    if (coordTasks.length === 0) {
-        const draftStr = localStorage.getItem("eventDraft");
-        if (draftStr) {
-            try {
-                const draft = JSON.parse(draftStr);
-                const title = draft.title || "your active event";
-                coordTasks = [
-                    { text: `Finalize venue checklist for "${title}"`, completed: false },
-                    { text: `Setup floor plan layout inside Planner workspace`, completed: false }
-                ];
-                if (parseInt(draft.catering_required) === 1) {
-                    coordTasks.push({ text: "Discuss executive dining menu options with caterer", completed: false });
+    // Map saved task completion status by text
+    const completionMap = {};
+    savedTasks.forEach(t => {
+        if (t && t.text) completionMap[t.text] = t.completed || false;
+    });
+
+    let generatedTasks = [];
+
+    // Fetch user's actual created events from backend
+    if (currentUsername && currentUsername !== "Guest") {
+        try {
+            const res = await fetch(`http://127.0.0.1:5000/my-events/${encodeURIComponent(currentUsername)}`);
+            if (res.ok) {
+                const userEvents = await res.json();
+                if (Array.isArray(userEvents) && userEvents.length > 0) {
+                    // Get the latest active event created by user
+                    const latestEvent = userEvents[0];
+                    const title = latestEvent.title || "your active event";
+
+                    generatedTasks.push({
+                        text: `Finalize venue checklist for "${title}" (${latestEvent.selected_venue || 'Selected Venue'})`,
+                        completed: completionMap[`Finalize venue checklist for "${title}" (${latestEvent.selected_venue || 'Selected Venue'})`] || false
+                    });
+
+                    if (parseInt(latestEvent.catering_required) === 1) {
+                        const txt = `Confirm catering menu & dietary preferences for "${title}"`;
+                        generatedTasks.push({ text: txt, completed: completionMap[txt] || false });
+                    }
+                    if (parseInt(latestEvent.sound_system_required) === 1) {
+                        const txt = `Test sound system & microphones at ${latestEvent.selected_venue || 'venue'}`;
+                        generatedTasks.push({ text: txt, completed: completionMap[txt] || false });
+                    }
+                    if (parseInt(latestEvent.parking_required) === 1) {
+                        const txt = `Reserve parking passes & VIP parking slots`;
+                        generatedTasks.push({ text: txt, completed: completionMap[txt] || false });
+                    }
+                    if (parseInt(latestEvent.wifi_required) === 1) {
+                        const txt = `Verify high-speed Wi-Fi access & bandwidth allocation`;
+                        generatedTasks.push({ text: txt, completed: completionMap[txt] || false });
+                    }
+                    if (parseInt(latestEvent.projector_required) === 1) {
+                        const txt = `Check projector setup & HDMI/AV connectivity`;
+                        generatedTasks.push({ text: txt, completed: completionMap[txt] || false });
+                    }
+                    if (parseInt(latestEvent.stage_setup_required) === 1) {
+                        const txt = `Approve stage backdrop & lighting placements`;
+                        generatedTasks.push({ text: txt, completed: completionMap[txt] || false });
+                    }
+
+                    if (latestEvent.timeline && latestEvent.timeline !== "[]" && latestEvent.timeline !== "null") {
+                        const txt = `Review & confirm timeline schedule for "${title}"`;
+                        generatedTasks.push({ text: txt, completed: completionMap[txt] || false });
+                    }
+                    if (latestEvent.layout && latestEvent.layout !== "[]" && latestEvent.layout !== "null") {
+                        const txt = `Verify interactive floor plan seating layout for "${title}"`;
+                        generatedTasks.push({ text: txt, completed: completionMap[txt] || false });
+                    }
                 }
-                if (parseInt(draft.sound_system_required) === 1) {
-                    coordTasks.push({ text: "Test sound systems & acoustic layout", completed: false });
-                }
-                if (parseInt(draft.stage_setup_required) === 1) {
-                    coordTasks.push({ text: "Approve stage backdrop & lighting placements", completed: false });
-                }
-                if (parseInt(draft.wifi_required) === 1) {
-                    coordTasks.push({ text: "Confirm high-speed wifi bandwidth allocation", completed: false });
-                }
-            } catch (e) {
-                console.error("Failed to generate default checklist tasks:", e);
             }
+        } catch (err) {
+            console.error("Failed to fetch user events for coordination tasks:", err);
         }
     }
 
-    // Default fallback if still empty
-    if (coordTasks.length === 0) {
+    // Preserve custom user-added tasks
+    const customUserTasks = savedTasks.filter(st => st && st.isCustom);
+
+    if (generatedTasks.length > 0) {
+        coordTasks = [...generatedTasks, ...customUserTasks];
+    } else if (savedTasks.length > 0) {
+        coordTasks = savedTasks;
+    } else {
         coordTasks = [
-            { text: "Initiate your first EventSync draft in Create Event page", completed: false },
+            { text: "Create your first event in Create Event page", completed: false },
             { text: "Compare venue specs and price offerings", completed: false },
             { text: "Confirm catering and sound requirements with team", completed: false }
         ];
@@ -501,7 +542,7 @@ window.addUserTask = function() {
     if (!input) return;
     const text = input.value.trim();
     if (text) {
-        coordTasks.push({ text: text, completed: false });
+        coordTasks.push({ text: text, completed: false, isCustom: true });
         input.value = "";
         renderCoordTasks();
     }
