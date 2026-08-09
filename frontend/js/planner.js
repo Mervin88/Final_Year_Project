@@ -196,31 +196,52 @@ function initCapacityTargetSelector() {
     if (!selector) return;
 
     selector.innerHTML = "";
-    const cap = eventData ? (parseInt(eventData.required_capacity) || 100) : 100;
+    
+    // Extract raw required_capacity string or number from eventData
+    const rawCap = eventData ? (eventData.required_capacity || "100 - 500") : "100 - 500";
+    const capStr = String(rawCap).toLowerCase();
 
-    // Full options range from 100 Pax to 1000 Pax in steps of 100
-    let options = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];
+    let options = [];
+    
+    // Determine the options range based on the user's selected Required Capacity Range
+    if (capStr.includes("500") && capStr.includes("1000")) {
+        // Range: 500 - 1000 Pax
+        options = [500, 600, 700, 800, 900, 1000];
+    } else if (capStr.includes("1000+") || capStr.includes("1000 plus") || capStr.includes("1000-") || (parseInt(rawCap) > 1000)) {
+        // Range: 1000+ Pax
+        options = [1000, 1200, 1500, 1800, 2000];
+    } else {
+        // Range: 100 - 500 Pax (Default)
+        options = [100, 200, 300, 400, 500];
+    }
 
-    // Ensure current capacity value is in options list
-    if (!options.includes(cap)) {
-        options.push(cap);
-        options.sort((a, b) => a - b);
+    // Determine current selected capacity integer
+    let currentVal = eventData ? (parseInt(eventData.target_capacity_pax) || parseInt(rawCap)) : options[0];
+    if (isNaN(currentVal) || !options.includes(currentVal)) {
+        currentVal = options[0]; // Pick lowest option in range as default
+    }
+    
+    if (eventData) {
+        eventData.target_capacity_pax = currentVal;
     }
 
     options.forEach(val => {
+        const tablesCount = Math.ceil(val / 10);
         const opt = document.createElement("option");
         opt.value = val;
-        opt.innerText = val + " Pax";
-        if (val === cap) {
+        opt.innerText = `${val} Pax (${tablesCount} Tables — 1 Table = 10 Pax)`;
+        if (val === currentVal) {
             opt.selected = true;
         }
         selector.appendChild(opt);
     });
 
-    selector.addEventListener("change", (e) => {
+    selector.onchange = (e) => {
         const newCap = parseInt(e.target.value);
-        eventData.required_capacity = newCap;
-        localStorage.setItem("eventDraft", JSON.stringify(eventData));
+        if (eventData) {
+            eventData.target_capacity_pax = newCap;
+            localStorage.setItem("eventDraft", JSON.stringify(eventData));
+        }
 
         const capDisplay = document.getElementById("capacity");
         if (capDisplay) {
@@ -228,7 +249,7 @@ function initCapacityTargetSelector() {
         }
 
         applyLayoutPreset(lastAppliedPreset || 'banquet');
-    });
+    };
 }
 
 // ==========================
@@ -1147,7 +1168,7 @@ function bindCanvasEvents(canvas) {
 let lastAppliedPreset = null;
 window.applyLayoutPreset = function (presetType) {
     lastAppliedPreset = presetType;
-    const attendeeCount = eventData ? (parseInt(eventData.required_capacity) || 50) : 50;
+    const attendeeCount = eventData ? (parseInt(eventData.target_capacity_pax) || parseInt(eventData.required_capacity) || 100) : 100;
     const tablesNeeded = Math.ceil(attendeeCount / 10);
     const canvasWidth = getWorkspaceWidth();
 
