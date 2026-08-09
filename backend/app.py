@@ -520,9 +520,7 @@ def create_event():
         notify_user = resolve_user_email(created_by)
         try:
             cursor.execute("INSERT INTO notifications (message, username, type) VALUES (%s, %s, %s)", 
-                           (f"Event '{title}' successfully created!", notify_user, "success"))
-            cursor.execute("INSERT INTO notifications (message, username, type) VALUES (%s, NULL, %s)", 
-                           (f"New event '{title}' created!", "info"))
+                           (f"Event '{title}' successfully created and pending review.", notify_user, "success"))
         except Exception as notify_err:
             print("Failed to log notification:", notify_err)
 
@@ -1213,6 +1211,11 @@ def admin_update_status(event_id):
             if new_status == "Approved":
                 notif_msg = f"Your booking request for '{event_title}' was accepted by Admin."
                 notif_type = "success"
+                # Public announcement for Latest Announcements when Approved & live for participants
+                cursor.execute(
+                    "INSERT INTO notifications (message, username, type) VALUES (%s, NULL, %s)",
+                    (f"New event '{event_title}' is now live for registration!", "success")
+                )
             elif new_status == "Rejected":
                 notif_msg = f"Event '{event_title}' booking request was rejected."
                 if feedback:
@@ -1721,15 +1724,16 @@ def backfill_notifications(cursor, username):
                 )
                 modified = True
 
-            # 1b. Check/Insert Global Creation Announcement for Latest Announcements (username IS NULL)
-            global_creation_msg = f"New event '{title}' created!"
-            cursor.execute("SELECT id FROM notifications WHERE username IS NULL AND message = %s", (global_creation_msg,))
-            if not cursor.fetchone():
-                cursor.execute(
-                    "INSERT INTO notifications (message, username, type, created_at) VALUES (%s, NULL, %s, %s)",
-                    (global_creation_msg, "info", created_at)
-                )
-                modified = True
+            # 1b. Check/Insert Global Creation Announcement for Latest Announcements (username IS NULL) ONLY if Approved/Accepted
+            if status == "Approved" or status == "Accepted":
+                global_creation_msg = f"New event '{title}' is now live for registration!"
+                cursor.execute("SELECT id FROM notifications WHERE username IS NULL AND message = %s", (global_creation_msg,))
+                if not cursor.fetchone():
+                    cursor.execute(
+                        "INSERT INTO notifications (message, username, type, created_at) VALUES (%s, NULL, %s, %s)",
+                        (global_creation_msg, "success", created_at)
+                    )
+                    modified = True
                 
             # 2. Check/Insert Status Notification
             status_msg = None
