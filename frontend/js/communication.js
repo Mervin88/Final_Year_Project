@@ -330,23 +330,23 @@ async function fetchNotifications(isInitialLoad = false) {
         const response = await fetch(`http://127.0.0.1:5000/notifications/${encodeURIComponent(currentUsername)}`);
         if (!response.ok) throw new Error("Network response was not ok");
         
-        const notifications = await response.json();
+        let notifications = await response.json();
         
         if (isInitialLoad) {
+            // Sort notifications descending by ID to guarantee newest first
+            notifications.sort((a, b) => b.id - a.id);
             allNotificationsList = notifications;
             renderNotificationFeed();
         } else {
-            // For updates, process new notifications
+            // For updates, sort new notifications ascending so unshift places newest at index 0
+            const newNotifs = notifications.filter(n => !seenNotificationIds.has(n.id)).sort((a, b) => a.id - b.id);
             let hasNew = false;
-            for (let i = notifications.length - 1; i >= 0; i--) {
-                const notif = notifications[i];
-                if (!seenNotificationIds.has(notif.id)) {
-                    seenNotificationIds.add(notif.id);
-                    allNotificationsList.unshift(notif);
-                    triggerNotification(notif.message, notif.type);
-                    hasNew = true;
-                }
-            }
+            newNotifs.forEach(notif => {
+                seenNotificationIds.add(notif.id);
+                allNotificationsList.unshift(notif);
+                triggerNotification(notif.message, notif.type);
+                hasNew = true;
+            });
             if (hasNew) {
                 renderNotificationFeed();
             }
@@ -369,7 +369,8 @@ async function fetchGlobalAnnouncements() {
         const response = await fetch("http://127.0.0.1:5000/admin/notifications");
         if (!response.ok) throw new Error("Announcements fetch failed");
         
-        const notifications = await response.json();
+        let notifications = await response.json();
+        notifications.sort((a, b) => b.id - a.id);
         
         listContainer.innerHTML = "";
         

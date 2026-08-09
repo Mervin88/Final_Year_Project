@@ -109,7 +109,8 @@ async function loadEvents() {
 async function loadNotifications() {
     try {
         const response = await fetch(`${API_BASE}/notifications/${username}`);
-        const notifications = await response.json();
+        let notifications = await response.json();
+        notifications.sort((a, b) => b.id - a.id);
         const notificationList = document.querySelector(".notification-list");
         
         if (notificationList) {
