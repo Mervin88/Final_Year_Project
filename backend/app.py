@@ -1412,8 +1412,9 @@ def upload_venue():
             notify_msg = f"New venue '{name}' has been uploaded and auto-approved." if status == "Approved" else f"New venue '{name}' has been submitted for review."
             cursor.execute("INSERT INTO notifications (message, username, type) VALUES (%s, %s, %s)", 
                            (notify_msg, uploaded_by, "info"))
-            cursor.execute("INSERT INTO notifications (message, username, type) VALUES (%s, NULL, %s)", 
-                           (f"New venue '{name}' created!", "info"))
+            if status == "Approved":
+                cursor.execute("INSERT INTO notifications (message, username, type) VALUES (%s, NULL, %s)", 
+                               (f"New venue '{name}' is now approved and available for booking!", "success"))
         except Exception as notify_err:
             print("Failed to log notification:", notify_err)
 
@@ -1620,6 +1621,12 @@ def admin_update_venue_status(venue_id):
             
             cursor.execute("INSERT INTO notifications (message, username, type) VALUES (%s, %s, %s)", 
                            (notif_msg, uploaded_by, "success" if new_status == "Approved" else "error" if new_status == "Rejected" else "warning"))
+            
+            if new_status == "Approved":
+                cursor.execute(
+                    "INSERT INTO notifications (message, username, type) VALUES (%s, NULL, %s)",
+                    (f"New venue '{venue_name}' is now approved and available for booking!", "success")
+                )
         except Exception as notify_err:
             print("Failed to log notification:", notify_err)
 
