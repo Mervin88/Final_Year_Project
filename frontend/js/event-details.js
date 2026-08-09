@@ -349,11 +349,10 @@ function renderLayoutPreview(canvas, elements, zoomVal = null) {
     const workspaceWidth = Math.max(1200, maxX + 150);
     const workspaceHeight = Math.max(900, maxY + 150);
 
-    // Calculate scale factor to fit layout in the modal body
     const containerWidth = canvas.clientWidth || 800;
     const containerHeight = canvas.clientHeight || 500;
-    const scaleX = (containerWidth - 40) / workspaceWidth;
-    const scaleY = (containerHeight - 40) / workspaceHeight;
+    const scaleX = containerWidth / workspaceWidth;
+    const scaleY = containerHeight / workspaceHeight;
     defaultFitScale = Math.min(scaleX, scaleY, 1.0);
 
     if (zoomVal === null) {
@@ -363,35 +362,37 @@ function renderLayoutPreview(canvas, elements, zoomVal = null) {
     }
     const scale = modalZoom;
 
-    const scaledW = workspaceWidth * scale;
-    const scaledH = workspaceHeight * scale;
+    const actualW = Math.max(workspaceWidth, Math.ceil(containerWidth / scale));
+    const actualH = Math.max(workspaceHeight, Math.ceil(containerHeight / scale));
 
-    const leftOffset = containerWidth > scaledW ? (containerWidth - scaledW) / 2 : 20;
-    const topOffset = containerHeight > scaledH ? (containerHeight - scaledH) / 2 : 20;
+    // Configure parent canvas to fill 100% with seamless white grid
+    canvas.style.display = "block";
+    canvas.style.position = "relative";
+    canvas.style.overflow = "auto";
+    canvas.style.backgroundColor = "#ffffff";
+    canvas.style.backgroundImage = "linear-gradient(rgba(200, 169, 107, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(200, 169, 107, 0.05) 1px, transparent 1px)";
+    canvas.style.backgroundSize = "20px 20px";
 
     // Create a layout-canvas inner container
     const canvasDiv = document.createElement("div");
     canvasDiv.className = "layout-canvas";
-    canvasDiv.style.width = workspaceWidth + "px";
-    canvasDiv.style.height = workspaceHeight + "px";
+    canvasDiv.style.width = actualW + "px";
+    canvasDiv.style.height = actualH + "px";
     canvasDiv.style.position = "absolute";
     canvasDiv.style.transformOrigin = "top left";
     canvasDiv.style.transform = `scale(${scale})`;
-    canvasDiv.style.left = leftOffset + "px";
-    canvasDiv.style.top = topOffset + "px";
-    
-    // Configure parent canvas
-    canvas.style.display = "block";
-    canvas.style.position = "relative";
-    canvas.style.overflow = "auto";
+    canvasDiv.style.left = "0px";
+    canvasDiv.style.top = "0px";
+    canvasDiv.style.boxShadow = "none";
+    canvasDiv.style.border = "none";
 
     canvas.appendChild(canvasDiv);
 
     // Add a spacer to define scroll boundaries
     const spacer = document.createElement("div");
     spacer.className = "layout-spacer";
-    spacer.style.width = (leftOffset + scaledW + 20) + "px";
-    spacer.style.height = (topOffset + scaledH + 20) + "px";
+    spacer.style.width = (actualW * scale) + "px";
+    spacer.style.height = (actualH * scale) + "px";
     spacer.style.pointerEvents = "none";
     spacer.style.position = "absolute";
     spacer.style.left = "0";
