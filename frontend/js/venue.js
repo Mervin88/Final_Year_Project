@@ -333,37 +333,37 @@ function filterAndRenderVenues(resetPage = false) {
         displayedVenues = filteredList.map(venue => {
             // 1. Capacity Score (30% Max Weight)
             const reqCap = parseInt(eventData.required_capacity) || 500;
-            const capLabel = String(eventData.capacity_range_label || "").toLowerCase();
             let capacityScore = 0;
 
-            if (capLabel.includes("100") || reqCap <= 500) {
-                if (venue.capacity >= 100 && venue.capacity <= 500) {
-                    capacityScore = 30; // Exact match within 100-500 range
-                } else if (venue.capacity > 500 && venue.capacity <= 1000) {
-                    capacityScore = 20; // 20% partial score for slightly larger venue (e.g. 600 pax)
-                } else {
-                    capacityScore = 10;
-                }
-            } else if (capLabel.includes("500") || (reqCap > 500 && reqCap <= 1000)) {
-                if (venue.capacity > 500 && venue.capacity <= 1000) {
-                    capacityScore = 30;
-                } else if (venue.capacity > 1000 && venue.capacity <= 1200) {
-                    capacityScore = 20;
-                } else if (venue.capacity >= 100 && venue.capacity <= 500) {
-                    capacityScore = 15;
-                } else {
-                    capacityScore = 10;
-                }
-            } else if (capLabel.includes("1000") || reqCap > 1000) {
+            if (reqCap > 1000) {
+                // Range: 1000+ Pax
                 if (venue.capacity > 1000) {
-                    capacityScore = 30;
+                    capacityScore = 30; // 100% match
                 } else if (venue.capacity >= 500 && venue.capacity <= 1000) {
                     capacityScore = 20;
                 } else {
                     capacityScore = 10;
                 }
+            } else if (reqCap > 500 && reqCap <= 1000) {
+                // Range: 500 - 1000 Pax
+                if (venue.capacity >= 500 && venue.capacity <= 1000) {
+                    capacityScore = 30; // 100% match within 500-1000 range
+                } else if (venue.capacity > 1000 && venue.capacity <= 1200) {
+                    capacityScore = 20;
+                } else if (venue.capacity >= 100 && venue.capacity < 500) {
+                    capacityScore = 15;
+                } else {
+                    capacityScore = 10;
+                }
             } else {
-                capacityScore = 20;
+                // Range: 100 - 500 Pax (reqCap <= 500)
+                if (venue.capacity >= 100 && venue.capacity <= 500) {
+                    capacityScore = 30; // 100% match within 100-500 range
+                } else if (venue.capacity > 500 && venue.capacity <= 1000) {
+                    capacityScore = 20; // Partial score for larger venue
+                } else {
+                    capacityScore = 10;
+                }
             }
 
             // 2. Budget Score (30% Max Weight)
