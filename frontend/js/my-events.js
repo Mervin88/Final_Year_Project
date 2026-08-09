@@ -608,8 +608,8 @@ function renderLayoutPreview(canvas, elements, zoomVal = null) {
 
     const containerWidth = canvas.clientWidth || 800;
     const containerHeight = canvas.clientHeight || 500;
-    const scaleX = containerWidth / workspaceWidth;
-    const scaleY = containerHeight / workspaceHeight;
+    const scaleX = (containerWidth - 40) / workspaceWidth;
+    const scaleY = (containerHeight - 40) / workspaceHeight;
     defaultFitScale = Math.min(scaleX, scaleY, 1.0);
 
     if (zoomVal === null) {
@@ -619,10 +619,11 @@ function renderLayoutPreview(canvas, elements, zoomVal = null) {
     }
     const scale = modalZoom;
 
-    const actualW = Math.max(workspaceWidth, Math.ceil(containerWidth / scale));
-    const actualH = Math.max(workspaceHeight, Math.ceil(containerHeight / scale));
+    const scaledW = workspaceWidth * scale;
+    const scaledH = workspaceHeight * scale;
 
-    const extraX = (actualW - workspaceWidth) / 2;
+    const leftOffset = containerWidth > scaledW ? (containerWidth - scaledW) / 2 : 20;
+    const topOffset = containerHeight > scaledH ? (containerHeight - scaledH) / 2 : 20;
 
     // Configure parent canvas to fill 100% with seamless white grid
     canvas.style.display = "block";
@@ -635,13 +636,13 @@ function renderLayoutPreview(canvas, elements, zoomVal = null) {
     // Create a layout-canvas inner container
     const canvasDiv = document.createElement("div");
     canvasDiv.className = "layout-canvas";
-    canvasDiv.style.width = actualW + "px";
-    canvasDiv.style.height = actualH + "px";
+    canvasDiv.style.width = workspaceWidth + "px";
+    canvasDiv.style.height = workspaceHeight + "px";
     canvasDiv.style.position = "absolute";
     canvasDiv.style.transformOrigin = "top left";
     canvasDiv.style.transform = `scale(${scale})`;
-    canvasDiv.style.left = "0px";
-    canvasDiv.style.top = "0px";
+    canvasDiv.style.left = leftOffset + "px";
+    canvasDiv.style.top = topOffset + "px";
     canvasDiv.style.boxShadow = "none";
     canvasDiv.style.border = "none";
 
@@ -650,8 +651,8 @@ function renderLayoutPreview(canvas, elements, zoomVal = null) {
     // Add a spacer to define scroll boundaries
     const spacer = document.createElement("div");
     spacer.className = "layout-spacer";
-    spacer.style.width = (actualW * scale) + "px";
-    spacer.style.height = (actualH * scale) + "px";
+    spacer.style.width = (leftOffset + scaledW + 20) + "px";
+    spacer.style.height = (topOffset + scaledH + 20) + "px";
     spacer.style.pointerEvents = "none";
     spacer.style.position = "absolute";
     spacer.style.left = "0";
