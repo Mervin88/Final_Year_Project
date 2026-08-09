@@ -1711,13 +1711,23 @@ def backfill_notifications(cursor, username):
             created_at = event[2]
             rejection_feedback = event[3]
             
-            # 1. Check/Insert Creation Notification
+            # 1. Check/Insert Creation Notification (Personal)
             creation_msg = f"Event '{title}' successfully created!"
             cursor.execute("SELECT id FROM notifications WHERE (username = %s OR (%s IS NOT NULL AND username = %s)) AND message = %s", (username, email, email, creation_msg))
             if not cursor.fetchone():
                 cursor.execute(
                     "INSERT INTO notifications (message, username, type, created_at) VALUES (%s, %s, %s, %s)",
                     (creation_msg, target_username, "success", created_at)
+                )
+                modified = True
+
+            # 1b. Check/Insert Global Creation Announcement for Latest Announcements (username IS NULL)
+            global_creation_msg = f"New event '{title}' created!"
+            cursor.execute("SELECT id FROM notifications WHERE username IS NULL AND message = %s", (global_creation_msg,))
+            if not cursor.fetchone():
+                cursor.execute(
+                    "INSERT INTO notifications (message, username, type, created_at) VALUES (%s, NULL, %s, %s)",
+                    (global_creation_msg, "info", created_at)
                 )
                 modified = True
                 
