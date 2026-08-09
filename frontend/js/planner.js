@@ -226,10 +226,9 @@ function initCapacityTargetSelector() {
     }
 
     options.forEach(val => {
-        const tablesCount = Math.ceil(val / 10);
         const opt = document.createElement("option");
         opt.value = val;
-        opt.innerText = `${val} Pax (${tablesCount} Tables — 1 Table = 10 Pax)`;
+        opt.innerText = val + " Pax";
         if (val === currentVal) {
             opt.selected = true;
         }
@@ -1168,7 +1167,7 @@ function bindCanvasEvents(canvas) {
 let lastAppliedPreset = null;
 window.applyLayoutPreset = function (presetType) {
     lastAppliedPreset = presetType;
-    const attendeeCount = eventData ? (parseInt(eventData.target_capacity_pax) || parseInt(eventData.required_capacity) || 100) : 100;
+    const attendeeCount = eventData ? (parseInt(eventData.required_capacity) || 50) : 50;
     const tablesNeeded = Math.ceil(attendeeCount / 10);
     const canvasWidth = getWorkspaceWidth();
 
