@@ -1714,15 +1714,15 @@ def backfill_notifications(cursor, username):
             created_at = event[2]
             rejection_feedback = event[3]
             
-            # 1. Check/Insert Creation Notification (Personal)
-            creation_msg = f"Event '{title}' successfully created!"
-            cursor.execute("SELECT id FROM notifications WHERE (username = %s OR (%s IS NOT NULL AND username = %s)) AND message = %s", (username, email, email, creation_msg))
-            if not cursor.fetchone():
-                cursor.execute(
-                    "INSERT INTO notifications (message, username, type, created_at) VALUES (%s, %s, %s, %s)",
-                    (creation_msg, target_username, "success", created_at)
-                )
-                modified = True
+            # 1. Check/Insert Creation/Status Notification (Personal)
+            if status == "Pending Review":
+                cursor.execute("SELECT id FROM notifications WHERE (username = %s OR (%s IS NOT NULL AND username = %s)) AND message LIKE %s", (username, email, email, f"Event '{title}'%"))
+                if not cursor.fetchone():
+                    cursor.execute(
+                        "INSERT INTO notifications (message, username, type, created_at) VALUES (%s, %s, %s, %s)",
+                        (f"Event '{title}' successfully created and pending administrative review.", target_username, "success", created_at)
+                    )
+                    modified = True
 
             # 1b. Check/Insert Global Creation Announcement for Latest Announcements (username IS NULL) ONLY if Approved/Accepted
             if status == "Approved" or status == "Accepted":
@@ -1735,7 +1735,7 @@ def backfill_notifications(cursor, username):
                     )
                     modified = True
                 
-            # 2. Check/Insert Status Notification
+            # 2. Check/Insert Status Notification for Approved/Rejected
             status_msg = None
             status_type = "info"
             if status == "Approved" or status == "Accepted":
@@ -1746,9 +1746,6 @@ def backfill_notifications(cursor, username):
                 if rejection_feedback:
                     status_msg += f" Reason: {rejection_feedback}"
                 status_type = "error"
-            elif status == "Pending Review":
-                status_msg = f"Event '{title}' is pending administrative review."
-                status_type = "warning"
                 
             if status_msg:
                 cursor.execute("SELECT id FROM notifications WHERE (username = %s OR (%s IS NOT NULL AND username = %s)) AND message = %s", (username, email, email, status_msg))
