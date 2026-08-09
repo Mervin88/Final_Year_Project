@@ -336,8 +336,11 @@ async function fetchNotifications(isInitialLoad = false) {
 }
 
 // ========================================
-// LATEST ANNOUNCEMENTS FEED (DYNAMIC)
+// LATEST ANNOUNCEMENTS FEED (DYNAMIC & REAL-TIME)
 // ========================================
+const seenAnnouncementIds = new Set();
+let isInitialAnnouncementLoad = true;
+
 async function fetchGlobalAnnouncements() {
     const listContainer = document.getElementById("liveAnnouncementList");
     if (!listContainer) return;
@@ -348,6 +351,20 @@ async function fetchGlobalAnnouncements() {
         
         let notifications = await response.json();
         sortItemsNewestFirst(notifications);
+
+        if (isInitialAnnouncementLoad) {
+            notifications.forEach(n => seenAnnouncementIds.add(n.id));
+            isInitialAnnouncementLoad = false;
+        } else {
+            // Trigger live toast popups for new announcements during background polling
+            const newAnnouncements = notifications.filter(n => !seenAnnouncementIds.has(n.id));
+            if (newAnnouncements.length > 0) {
+                newAnnouncements.forEach(ann => {
+                    seenAnnouncementIds.add(ann.id);
+                    triggerNotification(ann.message, "info");
+                });
+            }
+        }
         
         listContainer.innerHTML = "";
         
