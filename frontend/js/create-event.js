@@ -362,6 +362,7 @@ document.getElementById("continueBtn")
             preferred_location,
             budget: parsedBudget,
             required_capacity: parsedCapacity,
+            target_capacity_pax: parsedCapacity,
             capacity_range_label: capTextLabel,
             venue_type,
             parking_required: document.getElementById("parking").checked,
