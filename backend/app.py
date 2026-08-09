@@ -1146,7 +1146,7 @@ def admin_events():
     try:
         cursor = mysql.connection.cursor()
         cursor.execute("""
-            SELECT id, title, category, selected_venue, event_date, event_date_end, created_by, status, timeline, layout, backdrop_setup,
+            SELECT id, title, category, selected_venue, event_date, event_date_end, created_by, status, timeline, layout, backdrop_setup, banner_image,
                    (SELECT COUNT(*) FROM registrations r WHERE r.event_id = events.id) AS attendee_count 
             FROM events 
             ORDER BY id DESC
@@ -1168,7 +1168,8 @@ def admin_events():
                 "timeline": event[8],
                 "layout": event[9],
                 "backdrop_setup": event[10],
-                "attendee_count": event[11]
+                "banner_image": event[11],
+                "attendee_count": event[12]
             })
 
         return jsonify(result)

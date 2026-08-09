@@ -72,12 +72,14 @@ async function loadEvents() {
         }
 
         events.forEach(event => {
-            // Unsplash placeholder images based on categories
-            let img = "https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=1200&auto=format&fit=crop";
-            if (event.category === "Workshop") {
-                img = "https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=1200&auto=format&fit=crop";
-            } else if (event.category === "Seminar") {
-                img = "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?q=80&w=1200&auto=format&fit=crop";
+            // Use custom uploaded banner image if available, else category placeholders
+            let img = event.banner_image || "https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=1200&auto=format&fit=crop";
+            if (!event.banner_image || event.banner_image === 'None' || event.banner_image === 'null') {
+                if (event.category === "Workshop") {
+                    img = "https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=1200&auto=format&fit=crop";
+                } else if (event.category === "Seminar") {
+                    img = "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?q=80&w=1200&auto=format&fit=crop";
+                }
             }
 
             // Status badge coloring style
