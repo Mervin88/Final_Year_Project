@@ -288,7 +288,13 @@ function renderNotificationFeed() {
         } else if (toggleBtn) {
             toggleBtn.remove();
         }
-    }
+ function sortItemsNewestFirst(list) {
+    return list.sort((a, b) => {
+        const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        if (timeB !== timeA) return timeB - timeA;
+        return (b.id || 0) - (a.id || 0);
+    });
 }
 
 async function fetchNotifications(isInitialLoad = false) {
@@ -303,23 +309,23 @@ async function fetchNotifications(isInitialLoad = false) {
         let notifications = await response.json();
         
         if (isInitialLoad) {
-            // Sort notifications descending by ID to guarantee newest first
-            notifications.sort((a, b) => b.id - a.id);
+            // Sort notifications descending by timestamp then ID to guarantee newest first
+            sortItemsNewestFirst(notifications);
             // Mark ALL fetched notification IDs as seen on initial load
             notifications.forEach(n => seenNotificationIds.add(n.id));
             allNotificationsList = notifications;
             renderNotificationFeed();
         } else {
             // For live updates during polling, check for genuinely NEW notifications
-            const newNotifs = notifications.filter(n => !seenNotificationIds.has(n.id)).sort((a, b) => a.id - b.id);
+            const newNotifs = notifications.filter(n => !seenNotificationIds.has(n.id));
             if (newNotifs.length > 0) {
                 newNotifs.forEach(notif => {
                     seenNotificationIds.add(notif.id);
                     allNotificationsList.unshift(notif);
                     triggerNotification(notif.message, notif.type);
                 });
-                // Keep allNotificationsList strictly sorted descending by ID
-                allNotificationsList.sort((a, b) => b.id - a.id);
+                // Keep allNotificationsList strictly sorted descending by timestamp/ID
+                sortItemsNewestFirst(allNotificationsList);
                 renderNotificationFeed();
             }
         }
@@ -327,8 +333,6 @@ async function fetchNotifications(isInitialLoad = false) {
         console.error("Failed to sync notifications:", err);
     }
 }
-
-
 
 // ========================================
 // LATEST ANNOUNCEMENTS FEED (DYNAMIC)
@@ -342,7 +346,7 @@ async function fetchGlobalAnnouncements() {
         if (!response.ok) throw new Error("Announcements fetch failed");
         
         let notifications = await response.json();
-        notifications.sort((a, b) => b.id - a.id);
+        sortItemsNewestFirst(notifications);
         
         listContainer.innerHTML = "";
         

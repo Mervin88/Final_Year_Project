@@ -1796,7 +1796,7 @@ def get_user_notifications(username):
         if backfill_notifications(cursor, username):
             mysql.connection.commit()
             
-        cursor.execute("SELECT id, message, type, created_at FROM notifications WHERE username = %s OR (%s IS NOT NULL AND username = %s) ORDER BY id DESC", (username, email, email))
+        cursor.execute("SELECT id, message, type, created_at FROM notifications WHERE username = %s OR (%s IS NOT NULL AND username = %s) ORDER BY created_at DESC, id DESC", (username, email, email))
         rows = cursor.fetchall()
         cursor.close()
 
@@ -1825,7 +1825,7 @@ def admin_get_notifications():
               AND message NOT LIKE 'New user%'
               AND message NOT LIKE 'You have%'
               AND message NOT LIKE 'Your %'
-            ORDER BY id DESC
+            ORDER BY created_at DESC, id DESC
         """)
         rows = cursor.fetchall()
         cursor.close()
